@@ -1,8 +1,9 @@
 import re
 import sys
+import os
 import asyncio
 from subprocess import DEVNULL, check_call
-from typing import TYPE_CHECKING, Callable, Awaitable, Optional, Union
+from typing import TYPE_CHECKING, Callable, Awaitable, Optional, Union, Type, TypeVar
 
 from discord import opus, utils, Guild, Message, VoiceChannel, Emoji
 from emoji import is_emoji
@@ -160,6 +161,14 @@ def compare_components(obj1, obj2):
             return False
         return all(compare_components(obj1[k], obj2[k]) for k in obj1)
     return obj1 == obj2
+
+
+T = TypeVar('T')
+
+def get_env_var(key: str, fallback: T) -> T:
+    if key in os.environ and bool(os.environ[key]):
+        return type(fallback)(os.environ[key])
+    return fallback
 
 
 class Timer:

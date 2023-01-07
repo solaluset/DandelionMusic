@@ -1,14 +1,8 @@
 # fmt: off
 import os
-from typing import Optional, Type, TypeVar
+from musicbot.utils import get_env_var
+from typing import Optional
 
-
-T = TypeVar('T')
-
-def get_env_var(key: str, fallback: T) -> T:
-    if key in os.environ and bool(os.environ[key]):
-        return type(fallback)(os.environ[key])
-    return fallback
 
 BOT_TOKEN: str = get_env_var("BOT_TOKEN", "YOURTOKEN_GOES_HERE")
 SPOTIFY_ID: str = get_env_var("SPOTIFY_ID", "")
@@ -45,7 +39,7 @@ actual_prefix = (  # for internal use
 # database url in SQL Alchemy-supported format, must be async-compatible
 # CHANGE ONLY IF YOU KNOW WHAT YOU'RE DOING
 DATABASE = "sqlite+aiosqlite:///settings.db"
-if os.getenv("HEROKU"):
+if os.getenv("HEROKU") and os.getenv("HEROKU") != "0":
     # example with Heroku Postgres
     DATABASE = os.getenv(
         "DATABASE_URL",  # environment variable with the DB url
@@ -128,6 +122,8 @@ HELP_SHUFFLE_SHORT = "Shuffle the queue"
 HELP_SHUFFLE_LONG = "Randomly sort the songs in the current queue"
 HELP_RESET_SHORT = "Disconnect and reconnect"
 HELP_RESET_LONG = "Stop player, disconnect and reconnect to the channel you are in"
+HELP_REMOVE_SHORT = "Remove a song"
+HELP_REMOVE_LONG = "Allows to remove a song from the queue by typing it's position (defaults to the last song)."
 
 ABSOLUTE_PATH = ""  # do not modify
 

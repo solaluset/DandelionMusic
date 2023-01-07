@@ -167,7 +167,7 @@ class Music(commands.Cog):
             await ctx.send("Moved ↔️")
         except PlaylistError as e:
             await ctx.send(e)
-
+            
     @bridge.bridge_command(
         name="remove",
         description=config.HELP_REMOVE_LONG,
