@@ -61,6 +61,8 @@ Custom Cookies:
 
 You can find pre-built Docker image at https://hub.docker.com/repository/docker/krutyi4el/dandelion-music/
 
+For further details and ENV-options visit https://github.com/Raptor123471/DingoLingo/wiki/Configuration#global-settings/
+
 ## Commands:
 
 ### Music
