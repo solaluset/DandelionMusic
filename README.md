@@ -26,8 +26,7 @@ Obtained keys must be entered into ```config/config.py``` (or set as environment
 
 #### Requirements
 
-* Installation of Python 3.8+
-
+* Installation of Python 3.8+ (max 3.10)
 Install dependencies:
 ```
 pip install -r requirements.txt
@@ -60,6 +59,32 @@ Custom Cookies:
 ### Docker image
 
 You can find pre-built Docker image at https://hub.docker.com/repository/docker/krutyi4el/dandelion-music/
+
+The current docker-variables are:
+
+```BOT_TOKEN``` &ensp;&emsp;&emsp;&emsp; - Your applications ID
+
+```SPOTIFY_ID``` &emsp;&emsp;&emsp; - Your spotify ID (Optional - See "API Keys")
+
+```SPOTIFY_SECRET```&emsp; - Your spotify secret (Optional - See "API Keys")
+
+```BOT_PREFIX``` &emsp;&emsp;&emsp; - Your Bot's prefix (default: !d)
+
+```VC_TIMEOUT``` &emsp;&emsp;&emsp; - Time in seconds after wich the bot disconnects automaticly if no music is played  (default: 600)
+
+```MAX_SONG_PRELOAD```  &ensp;&emsp;&emsp;&emsp; - How much songs are getting preloaded  (default: 5, max 25)
+
+```ENABLE_SLASH_COMMANDS``` &ensp;&emsp;&emsp;&emsp; - Weither if slashcommands are enabled  (default: False [important: True is case-sensitive!])
+
+```VC_TIMOUT_DEFAULT``` &ensp;&emsp;&emsp;&emsp; - Weither if VC_TIMEOUT is enabled  (default: True [important: False is case-sensitive!])
+
+```MAX_HISTORY_LENGTH``` &ensp;&emsp;&emsp;&emsp; - Defines the max history-length  (default: 10)
+
+```MAX_TRACKNAME_HISTORY_LENGTH``` &ensp;&emsp;&emsp;&emsp; - Defines the max trackname-history-length  (default: 25)
+
+```HEROKU_DB```  &ensp;&emsp;&emsp;&emsp; - Weither if HEROKU_DB is enabled (optional)
+
+```DATABASE_URL```&emsp;&emsp; - Your DATABASE_URL (optional)
 
 ## Commands:
 
