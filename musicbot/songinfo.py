@@ -21,7 +21,9 @@ class Song:
         self.host = host
         self.origin = origin
         self.base_url = base_url
-        self.info = self.Sinfo(uploader, title, duration, webpage_url, thumbnail)
+        self.info = self.Sinfo(
+            uploader, title, duration, webpage_url, thumbnail
+        )
 
     class Sinfo:
         def __init__(
@@ -40,7 +42,6 @@ class Song:
             self.output = ""
 
         def format_output(self, playtype):
-
             embed = discord.Embed(
                 title=playtype,
                 description="[{}]({})".format(self.title, self.webpage_url),
@@ -51,13 +52,17 @@ class Song:
                 embed.set_thumbnail(url=self.thumbnail)
 
             embed.add_field(
-                name=config.SONGINFO_UPLOADER, value=self.uploader, inline=False
+                name=config.SONGINFO_UPLOADER,
+                value=self.uploader,
+                inline=False,
             )
 
             if self.duration is not None:
                 embed.add_field(
                     name=config.SONGINFO_DURATION,
-                    value="{}".format(str(datetime.timedelta(seconds=self.duration))),
+                    value="{}".format(
+                        str(datetime.timedelta(seconds=self.duration))
+                    ),
                     inline=False,
                 )
             else:

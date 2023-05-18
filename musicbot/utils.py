@@ -50,7 +50,8 @@ def download_ffmpeg():
 
     print("Downloading ffmpeg automatically...")
     stream = urlopen(
-        "https://github.com/Krutyi-4el/FFmpeg/releases/download/v5.1.git/ffmpeg.zip",
+        "https://github.com/Krutyi-4el/FFmpeg/"
+        "releases/download/v5.1.git/ffmpeg.zip",
         context=SSLContext(),
     )
     total_size = int(stream.getheader("content-length") or 0)
@@ -72,14 +73,17 @@ def download_ffmpeg():
     else:
         file.write(stream.read())
     zipf = ZipFile(file)
-    filename = [name for name in zipf.namelist() if name.endswith("ffmpeg.exe")][0]
+    filename = [
+        name for name in zipf.namelist() if name.endswith("ffmpeg.exe")
+    ][0]
     with open("ffmpeg.exe", "wb") as f:
         f.write(zipf.read(filename))
     print("\nSuccess!")
 
 
 def get_guild(bot: MusicBot, command: Message) -> Optional[Guild]:
-    """Gets the guild a command belongs to. Useful, if the command was sent via pm.
+    """Gets the guild a command belongs to
+    Useful, if the command was sent via pm
     Needs voice states intent"""
     if command.guild is not None:
         return command.guild
@@ -91,14 +95,20 @@ def get_guild(bot: MusicBot, command: Message) -> Optional[Guild]:
 
 
 async def connect_to_channel(
-    guild: Guild, dest_channel_name, ctx, switch: bool = False, default: bool = True
+    guild: Guild,
+    dest_channel_name,
+    ctx,
+    switch: bool = False,
+    default: bool = True,
 ):
     """Connects the bot to the specified voice channel.
 
     Args:
         guild: The guild for witch the operation should be performed.
-        switch: Determines if the bot should disconnect from his current channel to switch channels.
-        default: Determines if the bot should default to the first channel, if the name was not found.
+        switch: Determines if the bot should disconnect from
+            his current channel to switch channels.
+        default: Determines if the bot should default to
+            the first channel, if the name was not found.
     """
     for channel in guild.voice_channels:
         if str(channel.name).strip() == str(dest_channel_name).strip():
@@ -117,7 +127,9 @@ async def connect_to_channel(
         except Exception:
             await ctx.send(config.DEFAULT_CHANNEL_JOIN_FAILED)
     else:
-        await ctx.send(config.CHANNEL_NOT_FOUND_MESSAGE + str(dest_channel_name))
+        await ctx.send(
+            config.CHANNEL_NOT_FOUND_MESSAGE + str(dest_channel_name)
+        )
 
 
 async def is_connected(ctx: Context) -> Optional[VoiceChannel]:
@@ -159,7 +171,9 @@ async def voice_check(ctx: Context):
 
         if all(m.bot for m in bot_vc.channel.members):
             # current channel doesn't have any user in it
-            return await ctx.bot.audio_controllers[ctx.guild].uconnect(ctx, move=True)
+            return await ctx.bot.audio_controllers[ctx.guild].uconnect(
+                ctx, move=True
+            )
 
     try:
         if await dj_check(ctx):

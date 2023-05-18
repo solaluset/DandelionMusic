@@ -35,8 +35,9 @@ class Button(commands.Cog):
             await message.add_reaction(emoji)
 
     @commands.Cog.listener()
-    async def on_raw_reaction_add(self, reaction: discord.RawReactionActionEvent):
-
+    async def on_raw_reaction_add(
+        self, reaction: discord.RawReactionActionEvent
+    ):
         serv = self.bot.get_guild(reaction.guild_id)
 
         user_vc = reaction.member.voice
@@ -50,7 +51,10 @@ class Button(commands.Cog):
         if not button:
             return
 
-        if reaction.emoji.name == button or str(reaction.emoji.id or "") == button:
+        if (
+            reaction.emoji.name == button
+            or str(reaction.emoji.id or "") == button
+        ):
             chan = serv.get_channel(reaction.channel_id)
             message = await chan.fetch_message(reaction.message_id)
             url = linkutils.get_url(message.content)
@@ -70,7 +74,9 @@ class Button(commands.Cog):
             elif serv.voice_client.channel != user_vc.channel:
                 return
             if not audiocontroller.command_channel and sett.command_channel:
-                audiocontroller.command_channel = serv.get_channel(int(sett.command_channel))
+                audiocontroller.command_channel = serv.get_channel(
+                    int(sett.command_channel)
+                )
             await audiocontroller.process_song(url)
 
 

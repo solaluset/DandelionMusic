@@ -40,7 +40,6 @@ bot = MusicBot(
 
 
 if __name__ == "__main__":
-
     config.ABSOLUTE_PATH = os.path.dirname(os.path.abspath(__file__))
     config.COOKIE_PATH = config.ABSOLUTE_PATH + config.COOKIE_PATH
 

@@ -40,10 +40,6 @@ class Music(commands.Cog):
         audiocontroller.timer.cancel()
         audiocontroller.timer = utils.Timer(audiocontroller.timeout_handler)
 
-        # if audiocontroller.playlist.loop == True:
-        #     await ctx.send("Loop is enabled! Use {}loop to disable".format(config.BOT_PREFIX))
-        #     return
-
         song = await audiocontroller.process_song(track)
 
         if song is None:
@@ -69,8 +65,9 @@ class Music(commands.Cog):
         help=config.HELP_LOOP_SHORT,
         aliases=["l"],
     )
-    async def _loop(self, ctx: Context, mode: Option(str, choices=LOOP_MODES) = None):
-
+    async def _loop(
+        self, ctx: Context, mode: Option(str, choices=LOOP_MODES) = None
+    ):
         audiocontroller = ctx.bot.audio_controllers[ctx.guild]
 
         if not audiocontroller.is_active():
@@ -96,7 +93,9 @@ class Music(commands.Cog):
         audiocontroller.playlist.shuffle()
         await ctx.send("Shuffled queue :twisted_rightwards_arrows:")
 
-        for song in list(audiocontroller.playlist.playque)[: config.MAX_SONG_PRELOAD]:
+        for song in list(audiocontroller.playlist.playque)[
+            : config.MAX_SONG_PRELOAD
+        ]:
             audiocontroller.add_task(audiocontroller.preload(song))
 
     @bridge.bridge_command(
@@ -168,7 +167,9 @@ class Music(commands.Cog):
         help=config.HELP_REMOVE_SHORT,
         aliases=["rm"],
     )
-    async def _remove(self, ctx, queue_number: Option(int, min_value=2) = None):
+    async def _remove(
+        self, ctx, queue_number: Option(int, min_value=2) = None
+    ):
         audiocontroller = ctx.bot.audio_controllers[ctx.guild]
         if not audiocontroller.is_active():
             await ctx.send(config.QUEUE_EMPTY)
@@ -178,9 +179,8 @@ class Music(commands.Cog):
             queue_number = len(audiocontroller.playlist)
         try:
             song = audiocontroller.playlist.remove(queue_number - 1)
-            await ctx.send(
-                f"Removed #{queue_number}: {song.info.title or song.info.webpage_url}"
-            )
+            title = song.info.title or song.info.webpage_url
+            await ctx.send(f"Removed #{queue_number}: {title}")
         except PlaylistError as e:
             await ctx.send(e)
 
@@ -262,7 +262,9 @@ class Music(commands.Cog):
         help=config.HELP_VOL_SHORT,
     )
     async def _volume(
-        self, ctx: Context, value: Option(int, min_value=0, max_value=100) = None
+        self,
+        ctx: Context,
+        value: Option(int, min_value=0, max_value=100) = None,
     ):
         audiocontroller = ctx.bot.audio_controllers[ctx.guild]
 

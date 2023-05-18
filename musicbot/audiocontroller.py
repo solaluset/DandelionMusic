@@ -118,13 +118,10 @@ class AudioController(object):
                 downloader = d
                 break
         else:
-            # we need to copy options because downloader modifies the given dict
+            # we need to copy options because
+            # downloader modifies the given dict
             downloader = yt_dlp.YoutubeDL(options.copy())
             _cached_downloaders.append((options, downloader))
-        # if options in _cached_downloaders:
-        #     downloader = _cached_downloaders[options]
-        # else:
-        #     downloader = _cached_downloaders[options] = yt_dlp.YoutubeDL(options)
         async with _search_lock:
             return await self.bot.loop.run_in_executor(
                 None, downloader.extract_info, url, False
@@ -145,7 +142,12 @@ class AudioController(object):
             if isinstance(e, yt_dlp.DownloadError) and e.exc_info[1].expected:
                 return False
             info = await self.extract_info(
-                song, {"title": True, "cookiefile": config.COOKIE_PATH, "quiet": True}
+                song,
+                {
+                    "title": True,
+                    "cookiefile": config.COOKIE_PATH,
+                    "quiet": True,
+                },
             )
         song.update(info)
         return True
@@ -216,12 +218,18 @@ class AudioController(object):
         view.add_item(stop_button)
 
         volume_down_button = MusicButton(
-            lambda _: self.volume_down(), row=2, disabled=self.volume == 10, emoji="🔉"
+            lambda _: self.volume_down(),
+            row=2,
+            disabled=self.volume == 10,
+            emoji="🔉",
         )
         view.add_item(volume_down_button)
 
         volume_up_button = MusicButton(
-            lambda _: self.volume_up(), row=2, disabled=self.volume == 100, emoji="🔊"
+            lambda _: self.volume_up(),
+            row=2,
+            disabled=self.volume == 100,
+            emoji="🔊",
         )
         view.add_item(volume_up_button)
 
@@ -231,7 +239,9 @@ class AudioController(object):
 
     async def current_song_callback(self, ctx):
         await ctx.send(
-            embed=self.current_song.info.format_output(config.SONGINFO_SONGINFO),
+            embed=self.current_song.info.format_output(
+                config.SONGINFO_SONGINFO
+            ),
         )
 
     async def queue_callback(self, ctx):
@@ -253,7 +263,9 @@ class AudioController(object):
         elif (
             old_view
             and view
-            and compare_components(old_view.to_components(), view.to_components())
+            and compare_components(
+                old_view.to_components(), view.to_components()
+            )
         ):
             return
         try:
@@ -270,7 +282,9 @@ class AudioController(object):
 
     def is_active(self) -> bool:
         client = self.guild.voice_client
-        return client is not None and (client.is_playing() or client.is_paused())
+        return client is not None and (
+            client.is_playing() or client.is_paused()
+        )
 
     def track_history(self):
         history_string = config.INFO_HISTORY_TITLE
@@ -306,7 +320,8 @@ class AudioController(object):
         return LoopState.ENABLED
 
     def next_song(self, error=None):
-        """Invoked after a song is finished. Plays the next song if there is one."""
+        """Invoked after a song is finished
+        Plays the next song if there is one"""
 
         if self.is_active():
             self.guild.voice_client.stop()
@@ -338,7 +353,9 @@ class AudioController(object):
             return
 
         if song.base_url is None:
-            print("Something is wrong. Refusing to play a song without base_url.")
+            print(
+                "Something is wrong. Refusing to play a song without base_url."
+            )
             self.next_song()
             return
 
@@ -348,7 +365,8 @@ class AudioController(object):
         self.guild.voice_client.play(
             discord.FFmpegPCMAudio(
                 song.base_url,
-                before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
+                before_options="-reconnect 1 -reconnect_streamed 1"
+                " -reconnect_delay_max 5",
             ),
             after=self.next_song,
         )
@@ -358,7 +376,10 @@ class AudioController(object):
         )
         self.guild.voice_client.source.volume = float(self.volume) / 100.0
 
-        if self.bot.settings[self.guild].announce_songs and self.command_channel:
+        if (
+            self.bot.settings[self.guild].announce_songs
+            and self.command_channel
+        ):
             await self.command_channel.send(
                 embed=song.info.format_output(config.SONGINFO_NOW_PLAYING)
             )
@@ -366,13 +387,13 @@ class AudioController(object):
         self.add_task(self.preload_queue())
 
     async def process_song(self, track: str) -> Optional[Song]:
-        """Adds the track to the playlist instance and plays it, if it is the first song"""
+        """Adds the track to the playlist instance
+        Starts playing if it is the first song"""
 
         host = linkutils.identify_url(track)
         is_playlist = linkutils.identify_playlist(track)
 
         if is_playlist != linkutils.Playlist_Types.Unknown:
-
             await self.process_playlist(is_playlist, track)
 
             if self.current_song is None:
@@ -411,10 +432,10 @@ class AudioController(object):
 
         return song
 
-    async def process_playlist(self, playlist_type: linkutils.Playlist_Types, url: str):
-
+    async def process_playlist(
+        self, playlist_type: linkutils.Playlist_Types, url: str
+    ):
         if playlist_type == linkutils.Playlist_Types.YouTube_Playlist:
-
             if "playlist?list=" in url:
                 # listid = url.split("=")[1]
                 pass
@@ -433,7 +454,6 @@ class AudioController(object):
             r = await self.extract_info(url, options)
 
             for entry in r["entries"]:
-
                 link = "https://www.youtube.com/watch?v={}".format(entry["id"])
 
                 song = Song(
@@ -455,11 +475,14 @@ class AudioController(object):
                 self.playlist.add(song)
 
         if playlist_type == linkutils.Playlist_Types.BandCamp_Playlist:
-            options = {"format": "bestaudio/best", "extract_flat": True, "quiet": True}
+            options = {
+                "format": "bestaudio/best",
+                "extract_flat": True,
+                "quiet": True,
+            }
             r = await self.extract_info(url, options)
 
             for entry in r["entries"]:
-
                 link = entry.get("url")
 
                 song = Song(
@@ -478,7 +501,6 @@ class AudioController(object):
         task.add_done_callback(lambda t: self._tasks.remove(t))
 
     async def preload(self, song: Song):
-
         if song.info.title is not None or song.info.webpage_url is None:
             return True
         future = self._preloading.get(song)
@@ -503,7 +525,9 @@ class AudioController(object):
 
     async def preload_queue(self):
         rerun_needed = False
-        for song in list(islice(self.playlist.playque, 1, config.MAX_SONG_PRELOAD)):
+        for song in list(
+            islice(self.playlist.playque, 1, config.MAX_SONG_PRELOAD)
+        ):
             if not await self.preload(song):
                 self.playlist.playque.remove(song)
                 rerun_needed = True
@@ -511,7 +535,8 @@ class AudioController(object):
             self.add_task(self.preload_queue())
 
     async def search_youtube(self, title: str) -> Optional[dict]:
-        """Searches youtube for the video title and returns the first results video link"""
+        """Searches youtube for the video title
+        Returns the first results video link"""
 
         # if title is already a link
         if linkutils.get_url(title) is not None:

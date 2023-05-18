@@ -13,14 +13,16 @@ class PlaylistError(Exception):
 
 
 class Playlist:
-    """Stores the youtube links of songs to be played and already played and offers basic operation on the queues"""
+    """Stores the youtube links of songs to be played and already played
+    Offers basic operation on the queues"""
 
     def __init__(self):
         # Stores the links os the songs in queue and the ones already played
         self.playque: deque[Song] = deque()
         self.playhistory: deque[Song] = deque()
 
-        # A seperate history that remembers the names of the tracks that were played
+        # A seperate history that remembers
+        # the names of the tracks that were played
         self.trackname_history: deque[str] = deque()
 
         self.loop = "off"
@@ -40,7 +42,9 @@ class Playlist:
         return len(self.playque) >= (2 if self.loop == "off" else 1)
 
     def has_prev(self) -> bool:
-        return len(self.playhistory if self.loop == "off" else self.playque) != 0
+        return (
+            len(self.playhistory if self.loop == "off" else self.playque) != 0
+        )
 
     def next(self) -> Optional[Song]:
         if len(self.playque) == 0:
@@ -126,7 +130,8 @@ class Playlist:
             embed.add_field(
                 name="{}.".format(str(counter)),
                 value="[{}]({})".format(
-                    song.info.title or song.info.webpage_url, song.info.webpage_url
+                    song.info.title or song.info.webpage_url,
+                    song.info.webpage_url,
                 ),
                 inline=False,
             )

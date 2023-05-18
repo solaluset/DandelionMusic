@@ -12,7 +12,8 @@ sys.argv.extend(
         "--collect-binaries=discord",
         # make sure every file from musicbot folder is included
         *[
-            "--hidden-import=" + os.path.splitext(file)[0].replace(os.path.sep, ".")
+            "--hidden-import="
+            + os.path.splitext(file)[0].replace(os.path.sep, ".")
             for file in glob.glob("musicbot/**/*.py", recursive=True)
         ],
         "--hidden-import=" + DATABASE_LIBRARY,

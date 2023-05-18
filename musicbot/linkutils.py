@@ -19,11 +19,25 @@ except Exception:
     api = False
 
 url_regex = re.compile(
-    r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
+    r"""http[s]?://(?:
+        [a-zA-Z]
+        |[0-9]
+        |[$-_@.&+]
+        |[!*\(\),]
+        |(?:%[0-9a-fA-F][0-9a-fA-F])
+    )+""",
+    re.VERBOSE,
 )
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
+    "User-Agent": " ".join(
+        (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            "AppleWebKit/537.36 (KHTML, like Gecko)",
+            "Chrome/96.0.4664.110",
+            "Safari/537.36",
+        )
+    )
 }
 
 
@@ -32,7 +46,6 @@ def clean_sclink(track: str) -> str:
 
 
 async def convert_spotify(url: str) -> str:
-
     result = url_regex.search(url)
     if result and "?si=" in url:
         url = result.group(0) + "&nd=1"
@@ -44,7 +57,9 @@ async def convert_spotify(url: str) -> str:
     soup = BeautifulSoup(page, "html.parser")
 
     title = soup.find("title").string
-    return re.sub(r"(.*) - song( and lyrics)? by (.*) \| Spotify", r"\1 \3", title)
+    return re.sub(
+        r"(.*) - song( and lyrics)? by (.*) \| Spotify", r"\1 \3", title
+    )
 
 
 async def get_spotify_playlist(url: str) -> list:
@@ -70,7 +85,9 @@ async def get_spotify_playlist(url: str) -> list:
                 for track in tracks:
                     try:
                         links.append(
-                            track.get("track", track)["external_urls"]["spotify"]
+                            track.get("track", track)["external_urls"][
+                                "spotify"
+                            ]
                         )
                     except KeyError:
                         pass

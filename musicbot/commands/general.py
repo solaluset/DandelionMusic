@@ -60,9 +60,9 @@ class General(commands.Cog):
             # bot was connected and need some rest
             await asyncio.sleep(1)
 
-        audiocontroller = ctx.bot.audio_controllers[ctx.guild] = AudioController(
-            self.bot, ctx.guild
-        )
+        audiocontroller = ctx.bot.audio_controllers[
+            ctx.guild
+        ] = AudioController(self.bot, ctx.guild)
         await audiocontroller.uconnect(ctx)
         await ctx.send(
             "{} Connected to {}".format(
@@ -71,7 +71,9 @@ class General(commands.Cog):
         )
 
     @bridge.bridge_command(
-        name="ping", description=config.HELP_PING_LONG, help=config.HELP_PING_SHORT
+        name="ping",
+        description=config.HELP_PING_LONG,
+        help=config.HELP_PING_SHORT,
     )
     async def _ping(self, ctx):
         await ctx.send(f"Pong ({int(ctx.bot.latency * 1000)} ms)")

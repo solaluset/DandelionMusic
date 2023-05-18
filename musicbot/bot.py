@@ -9,7 +9,11 @@ from sqlalchemy.orm import sessionmaker
 
 from config import config
 from musicbot.audiocontroller import AudioController
-from musicbot.settings import GuildSettings, run_migrations, extract_legacy_settings
+from musicbot.settings import (
+    GuildSettings,
+    run_migrations,
+    extract_legacy_settings,
+)
 
 
 class MusicBot(bridge.Bot):
@@ -17,7 +21,8 @@ class MusicBot(bridge.Bot):
         kwargs.setdefault("help_command", UniversalHelpCommand())
         super().__init__(*args, **kwargs)
 
-        # A dictionary that remembers which guild belongs to which audiocontroller
+        # A dictionary that remembers
+        # which guild belongs to which audiocontroller
         self.audio_controllers: Dict[discord.Guild, AudioController] = {}
 
         # A dictionary that remembers which settings belongs to which guild
@@ -85,7 +90,9 @@ class MusicBot(bridge.Bot):
         return await super().get_prefix(message)
 
     async def get_application_context(self, interaction):
-        return await super().get_application_context(interaction, ApplicationContext)
+        return await super().get_application_context(
+            interaction, ApplicationContext
+        )
 
     async def process_application_commands(self, inter):
         if not inter.guild:
@@ -114,7 +121,9 @@ class MusicBot(bridge.Bot):
             self.settings[guild] = await GuildSettings.load(self, guild)
 
         sett = self.settings[guild]
-        controller = self.audio_controllers[guild] = AudioController(self, guild)
+        controller = self.audio_controllers[guild] = AudioController(
+            self, guild
+        )
 
         if config.GLOBAL_DISABLE_AUTOJOIN_VC:
             return
