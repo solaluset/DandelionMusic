@@ -2,11 +2,15 @@ import os
 import sys
 
 import discord
-from discord.ext import commands
+
+# import bridge here to override discord.Option with BridgeOption
+from discord.ext import commands, bridge
 
 from config import config
 from musicbot.bot import MusicBot
 from musicbot.utils import OutputWrapper, check_dependencies
+
+del bridge
 
 initial_extensions = [
     "musicbot.commands.music",
