@@ -50,7 +50,7 @@ EMBED_COLOR = 0x4dd4d0  # replace after'0x' with desired hex code ex. '#ff0188' 
 SUPPORTED_EXTENSIONS = (".webm", ".mp4", ".mp3", ".avi", ".wav", ".m4v", ".ogg", ".mov")
 
 
-COOKIE_PATH = "/config/cookies/cookies.txt"
+COOKIE_PATH = "config/cookies/cookies.txt"
 
 GLOBAL_DISABLE_AUTOJOIN_VC = False
 
@@ -143,5 +143,3 @@ HELP_RESET_SHORT = "Disconnect and reconnect"
 HELP_RESET_LONG = "Stop player, disconnect and reconnect to the channel you are in"
 HELP_REMOVE_SHORT = "Remove a song"
 HELP_REMOVE_LONG = "Allows to remove a song from the queue by typing it's position (defaults to the last song)."
-
-ABSOLUTE_PATH = ""  # do not modify
