@@ -17,10 +17,10 @@ os.environ["DANDELION_INSTALLING"] = "1"
 
 
 def main():
-    from config.config import DATABASE_LIBRARY
+    from config import config
 
     with open("db.txt", "w") as f:
-        print(DATABASE_LIBRARY, file=f)
+        print(config.DATABASE_LIBRARY, file=f)
 
     setup()
 

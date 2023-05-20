@@ -3,7 +3,7 @@ import sys
 import glob
 import runpy
 
-from config.config import DATABASE_LIBRARY
+from config import config
 
 sys.argv.extend(
     [
@@ -16,7 +16,11 @@ sys.argv.extend(
             + os.path.splitext(file)[0].replace(os.path.sep, ".")
             for file in glob.glob("musicbot/**/*.py", recursive=True)
         ],
-        "--hidden-import=" + DATABASE_LIBRARY,
+        "--hidden-import=" + config.DATABASE_LIBRARY,
+        *[
+            "--add-data=" + file + os.pathsep + "config"
+            for file in glob.glob("config/*.json")
+        ],
         "-n=DandelionMusic",
         "-i=ui/note.ico",
         "run.py",
