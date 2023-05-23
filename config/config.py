@@ -32,8 +32,8 @@ class Config:
 
     ENABLE_BUTTON_PLUGIN = True
 
-    # replace after '0x' with desired hex code ex. '#ff0188' >> 0xff0188
-    EMBED_COLOR = 0x4DD4D0
+    # replace after '0x' with desired hex code ex. '#ff0188' >> "0xff0188"
+    EMBED_COLOR: int = "0x4DD4D0"  # converted to int in __main__
 
     SUPPORTED_EXTENSIONS = (
         ".webm",
@@ -92,6 +92,8 @@ class Config:
         self.DATABASE_LIBRARY = self.DATABASE.partition("+")[2].partition(":")[
             0
         ]
+
+        self.EMBED_COLOR = int(self.EMBED_COLOR, 16)
 
         with open(os.path.join(os.path.dirname(__file__), "en.json")) as f:
             data = json.load(f)
