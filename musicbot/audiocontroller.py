@@ -1,5 +1,4 @@
 import asyncio
-from enum import Enum
 from itertools import islice
 from inspect import isawaitable
 from typing import TYPE_CHECKING, Coroutine, Optional, List, Tuple
@@ -9,7 +8,7 @@ import yt_dlp
 from config import config
 
 from musicbot import linkutils, utils
-from musicbot.playlist import Playlist
+from musicbot.playlist import Playlist, LoopMode, LoopState, PauseState
 from musicbot.songinfo import Song
 from musicbot.utils import CheckError, compare_components, play_check
 
@@ -21,18 +20,6 @@ if TYPE_CHECKING:
 _cached_downloaders: List[Tuple[dict, yt_dlp.YoutubeDL]] = []
 _not_provided = object()
 _search_lock = asyncio.Lock()
-
-
-class PauseState(Enum):
-    NOTHING_TO_PAUSE = "Nothing to pause or resume."
-    PAUSED = "Playback Paused :pause_button:"
-    RESUMED = "Resumed playback :arrow_forward:"
-
-
-class LoopState(Enum):
-    INVALID = "Invalid loop mode!"
-    ENABLED = "Loop enabled :arrows_counterclockwise:"
-    DISABLED = "Loop disabled :x:"
 
 
 class MusicButton(discord.ui.Button):
@@ -51,9 +38,6 @@ class MusicButton(discord.ui.Button):
         res = self._callback(ctx)
         if isawaitable(res):
             await res
-
-
-LOOP_MODES = ("all", "single", "off")
 
 
 class AudioController(object):
@@ -305,17 +289,19 @@ class AudioController(object):
 
     def loop(self, mode=None):
         if mode is None:
-            if self.playlist.loop == "off":
-                mode = "all"
+            if self.playlist.loop == LoopMode.OFF:
+                mode = LoopMode.ALL
             else:
-                mode = "off"
+                mode = LoopMode.OFF
 
-        if mode not in LOOP_MODES:
+        try:
+            mode = LoopMode(mode)
+        except ValueError:
             return LoopState.INVALID
 
         self.playlist.loop = mode
 
-        if mode == "off":
+        if mode == LoopMode.OFF:
             return LoopState.DISABLED
         return LoopState.ENABLED
 
@@ -344,7 +330,7 @@ class AudioController(object):
     async def play_song(self, song: Song):
         """Plays a song object"""
 
-        if self.playlist.loop == "off":  # let timer run thouh if looping
+        if self.playlist.loop == LoopMode.OFF:  # reset timer if looping
             self.timer.cancel()
             self.timer = utils.Timer(self.timeout_handler)
 
@@ -562,7 +548,7 @@ class AudioController(object):
         if not self.is_active():
             return
 
-        self.playlist.loop = "off"
+        self.playlist.loop = LoopMode.OFF
         self.playlist.next()
         self.clear_queue()
         self.guild.voice_client.stop()

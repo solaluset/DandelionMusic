@@ -94,15 +94,24 @@ class Config:
         ]
 
         with open(os.path.join(os.path.dirname(__file__), "en.json")) as f:
-            self.messages = {
-                k: v.format(**current_cfg) for k, v in json.load(f).items()
-            }
+            data = json.load(f)
+
+        self.messages = {}
+        self.dicts = {}
+        for k, v in data.items():
+            if isinstance(v, str):
+                self.messages[k] = v.format(**current_cfg)
+            elif isinstance(v, dict):
+                self.dicts[k] = v
 
     def __getattr__(self, key: str) -> str:
         try:
             return self.messages[key]
         except KeyError as e:
             raise AttributeError(f"No text for {key!r} defined") from e
+
+    def get_dict(self, name: str) -> dict:
+        return self.dicts[name]
 
     @classmethod
     def update(cls, data: dict):

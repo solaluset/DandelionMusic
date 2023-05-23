@@ -67,5 +67,21 @@
   "HELP_RESET_SHORT": "Disconnect and reconnect",
   "HELP_RESET_LONG": "Stop player, disconnect and reconnect to the channel you are in",
   "HELP_REMOVE_SHORT": "Remove a song",
-  "HELP_REMOVE_LONG": "Allows to remove a song from the queue by typing it's position (defaults to the last song)."
+  "HELP_REMOVE_LONG": "Allows to remove a song from the queue by typing it's position (defaults to the last song).",
+
+  "PauseState": {
+    "NOTHING_TO_PAUSE": "Nothing to pause or resume.",
+    "PAUSED": "Playback Paused :pause_button:",
+    "RESUMED": "Resumed playback :arrow_forward:"
+  },
+  "LoopState": {
+    "INVALID": "Invalid loop mode!",
+    "ENABLED": "Loop enabled :arrows_counterclockwise:",
+    "DISABLED": "Loop disabled :x:"
+  },
+  "LoopMode": {
+    "ALL": "all",
+    "SINGLE": "single",
+    "OFF": "off"
+  }
 }

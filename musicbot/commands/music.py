@@ -4,8 +4,7 @@ from discord.ext import commands, bridge
 from config import config
 from musicbot import linkutils, utils
 from musicbot.bot import MusicBot, Context
-from musicbot.playlist import PlaylistError
-from musicbot.audiocontroller import LOOP_MODES
+from musicbot.playlist import PlaylistError, LoopMode
 
 
 class Music(commands.Cog):
@@ -66,7 +65,9 @@ class Music(commands.Cog):
         aliases=["l"],
     )
     async def _loop(
-        self, ctx: Context, mode: Option(str, choices=LOOP_MODES) = None
+        self,
+        ctx: Context,
+        mode: Option(str, choices=tuple(m.value for m in LoopMode)) = None,
     ):
         audiocontroller = ctx.bot.audio_controllers[ctx.guild]
 
@@ -213,7 +214,7 @@ class Music(commands.Cog):
         audiocontroller = ctx.bot.audio_controllers[ctx.guild]
         audiocontroller.clear_queue()
         ctx.guild.voice_client.stop()
-        audiocontroller.playlist.loop = "off"
+        audiocontroller.playlist.loop = LoopMode.OFF
         await ctx.send("Cleared queue :no_entry_sign:")
 
     @bridge.bridge_command(

@@ -1,4 +1,5 @@
 import random
+from enum import StrEnum
 from typing import Optional
 from collections import deque
 
@@ -6,6 +7,11 @@ from discord import Embed
 
 from config import config
 from musicbot.songinfo import Song
+
+
+LoopMode = StrEnum("LoopMode", config.get_dict("LoopMode"))
+LoopState = StrEnum("LoopState", config.get_dict("LoopState"))
+PauseState = StrEnum("PauseState", config.get_dict("PauseState"))
 
 
 class PlaylistError(Exception):
@@ -25,7 +31,7 @@ class Playlist:
         # the names of the tracks that were played
         self.trackname_history: deque[str] = deque()
 
-        self.loop = "off"
+        self.loop = LoopMode.OFF
 
     def __len__(self):
         return len(self.playque)
@@ -39,18 +45,21 @@ class Playlist:
         self.playque.append(track)
 
     def has_next(self) -> bool:
-        return len(self.playque) >= (2 if self.loop == "off" else 1)
+        return len(self.playque) >= (2 if self.loop == LoopMode.OFF else 1)
 
     def has_prev(self) -> bool:
         return (
-            len(self.playhistory if self.loop == "off" else self.playque) != 0
+            len(
+                self.playhistory if self.loop == LoopMode.OFF else self.playque
+            )
+            != 0
         )
 
     def next(self) -> Optional[Song]:
         if len(self.playque) == 0:
             return None
 
-        if self.loop == "off":
+        if self.loop == LoopMode.OFF:
             self.playhistory.append(self.playque.popleft())
             if len(self.playhistory) > config.MAX_HISTORY_LENGTH:
                 self.playhistory.popleft()
@@ -59,13 +68,13 @@ class Playlist:
             else:
                 return None
 
-        if self.loop == "all":
+        if self.loop == LoopMode.ALL:
             self.playque.rotate(-1)
 
         return self.playque[0]
 
     def prev(self) -> Optional[Song]:
-        if self.loop == "off":
+        if self.loop == LoopMode.OFF:
             if len(self.playhistory) != 0:
                 song = self.playhistory.pop()
                 self.playque.appendleft(song)
@@ -76,7 +85,7 @@ class Playlist:
         if len(self.playque) == 0:
             return None
 
-        if self.loop == "all":
+        if self.loop == LoopMode.ALL:
             self.playque.rotate()
 
         return self.playque[0]
