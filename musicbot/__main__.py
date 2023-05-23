@@ -37,7 +37,7 @@ bot = MusicBot(
     command_prefix=prefix,
     case_insensitive=True,
     status=discord.Status.online,
-    activity=discord.Game(name="Music, type {}help".format(config.BOT_PREFIX)),
+    activity=discord.Game(name=config.STATUS_TEXT),
     intents=intents,
     allowed_mentions=discord.AllowedMentions.none(),
 )

@@ -1,5 +1,6 @@
 import os
 import ast
+import string
 from typing import TypeVar
 
 
@@ -29,3 +30,8 @@ def alchemize_url(url: str) -> str:
         if url.startswith(name):
             return url.replace(name, scheme, 1)
     return url
+
+
+class Formatter(string.Template):
+    delimiter = ""
+    format = string.Template.safe_substitute

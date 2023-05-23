@@ -1,6 +1,7 @@
 {
   "STARTUP_MESSAGE": "Starting Bot...",
   "STARTUP_COMPLETE_MESSAGE": "Startup Complete",
+  "STATUS_TEXT": "Music, type {prefix}help",
 
   "NO_GUILD_MESSAGE": "Error: Please join a voice channel or enter the command in guild chat",
   "USER_NOT_IN_VC_MESSAGE": "Error: Please join the active voice channel to use commands and buttons",
@@ -25,7 +26,9 @@
   "SONGINFO_PLAYLIST_QUEUED": "Queued playlist :page_with_curl:",
   "SONGINFO_UNKNOWN_DURATION": "Unknown",
   "QUEUE_EMPTY": "Queue is empty :x:",
+  "QUEUE_TITLE": ":scroll: Queue [{tracks_number}]",
 
+  "HELP_HELP_SHORT": "Help command",
   "HELP_ADDBOT_SHORT": "Add Bot to another server",
   "HELP_ADDBOT_LONG": "Gives you the link for adding this bot to another server of yours.",
   "HELP_CONNECT_SHORT": "Connect bot to voicechannel",
@@ -83,5 +86,15 @@
     "ALL": "all",
     "SINGLE": "single",
     "OFF": "off"
+  },
+  "PlaylistError": {
+    "NEGATIVE_INDEX": "Positions less than 2 are not supported.",
+    "ZERO_INDEX": "Cannot move the first song since it's already playing.",
+    "MISSING_INDEX": "Queue doesn't have that position."
+  },
+  "ConversionError": {
+    "BUTTON_DISABLED": "Button plugin is disabled",
+    "INVALID_EMOJI": "Invalid emote",
+    "INVALID_VOLUME": "Value must be a number in range 0-100"
   }
 }

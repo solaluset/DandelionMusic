@@ -2,7 +2,7 @@ import os
 import json
 import inspect
 
-from config.utils import get_env_var, alchemize_url
+from config.utils import Formatter, get_env_var, alchemize_url
 
 
 class Config:
@@ -100,7 +100,7 @@ class Config:
         self.dicts = {}
         for k, v in data.items():
             if isinstance(v, str):
-                self.messages[k] = v.format(**current_cfg)
+                self.messages[k] = Formatter(v).format(current_cfg)
             elif isinstance(v, dict):
                 self.dicts[k] = v
 

@@ -12,6 +12,9 @@ from musicbot.songinfo import Song
 LoopMode = StrEnum("LoopMode", config.get_dict("LoopMode"))
 LoopState = StrEnum("LoopState", config.get_dict("LoopState"))
 PauseState = StrEnum("PauseState", config.get_dict("PauseState"))
+PlaylistErrorText = StrEnum(
+    "PlaylistErrorText", config.get_dict("PlaylistError")
+)
 
 
 class PlaylistError(Exception):
@@ -97,29 +100,25 @@ class Playlist:
 
     def remove(self, index: int) -> Song:
         if index < 0:
-            raise PlaylistError("Negative indexes are not supported.")
+            raise PlaylistError(PlaylistErrorText.NEGATIVE_INDEX)
         if index == 0:
-            raise PlaylistError(
-                "Cannot remove the first song since it's already playing."
-            )
+            raise PlaylistError(PlaylistErrorText.ZERO_INDEX)
         try:
             song = self.playque[index]
         except IndexError as e:
-            raise PlaylistError("Invalid position.") from e
+            raise PlaylistError(PlaylistErrorText.MISSING_INDEX) from e
         del self.playque[index]
         return song
 
     def move(self, oldindex: int, newindex: int):
         if oldindex < 0 or newindex < 0:
-            raise PlaylistError("Negative indexes are not supported.")
+            raise PlaylistError(PlaylistErrorText.NEGATIVE_INDEX)
         if oldindex == 0 or newindex == 0:
-            raise PlaylistError(
-                "Cannot move the first song since it's already playing."
-            )
+            raise PlaylistError(PlaylistErrorText.ZERO_INDEX)
         try:
             temp = self.playque[oldindex]
         except IndexError as e:
-            raise PlaylistError("Invalid position.") from e
+            raise PlaylistError(PlaylistErrorText.MISSING_INDEX) from e
         del self.playque[oldindex]
         self.playque.insert(newindex, temp)
 
@@ -129,7 +128,7 @@ class Playlist:
 
     def queue_embed(self) -> Embed:
         embed = Embed(
-            title=":scroll: Queue [{}]".format(len(self.playque)),
+            title=config.QUEUE_TITLE.format(tracks_number=len(self.playque)),
             color=config.EMBED_COLOR,
         )
 

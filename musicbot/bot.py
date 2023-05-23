@@ -145,7 +145,7 @@ class MusicBot(bridge.Bot):
             if c.qualified_name.startswith(ctx.value)
         ]
 
-    @bridge.bridge_command(name="help", description="Help command")
+    @bridge.bridge_command(name="help", description=config.HELP_HELP_SHORT)
     async def _help(
         ctx, *, command: Option(str, autocomplete=_help_autocomplete) = None
     ):

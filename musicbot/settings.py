@@ -1,5 +1,6 @@
 import json
 import os
+from enum import StrEnum
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import discord
@@ -42,20 +43,25 @@ class Base(DeclarativeBase):
     }
 
 
+ConversionErrorText = StrEnum(
+    "ConversionErrorText", config.get_dict("ConversionError")
+)
+
+
 class ConversionError(Exception):
     pass
 
 
 def convert_emoji(ctx: "Context", value: Optional[str]) -> Optional[str]:
     if not config.ENABLE_BUTTON_PLUGIN:
-        raise ConversionError("Button plugin is disabled")
+        raise ConversionError(ConversionErrorText.BUTTON_DISABLED)
 
     if value is None:
         return None
 
     emoji = utils.get_emoji(ctx.guild, value)
     if emoji is None:
-        raise ConversionError("Invalid emote")
+        raise ConversionError(ConversionErrorText.INVALID_EMOJI)
     elif isinstance(emoji, discord.Emoji):
         emoji = str(emoji.id)
     return emoji
@@ -76,7 +82,7 @@ def convert_bool(ctx: "Context", value: bool) -> bool:
 
 def convert_volume(ctx: "Context", value: int) -> int:
     if value > 100 or value < 0:
-        raise ConversionError("Value must be a number in range 0-100")
+        raise ConversionError(ConversionErrorText.INVALID_VOLUME)
     return value
 
 
