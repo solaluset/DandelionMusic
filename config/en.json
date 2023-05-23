@@ -96,5 +96,13 @@
     "BUTTON_DISABLED": "Button plugin is disabled",
     "INVALID_EMOJI": "Invalid emote",
     "INVALID_VOLUME": "Value must be a number in range 0-100"
+  },
+  "SettingsEmbed": {
+    "TITLE": "Settings",
+    "FOOTER": "Usage: {prefix}set setting_name value",
+    "FIELD_EMPTY": "Not Set",
+    "INVALID_CHANNEL": "Invalid Channel",
+    "INVALID_VOICE_CHANNEL": "Invalid VChannel",
+    "INVALID_ROLE": "Invalid Role"
   }
 }

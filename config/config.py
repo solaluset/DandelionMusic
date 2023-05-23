@@ -96,13 +96,21 @@ class Config:
         self.EMBED_COLOR = int(self.EMBED_COLOR, 16)
 
         with open(os.path.join(os.path.dirname(__file__), "en.json")) as f:
-            data = json.load(f)
+            data = json.load(
+                f,
+                object_hook=lambda d: {
+                    k: Formatter(v).format(current_cfg)
+                    if isinstance(v, str)
+                    else v
+                    for k, v in d.items()
+                },
+            )
 
         self.messages = {}
         self.dicts = {}
         for k, v in data.items():
             if isinstance(v, str):
-                self.messages[k] = Formatter(v).format(current_cfg)
+                self.messages[k] = v
             elif isinstance(v, dict):
                 self.dicts[k] = v
 

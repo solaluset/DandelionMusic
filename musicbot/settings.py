@@ -46,6 +46,7 @@ class Base(DeclarativeBase):
 ConversionErrorText = StrEnum(
     "ConversionErrorText", config.get_dict("ConversionError")
 )
+SettingsEmbed = StrEnum("SettingsEmbed", config.get_dict("SettingsEmbed"))
 
 
 class ConversionError(Exception):
@@ -194,16 +195,14 @@ class GuildSettings(Base):
 
     def format(self, ctx: "Context"):
         embed = discord.Embed(
-            title="Settings",
+            title=SettingsEmbed.TITLE,
             description=ctx.guild.name,
             color=config.EMBED_COLOR,
         )
 
         if ctx.guild.icon:
             embed.set_thumbnail(url=ctx.guild.icon.url)
-        embed.set_footer(
-            text="Usage: {}set setting_name value".format(config.BOT_PREFIX)
-        )
+        embed.set_footer(text=SettingsEmbed.FOOTER)
 
         # exclusion_keys = ['id']
 
@@ -212,14 +211,18 @@ class GuildSettings(Base):
             #     continue
 
             if not getattr(self, key):
-                embed.add_field(name=key, value="Not Set", inline=False)
+                embed.add_field(
+                    name=key, value=SettingsEmbed.FIELD_EMPTY, inline=False
+                )
                 continue
 
             elif key == "start_voice_channel":
                 vc = ctx.guild.get_channel(int(self.start_voice_channel))
                 embed.add_field(
                     name=key,
-                    value=vc.name if vc else "Invalid VChannel",
+                    value=vc.name
+                    if vc
+                    else SettingsEmbed.INVALID_VOICE_CHANNEL,
                     inline=False,
                 )
                 continue
@@ -228,7 +231,7 @@ class GuildSettings(Base):
                 chan = ctx.guild.get_channel(int(self.command_channel))
                 embed.add_field(
                     name=key,
-                    value=chan.name if chan else "Invalid Channel",
+                    value=chan.name if chan else SettingsEmbed.INVALID_CHANNEL,
                     inline=False,
                 )
                 continue
@@ -237,7 +240,7 @@ class GuildSettings(Base):
                 role = ctx.guild.get_role(int(self.dj_role))
                 embed.add_field(
                     name=key,
-                    value=role.name if role else "Invalid Role",
+                    value=role.name if role else SettingsEmbed.INVALID_ROLE,
                     inline=False,
                 )
                 continue
