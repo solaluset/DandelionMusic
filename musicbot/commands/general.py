@@ -83,6 +83,7 @@ class General(commands.Cog):
         description=config.HELP_SETTINGS_LONG,
         help=config.HELP_SETTINGS_SHORT,
         aliases=["settings", "set"],
+        usage="[setting_name setting_value]",
         invoke_without_command=True,
     )
     async def _settings(self, ctx: Context, *, inexistent_setting=None):
