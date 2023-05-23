@@ -61,6 +61,7 @@ line = p.stdout.readline()
 try:
     child_pid = int(line)
 except ValueError:
+    sys.stdout = sys.stderr
     print("Can't grab subprocess id, something is wrong!")
     print("The output is:", line, sep="\n", end="")
 else:

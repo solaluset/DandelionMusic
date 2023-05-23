@@ -1,3 +1,4 @@
+import sys
 import asyncio
 from itertools import islice
 from inspect import isawaitable
@@ -262,7 +263,7 @@ class AudioController(object):
                 except discord.NotFound:
                     self.last_message = None
             else:
-                print("Failed to update view:", e)
+                print("Failed to update view:", e, file=sys.stderr)
 
     def is_active(self) -> bool:
         client = self.guild.voice_client
@@ -340,7 +341,9 @@ class AudioController(object):
 
         if song.base_url is None:
             print(
-                "Something is wrong. Refusing to play a song without base_url."
+                "Something is wrong."
+                " Refusing to play a song without base_url.",
+                file=sys.stderr,
             )
             self.next_song()
             return

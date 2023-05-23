@@ -1,4 +1,5 @@
 import re
+import sys
 from enum import Enum
 from typing import Optional, Union
 
@@ -94,7 +95,10 @@ async def get_spotify_playlist(url: str) -> list:
                 return links
         except Exception:
             if config.SPOTIFY_ID != "" or config.SPOTIFY_SECRET != "":
-                print("ERROR: Check spotify CLIENT_ID and SECRET")
+                print(
+                    "ERROR: Check spotify CLIENT_ID and SECRET",
+                    file=sys.stderr,
+                )
 
     async with aiohttp.ClientSession(headers=headers) as session:
         async with session.get(url + "&nd=1") as response:
