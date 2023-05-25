@@ -71,6 +71,17 @@ class MusicBot(bridge.Bot):
     async def on_application_command_error(self, ctx, error):
         await self.on_command_error(ctx, error)
 
+    async def on_voice_state_update(self, member, before, after):
+        guild = member.guild
+        # detect bot joining and users leaving
+        if (member == self.user and after.channel) or (
+            guild.voice_client
+            and guild.voice_client.channel == before.channel
+            and all(m.bot for m in before.channel.members)
+        ):
+            audiocontroller = self.audio_controllers[guild]
+            await audiocontroller.timer.start(guild.voice_client.is_playing())
+
     @tasks.loop(seconds=1)
     async def update_views(self):
         for audiocontroller in self.audio_controllers.values():

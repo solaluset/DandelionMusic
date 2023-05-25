@@ -282,6 +282,7 @@ class AudioController(object):
         if client:
             if client.is_playing():
                 client.pause()
+                self.add_task(self.timer.start(True))
                 return PauseState.PAUSED
             elif client.is_paused():
                 client.resume()
@@ -323,6 +324,15 @@ class AudioController(object):
         self.current_song = None
 
         if next_song is None:
+            if not self.timer.triggered:
+                self.add_task(
+                    self.timer.start(
+                        not all(
+                            m.bot
+                            for m in self.guild.voice_client.channel.members
+                        )
+                    )
+                )
             return
 
         coro = self.play_song(next_song)
@@ -330,10 +340,6 @@ class AudioController(object):
 
     async def play_song(self, song: Song):
         """Plays a song object"""
-
-        if self.playlist.loop == LoopMode.OFF:  # reset timer if looping
-            self.timer.cancel()
-            self.timer = utils.Timer(self.timeout_handler)
 
         if not await self.preload(song):
             self.next_song()
@@ -559,9 +565,6 @@ class AudioController(object):
     def prev_song(self) -> bool:
         """Loads the last song from the history into the queue and starts it"""
 
-        self.timer.cancel()
-        self.timer = utils.Timer(self.timeout_handler)
-
         prev_song = self.playlist.prev()
         if not prev_song:
             return False
@@ -577,11 +580,9 @@ class AudioController(object):
         if not self.guild.voice_client:
             return
 
-        if len(self.guild.voice_client.channel.voice_states) == 1:
+        if all(m.bot for m in self.guild.voice_client.channel.members):
             await self.udisconnect()
             return
-
-        self.timer = utils.Timer(self.timeout_handler)  # restart timer
 
         sett = self.bot.settings[self.guild]
 

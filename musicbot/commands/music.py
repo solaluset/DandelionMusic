@@ -36,11 +36,9 @@ class Music(commands.Cog):
         audiocontroller = ctx.bot.audio_controllers[ctx.guild]
 
         # reset timer
-        audiocontroller.timer.cancel()
-        audiocontroller.timer = utils.Timer(audiocontroller.timeout_handler)
+        await audiocontroller.timer.start(True)
 
         song = await audiocontroller.process_song(track)
-
         if song is None:
             await ctx.send(config.SONGINFO_ERROR)
             return
@@ -195,9 +193,6 @@ class Music(commands.Cog):
         audiocontroller = ctx.bot.audio_controllers[ctx.guild]
         # audiocontroller.playlist.loop = False
 
-        audiocontroller.timer.cancel()
-        audiocontroller.timer = utils.Timer(audiocontroller.timeout_handler)
-
         if not audiocontroller.is_active():
             await ctx.send(config.QUEUE_EMPTY)
             return
@@ -226,9 +221,6 @@ class Music(commands.Cog):
     async def _prev(self, ctx: Context):
         audiocontroller = ctx.bot.audio_controllers[ctx.guild]
         # audiocontroller.playlist.loop = False
-
-        audiocontroller.timer.cancel()
-        audiocontroller.timer = utils.Timer(audiocontroller.timeout_handler)
 
         if audiocontroller.prev_song():
             await ctx.send("Playing previous song :track_previous:")

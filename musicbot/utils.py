@@ -235,14 +235,24 @@ def compare_components(obj1, obj2):
 class Timer:
     def __init__(self, callback: Callable[[], Awaitable]):
         self._callback = callback
-        self._task = asyncio.create_task(self._job())
+        self._task = None
+        self.triggered = False
 
     async def _job(self):
         await asyncio.sleep(config.VC_TIMEOUT)
+        self.triggered = True
         await self._callback()
+        self.triggered = False
+        self._task = None
 
-    def cancel(self):
-        self._task.cancel()
+    # we need event loop here
+    async def start(self, restart=False):
+        if self._task:
+            if restart:
+                self._task.cancel()
+            else:
+                return
+        self._task = asyncio.create_task(self._job())
 
 
 class OutputWrapper:
