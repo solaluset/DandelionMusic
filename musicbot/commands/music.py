@@ -187,7 +187,7 @@ class Music(commands.Cog):
         name="skip",
         description=config.HELP_SKIP_LONG,
         help=config.HELP_SKIP_SHORT,
-        aliases=["s"],
+        aliases=["s", "next"],
     )
     async def _skip(self, ctx: Context):
         audiocontroller = ctx.bot.audio_controllers[ctx.guild]
