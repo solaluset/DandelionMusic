@@ -254,6 +254,11 @@ class Timer:
                 return
         self._task = asyncio.create_task(self._job())
 
+    def cancel(self):
+        if self._task:
+            self._task.cancel()
+            self._task = None
+
 
 class OutputWrapper:
     log_file = None

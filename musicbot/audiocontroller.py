@@ -617,6 +617,7 @@ class AudioController(object):
         if self.guild.voice_client is None:
             return False
         await self.guild.voice_client.disconnect(force=True)
+        self.timer.cancel()
         return True
 
     def clear_queue(self):
