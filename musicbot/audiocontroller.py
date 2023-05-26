@@ -525,8 +525,12 @@ class AudioController(object):
             islice(self.playlist.playque, 1, config.MAX_SONG_PRELOAD)
         ):
             if not await self.preload(song):
-                self.playlist.playque.remove(song)
-                rerun_needed = True
+                try:
+                    self.playlist.playque.remove(song)
+                    rerun_needed = True
+                except ValueError:
+                    # already removed
+                    pass
         if rerun_needed:
             self.add_task(self.preload_queue())
 
