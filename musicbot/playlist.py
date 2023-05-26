@@ -48,21 +48,23 @@ class Playlist:
         self.playque.append(track)
 
     def has_next(self) -> bool:
-        return len(self.playque) >= (2 if self.loop == LoopMode.OFF else 1)
+        return len(self.playque) >= (2 if self.loop != LoopMode.ALL else 1)
 
     def has_prev(self) -> bool:
         return (
             len(
-                self.playhistory if self.loop == LoopMode.OFF else self.playque
+                self.playhistory if self.loop != LoopMode.ALL else self.playque
             )
             != 0
         )
 
-    def next(self) -> Optional[Song]:
+    def next(self, ignore_single_loop=False) -> Optional[Song]:
         if len(self.playque) == 0:
             return None
 
-        if self.loop == LoopMode.OFF:
+        if self.loop == LoopMode.OFF or (
+            ignore_single_loop and self.loop == LoopMode.SINGLE
+        ):
             self.playhistory.append(self.playque.popleft())
             if len(self.playhistory) > config.MAX_HISTORY_LENGTH:
                 self.playhistory.popleft()
@@ -77,7 +79,7 @@ class Playlist:
         return self.playque[0]
 
     def prev(self) -> Optional[Song]:
-        if self.loop == LoopMode.OFF:
+        if self.loop != LoopMode.ALL:
             if len(self.playhistory) != 0:
                 song = self.playhistory.pop()
                 self.playque.appendleft(song)
@@ -88,8 +90,7 @@ class Playlist:
         if len(self.playque) == 0:
             return None
 
-        if self.loop == LoopMode.ALL:
-            self.playque.rotate()
+        self.playque.rotate()
 
         return self.playque[0]
 

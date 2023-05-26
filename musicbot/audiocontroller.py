@@ -159,7 +159,7 @@ class AudioController(object):
         view.add_item(pause_button)
 
         next_button = MusicButton(
-            lambda _: self.next_song(),
+            lambda _: self.next_song(forced=True),
             disabled=not self.playlist.has_next(),
             emoji="⏭️",
         )
@@ -307,11 +307,12 @@ class AudioController(object):
             return LoopState.DISABLED
         return LoopState.ENABLED
 
-    def next_song(self, error=None):
+    def next_song(self, error=None, *, forced=False):
         """Invoked after a song is finished
         Plays the next song if there is one"""
 
         if self.is_active():
+            self._next_song = self.playlist.next(forced)
             self.guild.voice_client.stop()
             return
 
@@ -319,7 +320,7 @@ class AudioController(object):
             next_song = self._next_song
             self._next_song = None
         else:
-            next_song = self.playlist.next()
+            next_song = self.playlist.next(forced)
 
         self.current_song = None
 
@@ -342,7 +343,7 @@ class AudioController(object):
         """Plays a song object"""
 
         if not await self.preload(song):
-            self.next_song()
+            self.next_song(forced=True)
             return
 
         if song.base_url is None:
@@ -351,7 +352,7 @@ class AudioController(object):
                 " Refusing to play a song without base_url.",
                 file=sys.stderr,
             )
-            self.next_song()
+            self.next_song(forced=True)
             return
 
         self.playlist.add_name(song.info.title)

@@ -191,12 +191,11 @@ class Music(commands.Cog):
     )
     async def _skip(self, ctx: Context):
         audiocontroller = ctx.bot.audio_controllers[ctx.guild]
-        # audiocontroller.playlist.loop = False
 
         if not audiocontroller.is_active():
             await ctx.send(config.QUEUE_EMPTY)
             return
-        audiocontroller.next_song()
+        audiocontroller.next_song(forced=True)
         await ctx.send("Skipped current song :fast_forward:")
 
     @bridge.bridge_command(
@@ -220,7 +219,6 @@ class Music(commands.Cog):
     )
     async def _prev(self, ctx: Context):
         audiocontroller = ctx.bot.audio_controllers[ctx.guild]
-        # audiocontroller.playlist.loop = False
 
         if audiocontroller.prev_song():
             await ctx.send("Playing previous song :track_previous:")
