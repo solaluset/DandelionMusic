@@ -1,3 +1,4 @@
+import asyncio
 from typing import Dict, Union, List
 
 import discord
@@ -81,6 +82,10 @@ class MusicBot(bridge.Bot):
         ):
             audiocontroller = self.audio_controllers[guild]
             await audiocontroller.timer.start(guild.voice_client.is_playing())
+            if (member == self.user) and guild.voice_client.is_playing():
+                # bot was moved, restore playback
+                await asyncio.sleep(1)
+                guild.voice_client.resume()
 
     @tasks.loop(seconds=1)
     async def update_views(self):
