@@ -19,6 +19,8 @@ class Button(commands.Cog):
         if not message.guild or message.author == self.bot.user:
             return
 
+        await self.bot.absolutely_ready
+
         sett = self.bot.settings[message.guild]
         button = sett.button_emote
 

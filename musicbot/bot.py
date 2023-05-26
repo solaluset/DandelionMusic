@@ -37,6 +37,8 @@ class MusicBot(bridge.Bot):
         self._default_help = self.remove_command("help")
         self.add_bridge_command(self._help)
 
+        self.absolutely_ready = asyncio.Future()
+
     async def start(self, *args, **kwargs):
         print(config.STARTUP_MESSAGE)
 
@@ -61,6 +63,9 @@ class MusicBot(bridge.Bot):
 
         if not self.update_views.is_running():
             self.update_views.start()
+
+        if not self.absolutely_ready.done():
+            self.absolutely_ready.set_result(True)
 
     async def on_guild_join(self, guild):
         print(guild.name)
@@ -115,6 +120,8 @@ class MusicBot(bridge.Bot):
             await inter.response.send_message(config.NO_GUILD_MESSAGE)
             return
 
+        await self.absolutely_ready
+
         await super().process_application_commands(inter)
 
     async def process_commands(self, message: discord.Message):
@@ -126,6 +133,8 @@ class MusicBot(bridge.Bot):
         if ctx.valid and not message.guild:
             await message.channel.send(config.NO_GUILD_MESSAGE)
             return
+
+        await self.absolutely_ready
 
         await self.invoke(ctx)
 
