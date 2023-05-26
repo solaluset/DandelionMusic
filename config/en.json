@@ -13,7 +13,7 @@
   "CHANNEL_NOT_FOUND_MESSAGE": "Error: Could not find channel",
   "DEFAULT_CHANNEL_JOIN_FAILED": "Error: Could not join the default voice channel",
 
-  "ADD_MESSAGE": "To add this bot to your own Server, click [here]",
+  "ADD_MESSAGE": "To add this bot to your own Server, click [here]({link})",
 
   "INFO_HISTORY_TITLE": "Songs Played:",
 

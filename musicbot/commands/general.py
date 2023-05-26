@@ -123,8 +123,9 @@ class General(commands.Cog):
     async def _addbot(self, ctx):
         embed = discord.Embed(
             title="Invite",
-            description=config.ADD_MESSAGE
-            + "({})".format(discord.utils.oauth_url(self.bot.user.id)),
+            description=config.ADD_MESSAGE.format(
+                link=discord.utils.oauth_url(self.bot.user.id)
+            ),
         )
 
         await ctx.send(embed=embed)
