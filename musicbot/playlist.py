@@ -139,7 +139,8 @@ class Playlist:
             embed.add_field(
                 name="{}.".format(str(counter)),
                 value="[{}]({})".format(
-                    song.info.title or song.info.webpage_url,
+                    song.info.title
+                    or song.info.webpage_url.partition("://")[2],
                     song.info.webpage_url,
                 ),
                 inline=False,
