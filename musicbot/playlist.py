@@ -99,6 +99,12 @@ class Playlist:
         random.shuffle(self.playque)
         self.playque.appendleft(first)
 
+    def clear(self):
+        if self.playque:
+            first = self.playque.popleft()
+            self.playque.clear()
+            self.playque.appendleft(first)
+
     def remove(self, index: int) -> Song:
         if index < 0:
             raise PlaylistError(PlaylistErrorText.NEGATIVE_INDEX)

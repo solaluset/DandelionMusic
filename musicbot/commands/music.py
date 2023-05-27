@@ -206,9 +206,7 @@ class Music(commands.Cog):
     )
     async def _clear(self, ctx: Context):
         audiocontroller = ctx.bot.audio_controllers[ctx.guild]
-        audiocontroller.clear_queue()
-        ctx.guild.voice_client.stop()
-        audiocontroller.playlist.loop = LoopMode.OFF
+        audiocontroller.playlist.clear()
         await ctx.send("Cleared queue :no_entry_sign:")
 
     @bridge.bridge_command(

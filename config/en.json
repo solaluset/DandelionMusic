@@ -60,7 +60,7 @@
   "HELP_PING_SHORT": "Pong",
   "HELP_PING_LONG": "Test bot response status",
   "HELP_CLEAR_SHORT": "Clear the queue.",
-  "HELP_CLEAR_LONG": "Clears the queue and skips the current song.",
+  "HELP_CLEAR_LONG": "Clears the queue but keeps the current song.",
   "HELP_LOOP_SHORT": "Loops the currently playing song or queue.",
   "HELP_LOOP_LONG": "Loops the currently playing song or queue. Modes are all/single/off.",
   "HELP_QUEUE_SHORT": "Shows the songs in queue.",

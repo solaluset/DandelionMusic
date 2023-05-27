@@ -560,8 +560,8 @@ class AudioController(object):
     def stop_player(self):
         """Stops the player and removes all songs from the queue"""
         self.playlist.loop = LoopMode.OFF
+        self.playlist.clear()
         self.playlist.next()
-        self.clear_queue()
 
         if not self.is_active():
             return
@@ -620,6 +620,3 @@ class AudioController(object):
         await self.guild.voice_client.disconnect(force=True)
         self.timer.cancel()
         return True
-
-    def clear_queue(self):
-        self.playlist.playque.clear()
