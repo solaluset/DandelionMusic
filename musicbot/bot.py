@@ -79,18 +79,26 @@ class MusicBot(bridge.Bot):
 
     async def on_voice_state_update(self, member, before, after):
         guild = member.guild
-        # detect bot joining and users leaving
-        if (member == self.user and after.channel) or (
+        if member == self.user:
+            audiocontroller = self.audio_controllers[guild]
+            if after.channel:
+                is_playing = guild.voice_client.is_playing()
+                await audiocontroller.timer.start(is_playing)
+                if is_playing:
+                    # bot was moved, restore playback
+                    await asyncio.sleep(1)
+                    guild.voice_client.resume()
+            else:
+                # disconnected, clear state
+                await audiocontroller.udisconnect()
+        elif (
             guild.voice_client
             and guild.voice_client.channel == before.channel
             and all(m.bot for m in before.channel.members)
         ):
+            # all users left
             audiocontroller = self.audio_controllers[guild]
             await audiocontroller.timer.start(guild.voice_client.is_playing())
-            if (member == self.user) and guild.voice_client.is_playing():
-                # bot was moved, restore playback
-                await asyncio.sleep(1)
-                guild.voice_client.resume()
 
     @tasks.loop(seconds=1)
     async def update_views(self):

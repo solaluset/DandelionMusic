@@ -325,7 +325,7 @@ class AudioController(object):
         self.current_song = None
 
         if next_song is None:
-            if not self.timer.triggered:
+            if not self.timer.triggered and self.guild.voice_client:
                 self.add_task(
                     self.timer.start(
                         not all(
@@ -559,12 +559,13 @@ class AudioController(object):
 
     def stop_player(self):
         """Stops the player and removes all songs from the queue"""
-        if not self.is_active():
-            return
-
         self.playlist.loop = LoopMode.OFF
         self.playlist.next()
         self.clear_queue()
+
+        if not self.is_active():
+            return
+
         self.guild.voice_client.stop()
 
     def prev_song(self) -> bool:
