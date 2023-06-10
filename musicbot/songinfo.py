@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional
+from typing import Optional, Union
 
 import discord
 from config import config
@@ -74,7 +74,12 @@ class Song:
 
             return embed
 
-    def update(self, data: dict):
+    def update(self, data: Union[dict, "Song"]):
+        if isinstance(data, Song):
+            self.base_url = data.base_url
+            self.info = data.info
+            return
+
         self.base_url = data.get("url")
         self.info.uploader = data.get("uploader")
         self.info.title = data.get("title")

@@ -2,13 +2,12 @@ import sys
 import asyncio
 from itertools import islice
 from inspect import isawaitable
-from typing import TYPE_CHECKING, Coroutine, Optional, List, Tuple
+from typing import TYPE_CHECKING, Coroutine, Optional
 
 import discord
-import yt_dlp
 from config import config
 
-from musicbot import linkutils, utils
+from musicbot import linkutils, utils, loader
 from musicbot.playlist import Playlist, LoopMode, LoopState, PauseState
 from musicbot.songinfo import Song
 from musicbot.utils import CheckError, compare_components, play_check
@@ -18,9 +17,7 @@ if TYPE_CHECKING:
     from musicbot.bot import MusicBot
 
 
-_cached_downloaders: List[Tuple[dict, yt_dlp.YoutubeDL]] = []
 _not_provided = object()
-_search_lock = asyncio.Lock()
 
 
 class MusicButton(discord.ui.Button):
@@ -72,7 +69,6 @@ class AudioController(object):
         # to keep strong references to all tasks
         self._tasks = set()
 
-        self._preloading = {}
         self.message_lock = asyncio.Lock()
 
     @property
@@ -95,47 +91,6 @@ class AudioController(object):
 
     async def register_voice_channel(self, channel: discord.VoiceChannel):
         await channel.connect(reconnect=True, timeout=None)
-
-    async def extract_info(self, url: str, options: dict) -> dict:
-        downloader = None
-        for o, d in _cached_downloaders:
-            if o == options:
-                downloader = d
-                break
-        else:
-            # we need to copy options because
-            # downloader modifies the given dict
-            downloader = yt_dlp.YoutubeDL(options.copy())
-            _cached_downloaders.append((options, downloader))
-        async with _search_lock:
-            return await self.bot.loop.run_in_executor(
-                None, downloader.extract_info, url, False
-            )
-
-    async def fetch_song_info(self, song: Song) -> bool:
-        try:
-            info = await self.extract_info(
-                song.info.webpage_url,
-                {
-                    "format": "bestaudio",
-                    "title": True,
-                    "cookiefile": config.COOKIE_PATH,
-                    "quiet": True,
-                },
-            )
-        except Exception as e:
-            if isinstance(e, yt_dlp.DownloadError) and e.exc_info[1].expected:
-                return False
-            info = await self.extract_info(
-                song,
-                {
-                    "title": True,
-                    "cookiefile": config.COOKIE_PATH,
-                    "quiet": True,
-                },
-            )
-        song.update(info)
-        return True
 
     def make_view(self):
         if not self.is_active():
@@ -342,7 +297,7 @@ class AudioController(object):
     async def play_song(self, song: Song):
         """Plays a song object"""
 
-        if not await self.preload(song):
+        if not await loader.preload(song):
             self.next_song(forced=True)
             return
 
@@ -386,145 +341,35 @@ class AudioController(object):
         """Adds the track to the playlist instance
         Starts playing if it is the first song"""
 
-        host = linkutils.identify_url(track)
-        is_playlist = linkutils.identify_playlist(track)
-
-        if is_playlist != linkutils.Playlist_Types.Unknown:
-            await self.process_playlist(is_playlist, track)
-
-            if self.current_song is None:
-                await self.play_song(self.playlist.playque[0])
-                print("Playing {}".format(track))
-
-            song = Song(linkutils.Origins.Playlist, linkutils.Sites.Unknown)
-            return song
-
-        data = None
-
-        if host == linkutils.Sites.Unknown:
-            if linkutils.get_url(track) is not None:
-                return None
-
-            data = await self.search_youtube(track)
-
-        elif host == linkutils.Sites.Spotify:
-            title = await linkutils.convert_spotify(track)
-            data = await self.search_youtube(title)
-
-        elif host == linkutils.Sites.YouTube:
-            track = track.split("&list=")[0]
-
-        song = Song(linkutils.Origins.Default, host, webpage_url=track)
-        if data:
-            song.update(data)
+        loaded_song = await loader.load_song(track)
+        if isinstance(loaded_song, Song):
+            self.playlist.add(loaded_song)
+        elif isinstance(loaded_song, list):
+            for song in loaded_song:
+                self.playlist.add(song)
+            loaded_song = Song(
+                linkutils.Origins.Playlist, linkutils.Sites.Unknown
+            )
         else:
-            if not await self.fetch_song_info(song):
-                return None
+            return None
 
-        self.playlist.add(song)
         if self.current_song is None:
             print("Playing {}".format(track))
-            await self.play_song(song)
+            await self.play_song(self.playlist.playque[0])
 
-        return song
-
-    async def process_playlist(
-        self, playlist_type: linkutils.Playlist_Types, url: str
-    ):
-        if playlist_type == linkutils.Playlist_Types.YouTube_Playlist:
-            if "playlist?list=" in url:
-                # listid = url.split("=")[1]
-                pass
-            else:
-                video = url.split("&")[0]
-                await self.process_song(video)
-                return
-
-            options = {
-                "format": "bestaudio/best",
-                "extract_flat": True,
-                "cookiefile": config.COOKIE_PATH,
-                "quiet": True,
-            }
-
-            r = await self.extract_info(url, options)
-
-            for entry in r["entries"]:
-                link = "https://www.youtube.com/watch?v={}".format(entry["id"])
-
-                song = Song(
-                    linkutils.Origins.Playlist,
-                    linkutils.Sites.YouTube,
-                    webpage_url=link,
-                )
-
-                self.playlist.add(song)
-
-        if playlist_type == linkutils.Playlist_Types.Spotify_Playlist:
-            links = await linkutils.get_spotify_playlist(url)
-            for link in links:
-                song = Song(
-                    linkutils.Origins.Playlist,
-                    linkutils.Sites.Spotify,
-                    webpage_url=link,
-                )
-                self.playlist.add(song)
-
-        if playlist_type == linkutils.Playlist_Types.BandCamp_Playlist:
-            options = {
-                "format": "bestaudio/best",
-                "extract_flat": True,
-                "quiet": True,
-            }
-            r = await self.extract_info(url, options)
-
-            for entry in r["entries"]:
-                link = entry.get("url")
-
-                song = Song(
-                    linkutils.Origins.Playlist,
-                    linkutils.Sites.Bandcamp,
-                    webpage_url=link,
-                )
-
-                self.playlist.add(song)
-
-        self.add_task(self.preload_queue())
+        return loaded_song
 
     def add_task(self, coro: Coroutine):
         task = self.bot.loop.create_task(coro)
         self._tasks.add(task)
         task.add_done_callback(lambda t: self._tasks.remove(t))
 
-    async def preload(self, song: Song):
-        if song.info.title is not None or song.info.webpage_url is None:
-            return True
-        future = self._preloading.get(song)
-        if future:
-            return await future
-        self._preloading[song] = asyncio.Future()
-
-        success = True
-
-        if song.host == linkutils.Sites.Spotify:
-            title = await linkutils.convert_spotify(song.info.webpage_url)
-            data = await self.search_youtube(title)
-            if data:
-                song.update(data)
-            else:
-                success = False
-
-        elif not await self.fetch_song_info(song):
-            success = False
-        self._preloading.pop(song).set_result(success)
-        return success
-
     async def preload_queue(self):
         rerun_needed = False
         for song in list(
             islice(self.playlist.playque, 1, config.MAX_SONG_PRELOAD)
         ):
-            if not await self.preload(song):
+            if not await loader.preload(song):
                 try:
                     self.playlist.playque.remove(song)
                     rerun_needed = True
@@ -533,29 +378,6 @@ class AudioController(object):
                     pass
         if rerun_needed:
             self.add_task(self.preload_queue())
-
-    async def search_youtube(self, title: str) -> Optional[dict]:
-        """Searches youtube for the video title
-        Returns the first results video link"""
-
-        # if title is already a link
-        if linkutils.get_url(title) is not None:
-            return title
-
-        options = {
-            "format": "bestaudio/best",
-            "default_search": "auto",
-            "noplaylist": True,
-            "cookiefile": config.COOKIE_PATH,
-            "quiet": True,
-        }
-
-        r = await self.extract_info("ytsearch:" + title, options)
-
-        if not r:
-            return None
-
-        return r["entries"][0]
 
     def stop_player(self):
         """Stops the player and removes all songs from the queue"""
