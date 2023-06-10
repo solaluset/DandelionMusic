@@ -33,7 +33,7 @@ class Config:
     ENABLE_BUTTON_PLUGIN = True
 
     # replace after '0x' with desired hex code ex. '#ff0188' >> "0xff0188"
-    EMBED_COLOR: int = "0x4DD4D0"  # converted to int in __main__
+    EMBED_COLOR: int = "0x4DD4D0"  # converted to int in __init__
 
     SUPPORTED_EXTENSIONS = (
         ".webm",
