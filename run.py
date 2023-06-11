@@ -99,5 +99,7 @@ except KeyboardInterrupt:
         os.kill(child_pid, signal.SIGINT)
     print(p.stdout.read(), end="")
 
-if p.wait() != 0:
+exit_code = p.wait()
+if exit_code != 0:
     input("Press Enter to exit... ")
+sys.exit(exit_code)
