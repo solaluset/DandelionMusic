@@ -1,5 +1,6 @@
 import os
 import sys
+from traceback import print_exc
 
 import discord
 
@@ -53,10 +54,11 @@ if __name__ == "__main__":
     check_dependencies()
     config.warn_unknown_vars()
 
-    if not config.BOT_TOKEN:
-        print("Error: No bot token!")
-        exit()
-
     bot.load_extensions(*initial_extensions)
 
-    bot.run(config.BOT_TOKEN, reconnect=True)
+    try:
+        bot.run(config.BOT_TOKEN, reconnect=True)
+    except discord.LoginFailure:
+        print_exc(file=sys.stderr)
+        print("Set the correct token in config.json", file=sys.stderr)
+        sys.exit(1)
