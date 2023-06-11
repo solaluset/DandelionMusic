@@ -1,8 +1,16 @@
 import os
 import json
 import inspect
+import warnings
 
-from config.utils import Formatter, get_env_var, alchemize_url
+from config.utils import (
+    Formatter,
+    get_env_var,
+    alchemize_url,
+    load_configs,
+    join_dicts,
+    subtract_dicts,
+)
 
 
 class Config:
@@ -54,29 +62,7 @@ class Config:
     ALLOW_VC_TIMEOUT_EDIT = True
 
     def __init__(self):
-        if os.path.isfile("config.json"):
-            with open("config.json") as f:
-                loaded_cfg = json.load(
-                    f,
-                    object_hook=lambda d: {
-                        k: tuple(v) if isinstance(v, list) else v
-                        for k, v in d.items()
-                    },
-                )
-        else:
-            loaded_cfg = {}
-
-        current_cfg = self.as_dict()
-        current_cfg.update(loaded_cfg)
-
-        if loaded_cfg.keys() != current_cfg.keys() and not os.getenv(
-            "DANDELION_INSTALLING"
-        ):
-            with open("config.json", "w") as f:
-                json.dump(current_cfg, f, indent=2)
-
-        for key, default in current_cfg.items():
-            setattr(self, key, get_env_var(key, default))
+        current_cfg = self.load()
 
         self.actual_prefix = (  # for internal use
             self.BOT_PREFIX
@@ -95,16 +81,17 @@ class Config:
 
         self.EMBED_COLOR = int(self.EMBED_COLOR, 16)
 
-        with open(os.path.join(os.path.dirname(__file__), "en.json")) as f:
-            data = json.load(
-                f,
-                object_hook=lambda d: {
+        data = join_dicts(
+            load_configs(
+                "en.json",
+                lambda d: {
                     k: Formatter(v).format(current_cfg)
                     if isinstance(v, str)
                     else v
                     for k, v in d.items()
                 },
             )
+        )
 
         self.messages = {}
         self.dicts = {}
@@ -113,6 +100,32 @@ class Config:
                 self.messages[k] = v
             elif isinstance(v, dict):
                 self.dicts[k] = v
+
+    def load(self) -> dict:
+        loaded_cfgs = load_configs(
+            "config.json",
+            lambda d: {
+                k: tuple(v) if isinstance(v, list) else v for k, v in d.items()
+            },
+        )
+
+        current_cfg = self.as_dict()
+        loaded_joined = join_dicts(loaded_cfgs)
+        missing = subtract_dicts(current_cfg, loaded_joined)
+        self.unknown_vars = subtract_dicts(loaded_joined, current_cfg)
+
+        if missing and not os.getenv("DANDELION_INSTALLING"):
+            missing.update(loaded_cfgs[-1])
+            with open("config.json", "w") as f:
+                json.dump(missing, f, indent=2)
+
+        current_cfg.update(loaded_joined)
+
+        for key, default in current_cfg.items():
+            current_cfg[key] = get_env_var(key, default)
+
+        self.update(current_cfg)
+        return current_cfg
 
     def __getattr__(self, key: str) -> str:
         try:
@@ -123,10 +136,13 @@ class Config:
     def get_dict(self, name: str) -> dict:
         return self.dicts[name]
 
-    @classmethod
-    def update(cls, data: dict):
+    def warn_unknown_vars(self):
+        for name in self.unknown_vars:
+            warnings.warn(f"Unknown variable in config: {name}")
+
+    def update(self, data: dict):
         for k, v in data.items():
-            setattr(cls, k, v)
+            setattr(self, k, v)
 
     @classmethod
     def as_dict(cls) -> dict:

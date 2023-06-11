@@ -51,6 +51,7 @@ if __name__ == "__main__":
         print(os.getpid())
 
     check_dependencies()
+    config.warn_unknown_vars()
 
     if not config.BOT_TOKEN:
         print("Error: No bot token!")
