@@ -75,27 +75,27 @@
   "PauseState": {
     "NOTHING_TO_PAUSE": "Nothing to pause or resume.",
     "PAUSED": "Playback Paused :pause_button:",
-    "RESUMED": "Resumed playback :arrow_forward:"
+    "RESUMED": "Resumed playback :arrow_forward:",
   },
   "LoopState": {
     "INVALID": "Invalid loop mode!",
     "ENABLED": "Loop enabled :arrows_counterclockwise:",
-    "DISABLED": "Loop disabled :x:"
+    "DISABLED": "Loop disabled :x:",
   },
   "LoopMode": {
     "ALL": "all",
     "SINGLE": "single",
-    "OFF": "off"
+    "OFF": "off",
   },
   "PlaylistError": {
     "NEGATIVE_INDEX": "Positions less than 2 are not supported.",
     "ZERO_INDEX": "Cannot move the first song since it's already playing.",
-    "MISSING_INDEX": "Queue doesn't have that position."
+    "MISSING_INDEX": "Queue doesn't have that position.",
   },
   "ConversionError": {
     "BUTTON_DISABLED": "Button plugin is disabled",
     "INVALID_EMOJI": "Invalid emote",
-    "INVALID_VOLUME": "Value must be a number in range 0-100"
+    "INVALID_VOLUME": "Value must be a number in range 0-100",
   },
   "SettingsEmbed": {
     "TITLE": "Settings",
@@ -103,6 +103,6 @@
     "FIELD_EMPTY": "Not Set",
     "INVALID_CHANNEL": "Invalid Channel",
     "INVALID_VOICE_CHANNEL": "Invalid VChannel",
-    "INVALID_ROLE": "Invalid Role"
-  }
+    "INVALID_ROLE": "Invalid Role",
+  },
 }
