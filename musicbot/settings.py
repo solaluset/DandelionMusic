@@ -29,7 +29,7 @@ DEFAULT_CONFIG = {
     "user_must_be_in_vc": True,
     "button_emote": None,
     "default_volume": 100,
-    "vc_timeout": config.VC_TIMOUT_DEFAULT,
+    "vc_timeout": config.VC_TIMEOUT_DEFAULT,
     "announce_songs": sqlalchemy.false(),
 }
 # use String for ids to be sure we won't hit overflow
