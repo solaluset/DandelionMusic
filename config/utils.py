@@ -44,7 +44,7 @@ def load_configs(
 ) -> List[dict]:
     dirs = [
         os.path.dirname(__file__),
-        os.path.dirname(os.path.abspath(sys.argv[0])),
+        os.path.dirname(os.path.abspath(sys.argv[0] or "dummy")),
         os.getcwd(),
     ]
     dirs = sorted(set(dirs), key=dirs.index)

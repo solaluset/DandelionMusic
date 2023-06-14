@@ -1,4 +1,5 @@
 import os
+import ast
 import jsonc
 import inspect
 import warnings
@@ -18,15 +19,21 @@ class Config:
     SPOTIFY_ID = ""
     SPOTIFY_SECRET = ""
 
-    BOT_PREFIX = "d!"  # set to empty string to disable
+    # set to empty string to disable
+    BOT_PREFIX = "d!"
     ENABLE_SLASH_COMMANDS = False
+    MENTION_AS_PREFIX = True
 
-    VC_TIMEOUT = 600  # seconds
+    # seconds
+    VC_TIMEOUT = 600
     # default template setting for VC timeout
     # true = yes, timeout; false = no timeout
     VC_TIMOUT_DEFAULT = True
+    # allow or disallow editing the vc_timeout guild setting
+    ALLOW_VC_TIMEOUT_EDIT = True
 
-    MAX_SONG_PRELOAD = 5  # maximum of 25
+    # maximum of 25
+    MAX_SONG_PRELOAD = 5
     MAX_HISTORY_LENGTH = 10
     MAX_TRACKNAME_HISTORY_LENGTH = 15
 
@@ -35,8 +42,6 @@ class Config:
     # Must be async-compatible
     # CHANGE ONLY IF YOU KNOW WHAT YOU'RE DOING
     DATABASE_URL = os.getenv("HEROKU_DB") or "sqlite:///settings.db"
-
-    MENTION_AS_PREFIX = True
 
     ENABLE_BUTTON_PLUGIN = True
 
@@ -57,9 +62,6 @@ class Config:
     COOKIE_PATH = "config/cookies/cookies.txt"
 
     GLOBAL_DISABLE_AUTOJOIN_VC = False
-
-    # allow or disallow editing the vc_timeout guild setting
-    ALLOW_VC_TIMEOUT_EDIT = True
 
     def __init__(self):
         current_cfg = self.load()
@@ -116,8 +118,18 @@ class Config:
 
         if missing and not os.getenv("DANDELION_INSTALLING"):
             missing.update(loaded_cfgs[-1])
+            comments = self.get_comments()
+            # sort according to definition order
+            missing = {k: missing[k] for k in comments if k in missing}
             with open("config.json", "w") as f:
-                jsonc.dump(missing, f, indent=2)
+                jsonc.dump(
+                    missing,
+                    f,
+                    indent=2,
+                    trailing_comma=True,
+                    comments=comments,
+                )
+                f.write("\n")
 
         current_cfg.update(loaded_joined)
 
@@ -151,3 +163,29 @@ class Config:
             for k, v in inspect.getmembers(cls)
             if not k.startswith("__") and not inspect.isroutine(v)
         }
+
+    @classmethod
+    def get_comments(cls) -> dict:
+        try:
+            src = inspect.getsource(cls)
+        except OSError:
+            return {}
+        result = {}
+        body = ast.parse(src).body[0].body
+        src = src.splitlines()
+        for node in body:
+            if isinstance(node, ast.Assign):
+                target = node.targets
+            elif isinstance(node, ast.AnnAssign):
+                target = node.target
+            else:
+                target = None
+            if target is not None:
+                comment = ""
+                for i in range(node.lineno - 2, -1, -1):
+                    line = src[i].strip()
+                    if line and not line.startswith("#"):
+                        break
+                    comment = line[1:].strip() + "\n" + comment
+                result[ast.unparse(target)] = comment
+        return result
