@@ -1,5 +1,10 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = [
+   "setuptools",
+   "wheel",
+   "tomli; python_version<'3.11'",
+   "json-with-comments @ https://github.com/Krutyi-4el/json-with-comments/archive/b8b51fed4c62da6f45b28ec96f9fafe89bb90e7e.zip",
+]
 
 [project]
 name = "MusicBot-DB"

@@ -4,7 +4,6 @@ repos:
     hooks:
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
-    -   id: check-json
     -   id: check-yaml
     -   id: check-added-large-files
 
@@ -18,3 +17,8 @@ repos:
     rev: 6.0.0
     hooks:
     -   id: flake8
+
+-   repo: https://github.com/Krutyi-4el/json-with-comments
+    rev: b8b51fed4c62da6f45b28ec96f9fafe89bb90e7e
+    hooks:
+    -   id: check-jsonc

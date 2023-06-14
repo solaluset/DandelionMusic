@@ -1,5 +1,5 @@
 import os
-import json
+import jsonc
 import inspect
 import warnings
 
@@ -117,7 +117,7 @@ class Config:
         if missing and not os.getenv("DANDELION_INSTALLING"):
             missing.update(loaded_cfgs[-1])
             with open("config.json", "w") as f:
-                json.dump(missing, f, indent=2)
+                jsonc.dump(missing, f, indent=2)
 
         current_cfg.update(loaded_joined)
 

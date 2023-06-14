@@ -3,6 +3,11 @@ import os
 import sys
 from pathlib import Path
 
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
+
 from setuptools import setup
 
 # imitate running in root directory
@@ -19,8 +24,10 @@ os.environ["DANDELION_INSTALLING"] = "1"
 def main():
     from config import config
 
-    with open("db.txt", "w") as f:
+    with open("db.txt", "w") as f, open("pyproject.toml", "rb") as t:
         print(config.DATABASE_LIBRARY, file=f)
+        # reuse jsonc already specified in toml
+        print(tomllib.load(t)["build-system"]["requires"][-1], file=f)
 
     setup()
 

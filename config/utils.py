@@ -1,7 +1,7 @@
 import os
 import sys
 import ast
-import json
+import jsonc
 import string
 from typing import TypeVar, Callable, Iterable, Optional, List
 
@@ -53,7 +53,7 @@ def load_configs(
         file = os.path.join(dir_, name)
         if os.path.isfile(file):
             with open(file) as f:
-                result.append(json.load(f, object_hook=object_hook))
+                result.append(jsonc.load(f, object_hook=object_hook))
         else:
             result.append({})
     return result
