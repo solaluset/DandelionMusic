@@ -75,7 +75,7 @@ class Config:
 
         # ignore empty DB URL in env
         if not self.DATABASE_URL:
-            self.DATABASE_URL = current_cfg["DATABASE_URL"]
+            self.DATABASE_URL = type(self).DATABASE_URL
         self.DATABASE = alchemize_url(self.DATABASE_URL)
         self.DATABASE_LIBRARY = self.DATABASE.partition("+")[2].partition(":")[
             0
