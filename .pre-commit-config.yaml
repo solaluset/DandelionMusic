@@ -19,6 +19,6 @@ repos:
     -   id: flake8
 
 -   repo: https://github.com/Krutyi-4el/json-with-comments
-    rev: b8b51fed4c62da6f45b28ec96f9fafe89bb90e7e
+    rev: 3d501ae7fca3ee137cd6cca55091dfa4afdee069
     hooks:
     -   id: check-jsonc

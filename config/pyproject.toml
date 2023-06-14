@@ -3,7 +3,7 @@ requires = [
    "setuptools",
    "wheel",
    "tomli; python_version<'3.11'",
-   "json-with-comments @ https://github.com/Krutyi-4el/json-with-comments/archive/b8b51fed4c62da6f45b28ec96f9fafe89bb90e7e.zip",
+   "json-with-comments @ https://github.com/Krutyi-4el/json-with-comments/archive/3d501ae7fca3ee137cd6cca55091dfa4afdee069.zip",
 ]
 
 [project]
