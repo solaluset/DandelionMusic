@@ -18,7 +18,22 @@ repos:
     hooks:
     -   id: flake8
 
--   repo: https://github.com/Krutyi-4el/json-with-comments
-    rev: 3d501ae7fca3ee137cd6cca55091dfa4afdee069
+-   repo: local
     hooks:
     -   id: check-jsonc
+        name: check-jsonc
+        description: 'Check JSON with comments'
+        entry: python -c 'import sys, jsonc; jsonc.load(open(sys.argv[1]))'
+        language: python
+        types: [json]
+        require_serial: true
+        additional_dependencies: &jsonc
+        -   "json-with-comments @ https://github.com/Krutyi-4el/json-with-comments/archive/3d501ae7fca3ee137cd6cca55091dfa4afdee069.zip"
+
+    -   id: update-dockerfile
+        name: update-dockerfile
+        description: 'Update env vars in Dockerfile'
+        entry: python -m config.update_dockerfile
+        language: python
+        require_serial: true
+        additional_dependencies: *jsonc
