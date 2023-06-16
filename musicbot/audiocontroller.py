@@ -90,6 +90,9 @@ class AudioController(object):
         self.volume = max(self.volume - 10, 10)
 
     async def register_voice_channel(self, channel: discord.VoiceChannel):
+        perms = channel.permissions_for(self.guild.me)
+        if not perms.connect or not perms.speak:
+            raise CheckError(config.VOICE_PERMISSIONS_MISSING)
         await channel.connect(reconnect=True, timeout=None)
 
     def make_view(self):

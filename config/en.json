@@ -11,6 +11,7 @@
   "NOT_A_DJ": "You are not a DJ",
   "USER_MISSING_PERMISSIONS": "You don't have permissions for this",
   "CHANNEL_NOT_FOUND_MESSAGE": "Error: Could not find channel",
+  "VOICE_PERMISSIONS_MISSING": "The bot needs VC permissions connect and speak",
   "DEFAULT_CHANNEL_JOIN_FAILED": "Error: Could not join the default voice channel",
 
   "ADD_MESSAGE": "To add this bot to your own Server, click [here]({link})",
