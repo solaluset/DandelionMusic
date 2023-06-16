@@ -53,6 +53,7 @@ if __name__ == "__main__":
 
     check_dependencies()
     config.warn_unknown_vars()
+    config.save()
 
     bot.load_extensions(*initial_extensions)
 

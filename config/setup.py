@@ -17,9 +17,6 @@ for i, path in enumerate(sys.path):
     if Path(path).absolute() == cfg_dir:
         sys.path[i] = str(cfg_dir.parent)
 
-# inform that we're in installation phase
-os.environ["DANDELION_INSTALLING"] = "1"
-
 
 def main():
     from config import config

@@ -128,20 +128,11 @@ class Config:
         missing = subtract_dicts(current_cfg, loaded_joined)
         self.unknown_vars = subtract_dicts(loaded_joined, current_cfg)
 
-        if missing and not os.getenv("DANDELION_INSTALLING"):
+        if missing:
             missing.update(loaded_cfgs[-1])
-            comments = self.get_comments()
-            # sort according to definition order
-            missing = {k: missing[k] for k in comments if k in missing}
-            with open("config.json", "w") as f:
-                jsonc.dump(
-                    missing,
-                    f,
-                    indent=2,
-                    trailing_comma=True,
-                    comments=comments,
-                )
-                f.write("\n")
+            self.to_save = missing
+        else:
+            self.to_save = None
 
         current_cfg.update(loaded_joined)
 
@@ -159,6 +150,23 @@ class Config:
 
     def get_dict(self, name: str) -> dict:
         return self.dicts[name]
+
+    def save(self):
+        if not self.to_save:
+            return
+        comments = self.get_comments()
+        # sort according to definition order
+        to_save = {k: self.to_save[k] for k in comments if k in self.to_save}
+        with open("config.json", "w") as f:
+            jsonc.dump(
+                to_save,
+                f,
+                indent=2,
+                trailing_comma=True,
+                comments=comments,
+            )
+            f.write("\n")
+        self.to_save = None
 
     def warn_unknown_vars(self):
         for name in self.unknown_vars:
