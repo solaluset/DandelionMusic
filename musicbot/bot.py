@@ -1,3 +1,4 @@
+import sys
 import asyncio
 from typing import Dict, Union, List
 
@@ -168,7 +169,11 @@ class MusicBot(bridge.Bot):
                     or guild.voice_channels[0]
                 )
             except Exception as e:
-                print(e)
+                print(
+                    f"Couldn't autojoin VC at {guild.name}:",
+                    e,
+                    file=sys.stderr,
+                )
 
     @staticmethod
     def _help_autocomplete(ctx: discord.AutocompleteContext) -> List[str]:
