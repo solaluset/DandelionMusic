@@ -3,6 +3,7 @@ import ast
 import jsonc
 import inspect
 import warnings
+from typing import Optional
 
 from config.utils import (
     Formatter,
@@ -152,11 +153,14 @@ class Config:
         if not self.to_save:
             return
         comments = self.get_comments()
-        # sort according to definition order
-        to_save = {k: self.to_save[k] for k in comments if k in self.to_save}
+        if comments:
+            # sort according to definition order
+            self.to_save = {
+                k: self.to_save[k] for k in comments if k in self.to_save
+            }
         with open("config.json", "w") as f:
             jsonc.dump(
-                to_save,
+                self.to_save,
                 f,
                 indent=2,
                 trailing_comma=True,
@@ -182,11 +186,11 @@ class Config:
         }
 
     @classmethod
-    def get_comments(cls) -> dict:
+    def get_comments(cls) -> Optional[dict]:
         try:
             src = inspect.getsource(cls)
         except OSError:
-            return {}
+            return None
         result = {}
         body = ast.parse(src).body[0].body
         src = src.splitlines()
