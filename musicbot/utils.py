@@ -10,8 +10,6 @@ from discord import (
     opus,
     utils,
     Guild,
-    Message,
-    VoiceChannel,
     Emoji,
 )
 from discord.ext.commands import CommandError
@@ -21,7 +19,7 @@ from config import config
 
 # avoiding circular import
 if TYPE_CHECKING:
-    from musicbot.bot import MusicBot, Context
+    from musicbot.bot import Context
 
 
 def check_dependencies():
@@ -79,64 +77,6 @@ def download_ffmpeg():
     with open("ffmpeg.exe", "wb") as f:
         f.write(zipf.read(filename))
     print("\nSuccess!")
-
-
-def get_guild(bot: MusicBot, command: Message) -> Optional[Guild]:
-    """Gets the guild a command belongs to
-    Useful, if the command was sent via pm
-    Needs voice states intent"""
-    if command.guild is not None:
-        return command.guild
-    for guild in bot.guilds:
-        for channel in guild.voice_channels:
-            if command.author in channel.members:
-                return guild
-    return None
-
-
-async def connect_to_channel(
-    guild: Guild,
-    dest_channel_name,
-    ctx,
-    switch: bool = False,
-    default: bool = True,
-):
-    """Connects the bot to the specified voice channel.
-
-    Args:
-        guild: The guild for witch the operation should be performed.
-        switch: Determines if the bot should disconnect from
-            his current channel to switch channels.
-        default: Determines if the bot should default to
-            the first channel, if the name was not found.
-    """
-    for channel in guild.voice_channels:
-        if str(channel.name).strip() == str(dest_channel_name).strip():
-            if switch:
-                try:
-                    await guild.voice_client.disconnect()
-                except Exception:
-                    await ctx.send(config.NOT_CONNECTED_MESSAGE)
-
-            await channel.connect()
-            return
-
-    if default:
-        try:
-            await guild.voice_channels[0].connect()
-        except Exception:
-            await ctx.send(config.DEFAULT_CHANNEL_JOIN_FAILED)
-    else:
-        await ctx.send(
-            config.CHANNEL_NOT_FOUND_MESSAGE + str(dest_channel_name)
-        )
-
-
-async def is_connected(ctx: Context) -> Optional[VoiceChannel]:
-    try:
-        return ctx.guild.voice_client.channel
-    except AttributeError:
-        return None
 
 
 class CheckError(CommandError):
