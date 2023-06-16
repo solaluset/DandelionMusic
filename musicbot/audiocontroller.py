@@ -93,7 +93,7 @@ class AudioController(object):
         perms = channel.permissions_for(self.guild.me)
         if not perms.connect or not perms.speak:
             raise CheckError(config.VOICE_PERMISSIONS_MISSING)
-        await channel.connect(reconnect=True, timeout=None)
+        await channel.connect(reconnect=True)
 
     def make_view(self):
         if not self.is_active():
