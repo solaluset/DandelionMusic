@@ -141,6 +141,11 @@ class Config:
         for key, default in current_cfg.items():
             current_cfg[key] = get_env_var(key, default)
 
+        # Embeds are limited to 25 fields
+        current_cfg["MAX_SONG_PRELOAD"] = min(
+            current_cfg["MAX_SONG_PRELOAD"], 25
+        )
+
         self.update(current_cfg)
         return current_cfg
 

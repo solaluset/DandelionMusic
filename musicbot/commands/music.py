@@ -120,11 +120,6 @@ class Music(commands.Cog):
             return
 
         playlist = audiocontroller.playlist
-
-        # Embeds are limited to 25 fields
-        if config.MAX_SONG_PRELOAD > 25:
-            config.MAX_SONG_PRELOAD = 25
-
         await ctx.send(embed=playlist.queue_embed())
 
     @bridge.bridge_command(
