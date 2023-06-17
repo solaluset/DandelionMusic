@@ -34,6 +34,7 @@ repos:
         name: update-dockerfile
         description: 'Update env vars in Dockerfile'
         entry: python -m config.update_dockerfile
+        files: ^config/config\.py$
         language: python
         require_serial: true
         additional_dependencies: *jsonc
