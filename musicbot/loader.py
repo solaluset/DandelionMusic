@@ -62,10 +62,6 @@ def search_youtube(title: str) -> Optional[dict]:
     """Searches youtube for the video title
     Returns the first results video link"""
 
-    # if title is already a link
-    if linkutils.get_url(title) is not None:
-        return title
-
     options = {
         "format": "bestaudio/best",
         "default_search": "auto",
