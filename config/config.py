@@ -194,6 +194,12 @@ class Config:
         try:
             src = inspect.getsource(cls)
         except OSError:
+            fallback = os.path.join(
+                getattr(sys, "_MEIPASS", ""), "config_comments.json"
+            )
+            if os.path.isfile(fallback):
+                with open(fallback) as f:
+                    return jsonc.load(f)
             return None
         result = {}
         body = ast.parse(src).body[0].body

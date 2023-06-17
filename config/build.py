@@ -1,9 +1,13 @@
 import os
 import sys
 import glob
+import json
 import runpy
 
 from config import config
+
+with open("config/config_comments.json", "w") as f:
+    json.dump(config.get_comments(), f)
 
 sys.argv.extend(
     [
