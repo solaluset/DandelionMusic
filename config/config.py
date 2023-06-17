@@ -72,12 +72,12 @@ class Config:
     def __init__(self):
         current_cfg = self.load()
 
-        self.actual_prefix = (  # for internal use
+        # prefix to display
+        current_cfg["prefix"] = (
             self.BOT_PREFIX
             if self.BOT_PREFIX
             else ("/" if self.ENABLE_SLASH_COMMANDS else "@bot ")
         )
-        current_cfg["prefix"] = self.actual_prefix
 
         self.DATABASE = alchemize_url(self.DATABASE_URL)
         self.DATABASE_LIBRARY = self.DATABASE.partition("+")[2].partition(":")[

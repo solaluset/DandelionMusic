@@ -25,7 +25,6 @@ if config.BOT_PREFIX:
     intents.message_content = True
     prefix = config.BOT_PREFIX
 else:
-    config.BOT_PREFIX = config.actual_prefix
     prefix = " "  # messages can't start with space
 if config.MENTION_AS_PREFIX:
     prefix = commands.when_mentioned_or(prefix)
