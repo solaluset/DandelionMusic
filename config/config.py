@@ -1,11 +1,13 @@
 import os
+import sys
 import ast
 import jsonc
 import inspect
 import warnings
 from typing import Optional
 
-from config.utils import (
+sys.path.insert(0, os.path.dirname(__file__))
+from utils import (  # noqa: E402
     Formatter,
     get_env_var,
     alchemize_url,
@@ -13,6 +15,8 @@ from config.utils import (
     join_dicts,
     subtract_dicts,
 )
+
+del sys.path[0]
 
 
 class Config:

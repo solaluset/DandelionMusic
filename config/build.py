@@ -18,9 +18,10 @@ sys.argv.extend(
         ],
         "--hidden-import=" + config.DATABASE_LIBRARY,
         *[
-            "--add-data=" + file + os.pathsep + "config"
+            "--add-data=" + file + os.pathsep + "/"
             for file in glob.glob("config/*.json")
         ],
+        "-p=config",
         "-n=DandelionMusic",
         "-i=ui/note.ico",
         "run.py",
