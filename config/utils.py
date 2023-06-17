@@ -7,6 +7,12 @@ from typing import TypeVar, Callable, Iterable, Optional, List
 
 
 T = TypeVar("T")
+CONFIG_DIRS = (
+    os.path.dirname(__file__),
+    os.path.dirname(os.path.abspath(sys.argv[0] or "dummy")),
+    os.getcwd(),
+)
+CONFIG_DIRS = tuple(sorted(set(CONFIG_DIRS), key=CONFIG_DIRS.index))
 
 
 def get_env_var(key: str, default: T) -> T:
@@ -42,14 +48,8 @@ class Formatter(string.Template):
 def load_configs(
     name: str, object_hook: Optional[Callable[[dict], dict]] = None
 ) -> List[dict]:
-    dirs = [
-        os.path.dirname(__file__),
-        os.path.dirname(os.path.abspath(sys.argv[0] or "dummy")),
-        os.getcwd(),
-    ]
-    dirs = sorted(set(dirs), key=dirs.index)
     result = []
-    for dir_ in dirs:
+    for dir_ in CONFIG_DIRS:
         file = os.path.join(dir_, name)
         if os.path.isfile(file):
             with open(file) as f:

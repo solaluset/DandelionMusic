@@ -8,6 +8,7 @@ from typing import Optional
 
 sys.path.insert(0, os.path.dirname(__file__))
 from utils import (  # noqa: E402
+    CONFIG_DIRS,
     Formatter,
     get_env_var,
     alchemize_url,
@@ -84,6 +85,11 @@ class Config:
         ]
 
         self.EMBED_COLOR = int(self.EMBED_COLOR, 16)
+        for dir_ in CONFIG_DIRS[::-1]:
+            path = os.path.join(dir_, self.COOKIE_PATH)
+            if os.path.isfile(path):
+                self.COOKIE_PATH = path
+                break
 
         data = join_dicts(
             load_configs(
