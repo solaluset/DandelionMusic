@@ -60,9 +60,7 @@ class Song:
             if self.duration is not None:
                 embed.add_field(
                     name=config.SONGINFO_DURATION,
-                    value="{}".format(
-                        str(datetime.timedelta(seconds=self.duration))
-                    ),
+                    value=str(datetime.timedelta(seconds=self.duration)),
                     inline=False,
                 )
             else:
