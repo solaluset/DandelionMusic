@@ -135,7 +135,7 @@ def identify_url(url: Optional[str]) -> Sites:
     if "https://www.youtu" in url or "https://youtu.be" in url:
         return Sites.YouTube
 
-    if "https://open.spotify.com/track" in url:
+    if re.match(r"^https://open\.spotify\.com/([^/]+/)?track", url):
         return Sites.Spotify
 
     if (
