@@ -42,10 +42,6 @@ headers = {
 }
 
 
-def clean_sclink(track: str) -> str:
-    return re.sub(r"^https?://m\.", "https://", track)
-
-
 async def convert_spotify(url: str) -> str:
     result = url_regex.search(url)
     if result and "?si=" in url:
