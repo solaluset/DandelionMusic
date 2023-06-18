@@ -45,7 +45,7 @@ class Button(commands.Cog):
         member = reaction.member
         user_vc = member.voice
 
-        if not serv or member == self.bot.user or not user_vc:
+        if not serv or member.bot or not user_vc:
             return
 
         sett = self.bot.settings[serv]
