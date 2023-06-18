@@ -42,9 +42,10 @@ class Button(commands.Cog):
     ):
         serv = self.bot.get_guild(reaction.guild_id)
 
-        user_vc = reaction.member.voice
+        member = reaction.member
+        user_vc = member.voice
 
-        if not serv or reaction.member == self.bot.user or not user_vc:
+        if not serv or member == self.bot.user or not user_vc:
             return
 
         sett = self.bot.settings[serv]
@@ -67,14 +68,20 @@ class Button(commands.Cog):
                 return
 
             if chan.permissions_for(serv.me).manage_messages:
-                await message.remove_reaction(reaction.emoji, reaction.member)
+                await message.remove_reaction(reaction.emoji, member)
 
             audiocontroller = self.bot.audio_controllers[serv]
 
-            if serv.voice_client is None:
-                await audiocontroller.register_voice_channel(user_vc.channel)
-            elif serv.voice_client.channel != user_vc.channel:
+            ctx = await self.bot.get_context(message)
+            # author is the user who added the reaction,
+            # not the one who sent the message
+            ctx.author = member
+            try:
+                if not await utils.voice_check(ctx):
+                    return
+            except utils.CheckError:
                 return
+            await audiocontroller.register_voice_channel(user_vc.channel)
             if not audiocontroller.command_channel and sett.command_channel:
                 audiocontroller.command_channel = serv.get_channel(
                     int(sett.command_channel)
