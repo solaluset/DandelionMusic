@@ -93,7 +93,12 @@ class AudioController(object):
         perms = channel.permissions_for(self.guild.me)
         if not perms.connect or not perms.speak:
             raise CheckError(config.VOICE_PERMISSIONS_MISSING)
-        await channel.connect(reconnect=True)
+
+        bot_vc = self.guild.voice_client
+        if bot_vc:
+            await bot_vc.move_to(channel)
+        else:
+            await channel.connect(reconnect=True)
 
     def make_view(self):
         if not self.is_active():
@@ -429,10 +434,8 @@ class AudioController(object):
         if not author_vc:
             raise CheckError(config.USER_NOT_IN_VC_MESSAGE)
 
-        if bot_vc is None:
+        if bot_vc is None or bot_vc.channel != author_vc.channel and move:
             await self.register_voice_channel(author_vc.channel)
-        elif move and bot_vc.channel != author_vc.channel:
-            await bot_vc.move_to(author_vc.channel)
         else:
             raise CheckError(config.ALREADY_CONNECTED_MESSAGE)
         return True
