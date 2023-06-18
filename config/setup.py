@@ -1,4 +1,4 @@
-"This file is here to automatically install the selected DB package"
+"This file is here to install the selected DB package and jsonc"
 import os
 
 try:
