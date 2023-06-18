@@ -427,7 +427,7 @@ class AudioController(object):
         bot_vc = self.guild.voice_client
 
         if not author_vc:
-            raise CheckError(config.NO_GUILD_MESSAGE)
+            raise CheckError(config.USER_NOT_IN_VC_MESSAGE)
 
         if bot_vc is None:
             await self.register_voice_channel(author_vc.channel)
