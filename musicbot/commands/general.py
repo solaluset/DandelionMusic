@@ -105,14 +105,10 @@ class General(commands.Cog):
         async def _set_setting(self, ctx: Context, *, value: type_):
             sett = ctx.bot.settings[ctx.guild]
             try:
-                sett.process_setting(ctx.command.name, value, ctx)
+                await sett.update_setting(ctx.command.name, value, ctx)
             except ConversionError as e:
                 await ctx.send(f"`Error: {e}`")
                 return
-
-            async with ctx.bot.DbSession() as session:
-                session.add(sett)
-                await session.commit()
             await ctx.send("Setting updated!")
 
     @bridge.bridge_command(

@@ -254,7 +254,7 @@ class GuildSettings(Base):
 
         return embed
 
-    def process_setting(
+    async def update_setting(
         self, setting: str, value: str, ctx: "Context"
     ) -> bool:
         if setting not in DEFAULT_CONFIG:
@@ -262,6 +262,9 @@ class GuildSettings(Base):
 
         value = CONFIG_CONVERTERS[setting](ctx, value)
         setattr(self, setting, value)
+        async with ctx.bot.DbSession() as session:
+            session.add(self)
+            await session.commit()
         return True
 
 
