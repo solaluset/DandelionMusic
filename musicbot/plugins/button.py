@@ -14,6 +14,14 @@ class Button(commands.Cog):
     def __init__(self, bot: MusicBot):
         self.bot = bot
 
+    @staticmethod
+    def get_links(text: str):
+        return [
+            link
+            for link in linkutils.get_urls(text)
+            if linkutils.identify_url(link) in SUPPORTED_SITES
+        ]
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if not message.guild or message.author == self.bot.user:
@@ -31,9 +39,7 @@ class Button(commands.Cog):
         if not emoji:
             return
 
-        host = linkutils.identify_url(message.content)
-
-        if host in SUPPORTED_SITES:
+        if self.get_links(message.content):
             await message.add_reaction(emoji)
 
     @commands.Cog.listener()
@@ -60,11 +66,10 @@ class Button(commands.Cog):
         ):
             chan = serv.get_channel(reaction.channel_id)
             message = await chan.fetch_message(reaction.message_id)
-            url = linkutils.get_url(message.content)
 
-            host = linkutils.identify_url(url)
+            links = self.get_links(message.content)
 
-            if host not in SUPPORTED_SITES:
+            if not links:
                 return
 
             if chan.permissions_for(serv.me).manage_messages:
@@ -86,7 +91,8 @@ class Button(commands.Cog):
                 audiocontroller.command_channel = serv.get_channel(
                     int(sett.command_channel)
                 )
-            await audiocontroller.process_song(url)
+            for url in links:
+                await audiocontroller.process_song(url)
 
 
 def setup(bot: MusicBot):

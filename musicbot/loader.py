@@ -92,7 +92,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
     data = None
 
     if host == linkutils.Sites.Unknown:
-        if linkutils.get_url(track) is not None:
+        if linkutils.get_urls(track):
             return None
 
         data = search_youtube(track)

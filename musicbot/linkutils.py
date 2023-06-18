@@ -1,7 +1,7 @@
 import re
 import sys
 from enum import Enum
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 import aiohttp
 import spotipy
@@ -119,11 +119,8 @@ async def get_spotify_playlist(url: str) -> list:
     return links
 
 
-def get_url(content: str) -> Optional[str]:
-    result = url_regex.search(content)
-    if result:
-        return result.group(0)
-    return None
+def get_urls(content: str) -> List[str]:
+    return url_regex.findall(content)
 
 
 class Sites(Enum):
