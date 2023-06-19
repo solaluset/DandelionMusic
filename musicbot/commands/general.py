@@ -28,7 +28,7 @@ class General(commands.Cog):
         aliases=["c", "cc"],  # this command replaces removed changechannel
     )
     @commands.check(voice_check)
-    async def _connect(self, ctx: Context):  # dest_channel_name: str
+    async def _connect(self, ctx: Context):
         audiocontroller = ctx.bot.audio_controllers[ctx.guild]
         await audiocontroller.uconnect(ctx, move=True)
         await ctx.send("Connected.")
