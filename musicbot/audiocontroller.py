@@ -283,13 +283,15 @@ class AudioController(object):
             self.guild.voice_client.stop()
             return
 
+        if self.current_song:
+            self.playlist.add_name(self.current_song.info.title)
+            self.current_song = None
+
         if self._next_song:
             next_song = self._next_song
             self._next_song = None
         else:
             next_song = self.playlist.next(forced)
-
-        self.current_song = None
 
         if next_song is None:
             if not self.timer.triggered and self.guild.voice_client:
@@ -322,7 +324,6 @@ class AudioController(object):
             self.next_song(forced=True)
             return
 
-        self.playlist.add_name(song.info.title)
         self.current_song = song
 
         self.guild.voice_client.play(
