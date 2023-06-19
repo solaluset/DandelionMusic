@@ -1,12 +1,17 @@
 import os
 import sys
+from traceback import print_exc
 
 import discord
-from discord.ext import commands
+
+# import bridge here to override discord.Option with BridgeOption
+from discord.ext import commands, bridge
 
 from config import config
 from musicbot.bot import MusicBot
 from musicbot.utils import OutputWrapper, check_dependencies
+
+del bridge
 
 initial_extensions = [
     "musicbot.commands.music",
@@ -20,7 +25,6 @@ if config.BOT_PREFIX:
     intents.message_content = True
     prefix = config.BOT_PREFIX
 else:
-    config.BOT_PREFIX = config.actual_prefix
     prefix = " "  # messages can't start with space
 if config.MENTION_AS_PREFIX:
     prefix = commands.when_mentioned_or(prefix)
@@ -33,17 +37,13 @@ bot = MusicBot(
     command_prefix=prefix,
     case_insensitive=True,
     status=discord.Status.online,
-    activity=discord.Game(name="Music, type {}help".format(config.BOT_PREFIX)),
+    activity=discord.Game(name=config.STATUS_TEXT),
     intents=intents,
     allowed_mentions=discord.AllowedMentions.none(),
 )
 
 
 if __name__ == "__main__":
-
-    config.ABSOLUTE_PATH = os.path.dirname(os.path.abspath(__file__))
-    config.COOKIE_PATH = config.ABSOLUTE_PATH + config.COOKIE_PATH
-
     sys.stdout = OutputWrapper(sys.stdout)
     sys.stderr = OutputWrapper(sys.stderr)
 
@@ -51,11 +51,14 @@ if __name__ == "__main__":
         print(os.getpid())
 
     check_dependencies()
-
-    if not config.BOT_TOKEN:
-        print("Error: No bot token!")
-        exit()
+    config.warn_unknown_vars()
+    config.save()
 
     bot.load_extensions(*initial_extensions)
 
-    bot.run(config.BOT_TOKEN, reconnect=True)
+    try:
+        bot.run(config.BOT_TOKEN, reconnect=True)
+    except discord.LoginFailure:
+        print_exc(file=sys.stderr)
+        print("Set the correct token in config.json", file=sys.stderr)
+        sys.exit(1)

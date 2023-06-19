@@ -1,3 +1,5 @@
+import sys
+import asyncio
 from typing import Dict, Union, List
 
 import discord
@@ -9,7 +11,11 @@ from sqlalchemy.orm import sessionmaker
 
 from config import config
 from musicbot.audiocontroller import AudioController
-from musicbot.settings import GuildSettings, run_migrations, extract_legacy_settings
+from musicbot.settings import (
+    GuildSettings,
+    run_migrations,
+    extract_legacy_settings,
+)
 
 
 class MusicBot(bridge.Bot):
@@ -17,7 +23,8 @@ class MusicBot(bridge.Bot):
         kwargs.setdefault("help_command", UniversalHelpCommand())
         super().__init__(*args, **kwargs)
 
-        # A dictionary that remembers which guild belongs to which audiocontroller
+        # A dictionary that remembers
+        # which guild belongs to which audiocontroller
         self.audio_controllers: Dict[discord.Guild, AudioController] = {}
 
         # A dictionary that remembers which settings belongs to which guild
@@ -30,6 +37,8 @@ class MusicBot(bridge.Bot):
         # replace default to register slash command
         self._default_help = self.remove_command("help")
         self.add_bridge_command(self._help)
+
+        self.absolutely_ready = asyncio.Future()
 
     async def start(self, *args, **kwargs):
         print(config.STARTUP_MESSAGE)
@@ -56,6 +65,9 @@ class MusicBot(bridge.Bot):
         if not self.update_views.is_running():
             self.update_views.start()
 
+        if not self.absolutely_ready.done():
+            self.absolutely_ready.set_result(True)
+
     async def on_guild_join(self, guild):
         print(guild.name)
         await self.register(guild)
@@ -65,6 +77,29 @@ class MusicBot(bridge.Bot):
 
     async def on_application_command_error(self, ctx, error):
         await self.on_command_error(ctx, error)
+
+    async def on_voice_state_update(self, member, before, after):
+        guild = member.guild
+        if member == self.user:
+            audiocontroller = self.audio_controllers[guild]
+            if after.channel:
+                is_playing = guild.voice_client.is_playing()
+                await audiocontroller.timer.start(is_playing)
+                if is_playing:
+                    # bot was moved, restore playback
+                    await asyncio.sleep(1)
+                    guild.voice_client.resume()
+            else:
+                # disconnected, clear state
+                await audiocontroller.udisconnect()
+        elif (
+            guild.voice_client
+            and guild.voice_client.channel == before.channel
+            and all(m.bot for m in before.channel.members)
+        ):
+            # all users left
+            audiocontroller = self.audio_controllers[guild]
+            await audiocontroller.timer.start(guild.voice_client.is_playing())
 
     @tasks.loop(seconds=1)
     async def update_views(self):
@@ -85,12 +120,16 @@ class MusicBot(bridge.Bot):
         return await super().get_prefix(message)
 
     async def get_application_context(self, interaction):
-        return await super().get_application_context(interaction, ApplicationContext)
+        return await super().get_application_context(
+            interaction, ApplicationContext
+        )
 
     async def process_application_commands(self, inter):
         if not inter.guild:
             await inter.response.send_message(config.NO_GUILD_MESSAGE)
             return
+
+        await self.absolutely_ready
 
         await super().process_application_commands(inter)
 
@@ -104,6 +143,8 @@ class MusicBot(bridge.Bot):
             await message.channel.send(config.NO_GUILD_MESSAGE)
             return
 
+        await self.absolutely_ready
+
         await self.invoke(ctx)
 
     async def register(self, guild: discord.Guild):
@@ -114,7 +155,9 @@ class MusicBot(bridge.Bot):
             self.settings[guild] = await GuildSettings.load(self, guild)
 
         sett = self.settings[guild]
-        controller = self.audio_controllers[guild] = AudioController(self, guild)
+        controller = self.audio_controllers[guild] = AudioController(
+            self, guild
+        )
 
         if config.GLOBAL_DISABLE_AUTOJOIN_VC:
             return
@@ -126,7 +169,11 @@ class MusicBot(bridge.Bot):
                     or guild.voice_channels[0]
                 )
             except Exception as e:
-                print(e)
+                print(
+                    f"Couldn't autojoin VC at {guild.name}:",
+                    e,
+                    file=sys.stderr,
+                )
 
     @staticmethod
     def _help_autocomplete(ctx: discord.AutocompleteContext) -> List[str]:
@@ -136,7 +183,7 @@ class MusicBot(bridge.Bot):
             if c.qualified_name.startswith(ctx.value)
         ]
 
-    @bridge.bridge_command(name="help", description="Help command")
+    @bridge.bridge_command(name="help", description=config.HELP_HELP_SHORT)
     async def _help(
         ctx, *, command: Option(str, autocomplete=_help_autocomplete) = None
     ):

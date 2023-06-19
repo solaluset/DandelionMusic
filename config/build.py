@@ -1,9 +1,13 @@
 import os
 import sys
 import glob
+import json
 import runpy
 
-from config.config import DATABASE_LIBRARY
+from config import config
+
+with open("config/config_comments.json", "w") as f:
+    json.dump(config.get_comments(), f)
 
 sys.argv.extend(
     [
@@ -12,10 +16,16 @@ sys.argv.extend(
         "--collect-binaries=discord",
         # make sure every file from musicbot folder is included
         *[
-            "--hidden-import=" + os.path.splitext(file)[0].replace(os.path.sep, ".")
+            "--hidden-import="
+            + os.path.splitext(file)[0].replace(os.path.sep, ".")
             for file in glob.glob("musicbot/**/*.py", recursive=True)
         ],
-        "--hidden-import=" + DATABASE_LIBRARY,
+        "--hidden-import=" + config.DATABASE_LIBRARY,
+        *[
+            "--add-data=" + file + os.pathsep + "/"
+            for file in glob.glob("config/*.json")
+        ],
+        "-p=config",
         "-n=DandelionMusic",
         "-i=ui/note.ico",
         "run.py",

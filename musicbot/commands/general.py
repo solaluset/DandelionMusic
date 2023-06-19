@@ -28,7 +28,7 @@ class General(commands.Cog):
         aliases=["c", "cc"],  # this command replaces removed changechannel
     )
     @commands.check(voice_check)
-    async def _connect(self, ctx: Context):  # dest_channel_name: str
+    async def _connect(self, ctx: Context):
         audiocontroller = ctx.bot.audio_controllers[ctx.guild]
         await audiocontroller.uconnect(ctx, move=True)
         await ctx.send("Connected.")
@@ -60,9 +60,9 @@ class General(commands.Cog):
             # bot was connected and need some rest
             await asyncio.sleep(1)
 
-        audiocontroller = ctx.bot.audio_controllers[ctx.guild] = AudioController(
-            self.bot, ctx.guild
-        )
+        audiocontroller = ctx.bot.audio_controllers[
+            ctx.guild
+        ] = AudioController(self.bot, ctx.guild)
         await audiocontroller.uconnect(ctx)
         await ctx.send(
             "{} Connected to {}".format(
@@ -71,7 +71,9 @@ class General(commands.Cog):
         )
 
     @bridge.bridge_command(
-        name="ping", description=config.HELP_PING_LONG, help=config.HELP_PING_SHORT
+        name="ping",
+        description=config.HELP_PING_LONG,
+        help=config.HELP_PING_SHORT,
     )
     async def _ping(self, ctx):
         await ctx.send(f"Pong ({int(ctx.bot.latency * 1000)} ms)")
@@ -81,6 +83,7 @@ class General(commands.Cog):
         description=config.HELP_SETTINGS_LONG,
         help=config.HELP_SETTINGS_SHORT,
         aliases=["settings", "set"],
+        usage="[setting_name setting_value]",
         invoke_without_command=True,
     )
     async def _settings(self, ctx: Context, *, inexistent_setting=None):
@@ -102,14 +105,10 @@ class General(commands.Cog):
         async def _set_setting(self, ctx: Context, *, value: type_):
             sett = ctx.bot.settings[ctx.guild]
             try:
-                sett.process_setting(ctx.command.name, value, ctx)
+                await sett.update_setting(ctx.command.name, value, ctx)
             except ConversionError as e:
                 await ctx.send(f"`Error: {e}`")
                 return
-
-            async with ctx.bot.DbSession() as session:
-                session.add(sett)
-                await session.commit()
             await ctx.send("Setting updated!")
 
     @bridge.bridge_command(
@@ -120,8 +119,10 @@ class General(commands.Cog):
     async def _addbot(self, ctx):
         embed = discord.Embed(
             title="Invite",
-            description=config.ADD_MESSAGE
-            + "({})".format(discord.utils.oauth_url(self.bot.user.id)),
+            description=config.ADD_MESSAGE.format(
+                link=discord.utils.oauth_url(self.bot.user.id)
+            ),
+            color=config.EMBED_COLOR,
         )
 
         await ctx.send(embed=embed)

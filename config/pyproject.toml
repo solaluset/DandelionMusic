@@ -1,10 +1,15 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = [
+   "setuptools",
+   "wheel",
+   "tomli; python_version<'3.11'",
+   "json-with-comments @ https://github.com/Krutyi-4el/json-with-comments/archive/3d501ae7fca3ee137cd6cca55091dfa4afdee069.zip",
+]
 
 [project]
 name = "MusicBot-DB"
-description = "Dummy package that requires DB library as dependency"
-version = "0.0.1"
+description = "Package that installs DB library and jsonc as dependencies"
+version = "0.0.2"
 dynamic = ["dependencies"]
 
 [tool.setuptools.dynamic]

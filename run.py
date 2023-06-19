@@ -42,6 +42,12 @@ if on_windows:
 else:
     kwargs = {"start_new_session": True}
 
+
+# disable interrupting until we have the pid
+# (we don't want to have a wild process at this point)
+default_sigint_handler = signal.signal(signal.SIGINT, lambda s, f: None)
+
+
 p = subprocess.Popen(
     # sys.executable may be python interpreter or pyinstaller exe
     [sys.executable, __file__, "--run"],
@@ -52,20 +58,16 @@ p = subprocess.Popen(
 )
 
 
-# disable interrupting until we have the pid
-# (we don't want to have a wild process at this point)
-default_sigint_handler = signal.signal(signal.SIGINT, lambda s, f: None)
-
 # the pid is passed via stdout because p.pid can be incorrect
 line = p.stdout.readline()
 try:
     child_pid = int(line)
 except ValueError:
+    # try using p.pid anyway and hope that it'll work
+    child_pid = p.pid
+    sys.stdout = sys.stderr
     print("Can't grab subprocess id, something is wrong!")
     print("The output is:", line, sep="\n", end="")
-else:
-    if on_windows:
-        assert SetHandler(handler, True), "failed to set Ctrl+C handler"
 
 
 def new_handler(sig, frame):
@@ -79,6 +81,15 @@ def new_handler(sig, frame):
 
 
 signal.signal(signal.SIGINT, new_handler)
+if on_windows and not SetHandler(handler, True):
+    print(
+        "Failed to set Ctrl+C handler!\n"
+        "The bot may not react to this key combination.\n"
+        "Please report this bug.",
+        file=sys.stderr,
+    )
+    # can't use windows behaviour
+    on_windows = False
 
 try:
     while line := p.stdout.readline():
@@ -88,5 +99,7 @@ except KeyboardInterrupt:
         os.kill(child_pid, signal.SIGINT)
     print(p.stdout.read(), end="")
 
-if p.wait() != 0:
+exit_code = p.wait()
+if exit_code != 0:
     input("Press Enter to exit... ")
+sys.exit(exit_code)

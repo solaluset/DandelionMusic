@@ -1,147 +1,233 @@
-# fmt: off
-
 import os
-import json
+import sys
+import ast
+import jsonc
+import inspect
+import warnings
+from typing import Optional
 
-from config.utils import get_env_var, alchemize_url
+sys.path.insert(0, os.path.dirname(__file__))
+from utils import (  # noqa: E402
+    CONFIG_DIRS,
+    Formatter,
+    get_env_var,
+    alchemize_url,
+    load_configs,
+    join_dicts,
+    subtract_dicts,
+)
+
+del sys.path[0]
 
 
-DEFAULTS = {
-    "BOT_TOKEN": "YOUR_TOKEN_GOES_HERE",
-    "SPOTIFY_ID": "",
-    "SPOTIFY_SECRET": "",
+class Config:
+    BOT_TOKEN = "YOUR_TOKEN_GOES_HERE"
+    SPOTIFY_ID = ""
+    SPOTIFY_SECRET = ""
 
-    "BOT_PREFIX": "d!",  # set to empty string to disable
-    "ENABLE_SLASH_COMMANDS": False,
+    # set to empty string to disable
+    BOT_PREFIX = "d!"
+    ENABLE_SLASH_COMMANDS = False
+    MENTION_AS_PREFIX = True
 
-    "VC_TIMEOUT": 600,  # seconds
-    "VC_TIMOUT_DEFAULT": True,  # default template setting for VC timeout true= yes, timeout false= no timeout
+    # seconds
+    VC_TIMEOUT = 600
+    # default template setting for VC timeout
+    # true = yes, timeout; false = no timeout
+    VC_TIMEOUT_DEFAULT = True
+    # allow or disallow editing the vc_timeout guild setting
+    ALLOW_VC_TIMEOUT_EDIT = True
 
-    "MAX_SONG_PRELOAD": 5,  # maximum of 25
-    "MAX_HISTORY_LENGTH": 10,
-    "MAX_TRACKNAME_HISTORY_LENGTH": 15,
+    # maximum of 25
+    MAX_SONG_PRELOAD = 5
+    MAX_HISTORY_LENGTH = 10
+    MAX_TRACKNAME_HISTORY_LENGTH = 15
 
     # if database is not one of sqlite, postgres or MySQL
     # you need to provide the url in SQL Alchemy-supported format.
     # Must be async-compatible
     # CHANGE ONLY IF YOU KNOW WHAT YOU'RE DOING
-    "DATABASE_URL": os.getenv("HEROKU_DB") or "sqlite:///settings.db",
-}
+    DATABASE_URL = os.getenv("HEROKU_DB") or "sqlite:///settings.db"
 
+    ENABLE_BUTTON_PLUGIN = True
 
-if os.path.isfile("config.json"):
-    with open("config.json") as f:
-        DEFAULTS.update(json.load(f))
-elif not os.getenv("DANDELION_INSTALLING"):
-    with open("config.json", "w") as f:
-        json.dump(DEFAULTS, f, indent=2)
+    # replace after '0x' with desired hex code ex. '#ff0188' >> "0xff0188"
+    EMBED_COLOR: int = "0x4DD4D0"  # converted to int in __init__
 
+    SUPPORTED_EXTENSIONS = (
+        ".webm",
+        ".mp4",
+        ".mp3",
+        ".avi",
+        ".wav",
+        ".m4v",
+        ".ogg",
+        ".mov",
+    )
 
-for key, default in DEFAULTS.items():
-    globals()[key] = get_env_var(key, default)
+    COOKIE_PATH = "config/cookies/cookies.txt"
 
+    GLOBAL_DISABLE_AUTOJOIN_VC = False
 
-MENTION_AS_PREFIX = True
+    def __init__(self):
+        current_cfg = self.load()
 
-ENABLE_BUTTON_PLUGIN = True
+        # prefix to display
+        current_cfg["prefix"] = (
+            self.BOT_PREFIX
+            if self.BOT_PREFIX
+            else ("/" if self.ENABLE_SLASH_COMMANDS else "@bot ")
+        )
 
-EMBED_COLOR = 0x4dd4d0  # replace after'0x' with desired hex code ex. '#ff0188' >> '0xff0188'
+        self.DATABASE = alchemize_url(self.DATABASE_URL)
+        self.DATABASE_LIBRARY = self.DATABASE.partition("+")[2].partition(":")[
+            0
+        ]
 
-SUPPORTED_EXTENSIONS = (".webm", ".mp4", ".mp3", ".avi", ".wav", ".m4v", ".ogg", ".mov")
+        self.EMBED_COLOR = int(self.EMBED_COLOR, 16)
+        for dir_ in CONFIG_DIRS[::-1]:
+            path = os.path.join(dir_, self.COOKIE_PATH)
+            if os.path.isfile(path):
+                self.COOKIE_PATH = path
+                break
 
+        data = join_dicts(
+            load_configs(
+                "en.json",
+                lambda d: {
+                    k: Formatter(v).format(current_cfg)
+                    if isinstance(v, str)
+                    else v
+                    for k, v in d.items()
+                },
+            )
+        )
 
-COOKIE_PATH = "/config/cookies/cookies.txt"
+        self.messages = {}
+        self.dicts = {}
+        for k, v in data.items():
+            if isinstance(v, str):
+                self.messages[k] = v
+            elif isinstance(v, dict):
+                self.dicts[k] = v
 
-GLOBAL_DISABLE_AUTOJOIN_VC = False
+    def load(self) -> dict:
+        loaded_cfgs = load_configs(
+            "config.json",
+            lambda d: {
+                k: tuple(v) if isinstance(v, list) else v for k, v in d.items()
+            },
+        )
 
-ALLOW_VC_TIMEOUT_EDIT = True  # allow or disallow editing the vc_timeout guild setting
+        current_cfg = self.as_dict()
+        loaded_joined = join_dicts(loaded_cfgs)
+        # recognise deprecated cfg key with a typo
+        if "VC_TIMOUT_DEFAULT" in loaded_joined:
+            # in config, silently replace
+            current_cfg["VC_TIMEOUT_DEFAULT"] = loaded_joined.pop(
+                "VC_TIMOUT_DEFAULT"
+            )
+        if "VC_TIMOUT_DEFAULT" in os.environ:
+            # in env, we can't fix it easily
+            raise RuntimeError(
+                "Please rename VC_TIMOUT_DEFAULT"
+                " to VC_TIMEOUT_DEFAULT in your environment"
+            )
+        missing = subtract_dicts(current_cfg, loaded_joined)
+        self.unknown_vars = subtract_dicts(loaded_joined, current_cfg)
 
+        if missing:
+            missing.update(loaded_cfgs[-1])
+            self.to_save = missing
+        else:
+            self.to_save = None
 
-actual_prefix = (  # for internal use
-    BOT_PREFIX
-    if BOT_PREFIX
-    else ("/" if ENABLE_SLASH_COMMANDS else "@bot ")
-)
+        current_cfg.update(loaded_joined)
 
-# set db url during install even if it's overriden by env
-if os.getenv("DANDELION_INSTALLING") and not DATABASE_URL:
-    DATABASE_URL = DEFAULTS["DATABASE_URL"]
-DATABASE = alchemize_url(DATABASE_URL)
-DATABASE_LIBRARY = DATABASE.partition("+")[2].partition(":")[0]
+        for key, default in current_cfg.items():
+            current_cfg[key] = get_env_var(key, default)
 
+        # Embeds are limited to 25 fields
+        current_cfg["MAX_SONG_PRELOAD"] = min(
+            current_cfg["MAX_SONG_PRELOAD"], 25
+        )
 
-STARTUP_MESSAGE = "Starting Bot..."
-STARTUP_COMPLETE_MESSAGE = "Startup Complete"
+        self.update(current_cfg)
+        return current_cfg
 
-NO_GUILD_MESSAGE = "Error: Please join a voice channel or enter the command in guild chat"
-USER_NOT_IN_VC_MESSAGE = "Error: Please join the active voice channel to use commands and buttons"
-WRONG_CHANNEL_MESSAGE = "Error: Please use configured command channel"
-NOT_CONNECTED_MESSAGE = "Error: Bot not connected to any voice channel"
-ALREADY_CONNECTED_MESSAGE = "Error: Already connected to a voice channel"
-NOT_A_DJ = "You are not a DJ"
-USER_MISSING_PERMISSIONS = "You don't have permissions for this"
-CHANNEL_NOT_FOUND_MESSAGE = "Error: Could not find channel"
-DEFAULT_CHANNEL_JOIN_FAILED = "Error: Could not join the default voice channel"
-INVALID_INVITE_MESSAGE = "Error: Invalid invitation link"
+    def __getattr__(self, key: str) -> str:
+        try:
+            return self.messages[key]
+        except KeyError as e:
+            raise AttributeError(f"No text for {key!r} defined") from e
 
-ADD_MESSAGE = "To add this bot to your own Server, click [here]"  # brackets will be the link text
+    def get_dict(self, name: str) -> dict:
+        return self.dicts[name]
 
-INFO_HISTORY_TITLE = "Songs Played:"
+    def save(self):
+        if not self.to_save:
+            return
+        comments = self.get_comments()
+        if comments:
+            # sort according to definition order
+            self.to_save = {
+                k: self.to_save[k] for k in comments if k in self.to_save
+            }
+        with open("config.json", "w") as f:
+            jsonc.dump(
+                self.to_save,
+                f,
+                indent=2,
+                trailing_comma=True,
+                comments=comments,
+            )
+            f.write("\n")
+        self.to_save = None
 
-SONGINFO_UPLOADER = "Uploader: "
-SONGINFO_DURATION = "Duration: "
-SONGINFO_SECONDS = "s"
-SONGINFO_LIKES = "Likes: "
-SONGINFO_DISLIKES = "Dislikes: "
-SONGINFO_NOW_PLAYING = "Now Playing"
-SONGINFO_QUEUE_ADDED = "Added to queue"
-SONGINFO_SONGINFO = "Song info"
-SONGINFO_ERROR = "Error: Unsupported site or age restricted content. To enable age restricted content check the documentation/wiki."
-SONGINFO_PLAYLIST_QUEUED = "Queued playlist :page_with_curl:"
-SONGINFO_UNKNOWN_DURATION = "Unknown"
-QUEUE_EMPTY = "Queue is empty :x:"
+    def warn_unknown_vars(self):
+        for name in self.unknown_vars:
+            warnings.warn(f"Unknown variable in config: {name}")
 
-HELP_ADDBOT_SHORT = "Add Bot to another server"
-HELP_ADDBOT_LONG = "Gives you the link for adding this bot to another server of yours."
-HELP_CONNECT_SHORT = "Connect bot to voicechannel"
-HELP_CONNECT_LONG = "Connects the bot to the voice channel you are currently in"
-HELP_DISCONNECT_SHORT = "Disonnect bot from voicechannel"
-HELP_DISCONNECT_LONG = "Disconnect the bot from the voice channel and stop audio."
+    def update(self, data: dict):
+        for k, v in data.items():
+            setattr(self, k, v)
 
-HELP_SETTINGS_SHORT = "View and set bot settings"
-HELP_SETTINGS_LONG = "View and set bot settings in the server. Usage: {}settings setting_name value".format(actual_prefix)
+    @classmethod
+    def as_dict(cls) -> dict:
+        return {
+            k: v
+            for k, v in inspect.getmembers(cls)
+            if not k.startswith("__") and not inspect.isroutine(v)
+        }
 
-HELP_HISTORY_SHORT = "Show history of songs"
-HELP_HISTORY_LONG = "Shows the " + str(MAX_TRACKNAME_HISTORY_LENGTH) + " last played songs."
-HELP_PAUSE_SHORT = "Pause Music"
-HELP_PAUSE_LONG = "Pauses the AudioPlayer. Use it again to resume playback."
-HELP_VOL_SHORT = "Change volume %"
-HELP_VOL_LONG = "Changes the volume of the AudioPlayer. Argument specifies the % to which the volume should be set."
-HELP_PREV_SHORT = "Go back one Song"
-HELP_PREV_LONG = "Plays the previous song again."
-HELP_SKIP_SHORT = "Skip a song"
-HELP_SKIP_LONG = "Skips the currently playing song and goes to the next item in the queue."
-HELP_SONGINFO_SHORT = "Info about current Song"
-HELP_SONGINFO_LONG = "Shows details about the song currently being played and posts a link to the song."
-HELP_STOP_SHORT = "Stop Music"
-HELP_STOP_LONG = "Stops the AudioPlayer and clears the songqueue"
-HELP_MOVE_LONG = f"{actual_prefix}move [position] [new position]"
-HELP_MOVE_SHORT = "Moves a track in the queue"
-HELP_YT_SHORT = "Play a supported link or search on youtube"
-HELP_YT_LONG = f"{actual_prefix}p [link/video title/keywords/playlist/soundcloud link/spotify link/bandcamp link/twitter link]"
-HELP_PING_SHORT = "Pong"
-HELP_PING_LONG = "Test bot response status"
-HELP_CLEAR_SHORT = "Clear the queue."
-HELP_CLEAR_LONG = "Clears the queue and skips the current song."
-HELP_LOOP_SHORT = "Loops the currently playing song or queue."
-HELP_LOOP_LONG = "Loops the currently playing song or queue. Modes are all/single/off."
-HELP_QUEUE_SHORT = "Shows the songs in queue."
-HELP_QUEUE_LONG = "Shows the number of songs in queue, up to 10."
-HELP_SHUFFLE_SHORT = "Shuffle the queue"
-HELP_SHUFFLE_LONG = "Randomly sort the songs in the current queue"
-HELP_RESET_SHORT = "Disconnect and reconnect"
-HELP_RESET_LONG = "Stop player, disconnect and reconnect to the channel you are in"
-HELP_REMOVE_SHORT = "Remove a song"
-HELP_REMOVE_LONG = "Allows to remove a song from the queue by typing it's position (defaults to the last song)."
-
-ABSOLUTE_PATH = ""  # do not modify
+    @classmethod
+    def get_comments(cls) -> Optional[dict]:
+        try:
+            src = inspect.getsource(cls)
+        except OSError:
+            fallback = os.path.join(
+                getattr(sys, "_MEIPASS", ""), "config_comments.json"
+            )
+            if os.path.isfile(fallback):
+                with open(fallback) as f:
+                    return jsonc.load(f)
+            return None
+        result = {}
+        body = ast.parse(src).body[0].body
+        src = src.splitlines()
+        for node in body:
+            if isinstance(node, ast.Assign):
+                target = node.targets
+            elif isinstance(node, ast.AnnAssign):
+                target = node.target
+            else:
+                target = None
+            if target is not None:
+                comment = ""
+                for i in range(node.lineno - 2, -1, -1):
+                    line = src[i].strip()
+                    if line and not line.startswith("#"):
+                        break
+                    comment = line[1:].strip() + "\n" + comment
+                result[ast.unparse(target)] = comment
+        return result

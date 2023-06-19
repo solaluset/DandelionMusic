@@ -10,8 +10,6 @@ from discord import (
     opus,
     utils,
     Guild,
-    Message,
-    VoiceChannel,
     Emoji,
 )
 from discord.ext.commands import CommandError
@@ -21,11 +19,11 @@ from config import config
 
 # avoiding circular import
 if TYPE_CHECKING:
-    from musicbot.bot import MusicBot, Context
+    from musicbot.bot import Context
 
 
 def check_dependencies():
-    assert pycord_version == "2.5", (
+    assert pycord_version == "2.5.1", (
         "you don't have necessary version of Pycord."
         " Please install the version specified in requirements.txt"
     )
@@ -50,7 +48,8 @@ def download_ffmpeg():
 
     print("Downloading ffmpeg automatically...")
     stream = urlopen(
-        "https://github.com/Krutyi-4el/FFmpeg/releases/download/v5.1.git/ffmpeg.zip",
+        "https://github.com/Krutyi-4el/FFmpeg/"
+        "releases/download/v5.1.git/ffmpeg.zip",
         context=SSLContext(),
     )
     total_size = int(stream.getheader("content-length") or 0)
@@ -72,59 +71,12 @@ def download_ffmpeg():
     else:
         file.write(stream.read())
     zipf = ZipFile(file)
-    filename = [name for name in zipf.namelist() if name.endswith("ffmpeg.exe")][0]
+    filename = [
+        name for name in zipf.namelist() if name.endswith("ffmpeg.exe")
+    ][0]
     with open("ffmpeg.exe", "wb") as f:
         f.write(zipf.read(filename))
     print("\nSuccess!")
-
-
-def get_guild(bot: MusicBot, command: Message) -> Optional[Guild]:
-    """Gets the guild a command belongs to. Useful, if the command was sent via pm.
-    Needs voice states intent"""
-    if command.guild is not None:
-        return command.guild
-    for guild in bot.guilds:
-        for channel in guild.voice_channels:
-            if command.author in channel.members:
-                return guild
-    return None
-
-
-async def connect_to_channel(
-    guild: Guild, dest_channel_name, ctx, switch: bool = False, default: bool = True
-):
-    """Connects the bot to the specified voice channel.
-
-    Args:
-        guild: The guild for witch the operation should be performed.
-        switch: Determines if the bot should disconnect from his current channel to switch channels.
-        default: Determines if the bot should default to the first channel, if the name was not found.
-    """
-    for channel in guild.voice_channels:
-        if str(channel.name).strip() == str(dest_channel_name).strip():
-            if switch:
-                try:
-                    await guild.voice_client.disconnect()
-                except Exception:
-                    await ctx.send(config.NOT_CONNECTED_MESSAGE)
-
-            await channel.connect()
-            return
-
-    if default:
-        try:
-            await guild.voice_channels[0].connect()
-        except Exception:
-            await ctx.send(config.DEFAULT_CHANNEL_JOIN_FAILED)
-    else:
-        await ctx.send(config.CHANNEL_NOT_FOUND_MESSAGE + str(dest_channel_name))
-
-
-async def is_connected(ctx: Context) -> Optional[VoiceChannel]:
-    try:
-        return ctx.guild.voice_client.channel
-    except AttributeError:
-        return None
 
 
 class CheckError(CommandError):
@@ -159,7 +111,9 @@ async def voice_check(ctx: Context):
 
         if all(m.bot for m in bot_vc.channel.members):
             # current channel doesn't have any user in it
-            return await ctx.bot.audio_controllers[ctx.guild].uconnect(ctx, move=True)
+            return await ctx.bot.audio_controllers[ctx.guild].uconnect(
+                ctx, move=True
+            )
 
     try:
         if await dj_check(ctx):
@@ -203,32 +157,32 @@ def get_emoji(guild: Guild, string: str) -> Optional[Union[str, Emoji]]:
     return utils.get(guild.emojis, name=string)
 
 
-def compare_components(obj1, obj2):
-    "compare two objects recursively but ignore custom_id in dicts"
-    if isinstance(obj1, (list, tuple)) and isinstance(obj2, (list, tuple)):
-        if len(obj1) != len(obj2):
-            return False
-        return all(compare_components(x1, x2) for x1, x2 in zip(obj1, obj2))
-    elif isinstance(obj1, dict) and isinstance(obj2, dict):
-        obj1.pop("custom_id", None)
-        obj2.pop("custom_id", None)
-        if obj1.keys() != obj2.keys():
-            return False
-        return all(compare_components(obj1[k], obj2[k]) for k in obj1)
-    return obj1 == obj2
-
-
 class Timer:
     def __init__(self, callback: Callable[[], Awaitable]):
         self._callback = callback
-        self._task = asyncio.create_task(self._job())
+        self._task = None
+        self.triggered = False
 
     async def _job(self):
         await asyncio.sleep(config.VC_TIMEOUT)
+        self.triggered = True
         await self._callback()
+        self.triggered = False
+        self._task = None
+
+    # we need event loop here
+    async def start(self, restart=False):
+        if self._task:
+            if restart:
+                self._task.cancel()
+            else:
+                return
+        self._task = asyncio.create_task(self._job())
 
     def cancel(self):
-        self._task.cancel()
+        if self._task:
+            self._task.cancel()
+            self._task = None
 
 
 class OutputWrapper:

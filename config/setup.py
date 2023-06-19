@@ -1,25 +1,25 @@
-"This file is here to automatically install the selected DB package"
+"This file is here to install the selected DB package and jsonc"
 import os
-import sys
-from pathlib import Path
 
-# imitate running in root directory
-cfg_dir = Path(__file__).parent
-sys.path.insert(0, str(cfg_dir.parent))
-for i, path in enumerate(sys.path):
-    if Path(path).absolute() == cfg_dir:
-        sys.path[i] = str(cfg_dir.parent)
-
-# inform that we're in installation phase
-os.environ["DANDELION_INSTALLING"] = "1"
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 
 from setuptools import setup
-from config.config import DATABASE_LIBRARY
+
+from config import Config
 
 
-with open("db.txt", "w") as f:
-    print(DATABASE_LIBRARY, file=f)
+def main():
+    with open("db.txt", "w") as f, open("pyproject.toml", "rb") as t:
+        print(Config().DATABASE_LIBRARY, file=f)
+        # reuse jsonc already specified in toml
+        print(tomllib.load(t)["build-system"]["requires"][-1], file=f)
 
-setup()
+    setup()
 
-os.remove("db.txt")
+    os.remove("db.txt")
+
+
+main()

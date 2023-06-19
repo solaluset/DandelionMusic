@@ -1,6 +1,7 @@
 import re
+import sys
 from enum import Enum
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 import aiohttp
 import spotipy
@@ -19,20 +20,30 @@ except Exception:
     api = False
 
 url_regex = re.compile(
-    r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
+    r"""http[s]?://(?:
+        [a-zA-Z]
+        |[0-9]
+        |[$-_@.&+]
+        |[!*\(\),]
+        |(?:%[0-9a-fA-F][0-9a-fA-F])
+    )+""",
+    re.VERBOSE,
 )
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
+    "User-Agent": " ".join(
+        (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            "AppleWebKit/537.36 (KHTML, like Gecko)",
+            "Chrome/113.0.5672.126",
+            "Safari/537.36",
+        )
+    )
 }
 
 
-def clean_sclink(track: str) -> str:
-    return re.sub(r"^https?://m\.", "https://", track)
-
-
 async def convert_spotify(url: str) -> str:
-
+    "Fetches song name from Spotify URL"
     result = url_regex.search(url)
     if result and "?si=" in url:
         url = result.group(0) + "&nd=1"
@@ -44,11 +55,13 @@ async def convert_spotify(url: str) -> str:
     soup = BeautifulSoup(page, "html.parser")
 
     title = soup.find("title").string
-    return re.sub(r"(.*) - song( and lyrics)? by (.*) \| Spotify", r"\1 \3", title)
+    return re.sub(
+        r"(.*) - song( and lyrics)? by (.*) \| Spotify", r"\1 \3", title
+    )
 
 
 async def get_spotify_playlist(url: str) -> list:
-    """Return Spotify_Playlist class"""
+    """Returns list of Spotify links"""
 
     code = url.split("/")[4].split("?")[0]
 
@@ -70,14 +83,19 @@ async def get_spotify_playlist(url: str) -> list:
                 for track in tracks:
                     try:
                         links.append(
-                            track.get("track", track)["external_urls"]["spotify"]
+                            track.get("track", track)["external_urls"][
+                                "spotify"
+                            ]
                         )
                     except KeyError:
                         pass
                 return links
         except Exception:
             if config.SPOTIFY_ID != "" or config.SPOTIFY_SECRET != "":
-                print("ERROR: Check spotify CLIENT_ID and SECRET")
+                print(
+                    "ERROR: Check spotify CLIENT_ID and SECRET",
+                    file=sys.stderr,
+                )
 
     async with aiohttp.ClientSession(headers=headers) as session:
         async with session.get(url + "&nd=1") as response:
@@ -98,11 +116,8 @@ async def get_spotify_playlist(url: str) -> list:
     return links
 
 
-def get_url(content: str) -> Optional[str]:
-    result = url_regex.search(content)
-    if result:
-        return result.group(0)
-    return None
+def get_urls(content: str) -> List[str]:
+    return url_regex.findall(content)
 
 
 class Sites(Enum):
