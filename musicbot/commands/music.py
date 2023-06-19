@@ -143,12 +143,16 @@ class Music(commands.Cog):
         self,
         ctx: Context,
         src_pos: Option(int, min_value=2),
-        dest_pos: Option(int, min_value=2),
+        dest_pos: Option(int, min_value=2) = None,
     ):
         audiocontroller = ctx.bot.audio_controllers[ctx.guild]
         if not audiocontroller.is_active():
             await ctx.send(config.QUEUE_EMPTY)
             return
+
+        if dest_pos is None:
+            dest_pos = len(audiocontroller.playlist)
+
         try:
             audiocontroller.playlist.move(src_pos - 1, dest_pos - 1)
             await ctx.send("Moved ↔️")
