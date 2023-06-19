@@ -56,7 +56,7 @@ class Music(commands.Cog):
         if song.origin == linkutils.Origins.Playlist:
             await ctx.send(config.SONGINFO_PLAYLIST_QUEUED)
         else:
-            if len(ctx.audiocontroller.playlist) != 0:
+            if len(ctx.audiocontroller.playlist) != 1:
                 await ctx.send(
                     embed=song.info.format_output(config.SONGINFO_QUEUE_ADDED)
                 )
