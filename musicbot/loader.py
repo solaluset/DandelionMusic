@@ -10,7 +10,7 @@ from musicbot import linkutils
 from musicbot.songinfo import Song
 
 
-_runner = asyncio.Runner()
+_loop = asyncio.new_event_loop()
 _executor = ProcessPoolExecutor(1)
 _cached_downloaders: List[Tuple[dict, yt_dlp.YoutubeDL]] = []
 _preloading = {}
@@ -98,7 +98,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
         data = search_youtube(track)
 
     elif host == linkutils.Sites.Spotify:
-        title = _runner.run(linkutils.convert_spotify(track))
+        title = _loop.run_until_complete(linkutils.convert_spotify(track))
         data = search_youtube(title)
 
     elif host == linkutils.Sites.YouTube:
@@ -137,7 +137,7 @@ def load_playlist(
         ]
 
     if playlist_type == linkutils.Playlist_Types.Spotify_Playlist:
-        links = _runner.run(linkutils.get_spotify_playlist(url))
+        links = _loop.run_until_complete(linkutils.get_spotify_playlist(url))
         return [
             Song(
                 linkutils.Origins.Playlist,
@@ -166,7 +166,9 @@ def load_playlist(
 
 def _preload(song: Song) -> Optional[Song]:
     if song.host == linkutils.Sites.Spotify:
-        title = _runner.run(linkutils.convert_spotify(song.info.webpage_url))
+        title = _loop.run_until_complete(
+            linkutils.convert_spotify(song.info.webpage_url)
+        )
         data = search_youtube(title)
         if data:
             song.update(data)
