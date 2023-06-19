@@ -122,6 +122,7 @@ class General(commands.Cog):
             description=config.ADD_MESSAGE.format(
                 link=discord.utils.oauth_url(self.bot.user.id)
             ),
+            color=config.EMBED_COLOR,
         )
 
         await ctx.send(embed=embed)
