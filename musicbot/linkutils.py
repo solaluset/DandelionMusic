@@ -43,6 +43,7 @@ headers = {
 
 
 async def convert_spotify(url: str) -> str:
+    "Fetches song name from Spotify URL"
     result = url_regex.search(url)
     if result and "?si=" in url:
         url = result.group(0) + "&nd=1"
@@ -60,7 +61,7 @@ async def convert_spotify(url: str) -> str:
 
 
 async def get_spotify_playlist(url: str) -> list:
-    """Return Spotify_Playlist class"""
+    """Returns list of Spotify links"""
 
     code = url.split("/")[4].split("?")[0]
 
