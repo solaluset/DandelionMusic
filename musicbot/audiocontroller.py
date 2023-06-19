@@ -145,7 +145,7 @@ class AudioController(object):
         view.add_item(np_button)
 
         shuffle_button = MusicButton(
-            lambda _: self.playlist.shuffle(),
+            lambda _: self.shuffle(),
             row=1,
             disabled=is_empty,
             emoji="🔀",
@@ -269,6 +269,10 @@ class AudioController(object):
         if mode == LoopMode.OFF:
             return LoopState.DISABLED
         return LoopState.ENABLED
+
+    def shuffle(self):
+        self.playlist.shuffle()
+        self.add_task(self.preload_queue())
 
     def next_song(self, error=None, *, forced=False):
         """Invoked after a song is finished

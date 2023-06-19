@@ -89,13 +89,8 @@ class Music(commands.Cog):
             await ctx.send(config.QUEUE_EMPTY)
             return
 
-        audiocontroller.playlist.shuffle()
+        audiocontroller.shuffle()
         await ctx.send("Shuffled queue :twisted_rightwards_arrows:")
-
-        for song in list(audiocontroller.playlist.playque)[
-            : config.MAX_SONG_PRELOAD
-        ]:
-            audiocontroller.add_task(audiocontroller.preload(song))
 
     @bridge.bridge_command(
         name="pause",
