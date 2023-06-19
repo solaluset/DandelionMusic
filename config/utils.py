@@ -19,10 +19,11 @@ def get_env_var(key: str, default: T) -> T:
     value = os.getenv(key)
     if value is None:
         return default
-    try:
-        value = ast.literal_eval(value)
-    except (SyntaxError, ValueError):
-        pass
+    if not isinstance(default, str):
+        try:
+            value = ast.literal_eval(value)
+        except (SyntaxError, ValueError):
+            pass
     assert type(value) == type(default), f"invalid value for {key}: {value!r}"
     return value
 
