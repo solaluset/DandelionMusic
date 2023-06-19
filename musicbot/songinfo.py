@@ -39,7 +39,6 @@ class Song:
             self.duration = duration
             self.webpage_url = webpage_url
             self.thumbnail = thumbnail
-            self.output = ""
 
         def format_output(self, playtype):
             embed = discord.Embed(
