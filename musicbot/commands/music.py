@@ -141,6 +141,7 @@ class Music(commands.Cog):
 
         try:
             ctx.audiocontroller.playlist.move(src_pos - 1, dest_pos - 1)
+            ctx.audiocontroller.preload_queue()
             await ctx.send("Moved ↔️")
         except PlaylistError as e:
             await ctx.send(e)
@@ -159,6 +160,7 @@ class Music(commands.Cog):
             queue_number = len(ctx.audiocontroller.playlist)
         try:
             song = ctx.audiocontroller.playlist.remove(queue_number - 1)
+            ctx.audiocontroller.preload_queue()
             title = song.info.title or song.info.webpage_url
             await ctx.send(f"Removed #{queue_number}: {title}")
         except PlaylistError as e:
