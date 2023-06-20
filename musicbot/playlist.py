@@ -1,11 +1,11 @@
 import random
-from enum import StrEnum
 from typing import Optional
 from collections import deque
 
 from discord import Embed
 
 from config import config
+from musicbot.utils import StrEnum
 from musicbot.songinfo import Song
 
 

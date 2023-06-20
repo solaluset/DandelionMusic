@@ -217,7 +217,7 @@ class Config:
         src = src.splitlines()
         for node in body:
             if isinstance(node, ast.Assign):
-                target = node.targets
+                target = node.targets[0]
             elif isinstance(node, ast.AnnAssign):
                 target = node.target
             else:
@@ -229,5 +229,5 @@ class Config:
                     if line and not line.startswith("#"):
                         break
                     comment = line[1:].strip() + "\n" + comment
-                result[ast.unparse(target)] = comment
+                result[target.id] = comment
         return result

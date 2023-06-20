@@ -1,6 +1,5 @@
 import json
 import os
-from enum import StrEnum
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import discord
@@ -13,8 +12,9 @@ from alembic.autogenerate import produce_migrations, render_python_code
 from alembic.operations import Operations
 from typing_extensions import Annotated
 
-from musicbot import utils
 from config import config
+from musicbot import utils
+from musicbot.utils import StrEnum
 
 # avoiding circular import
 if TYPE_CHECKING:

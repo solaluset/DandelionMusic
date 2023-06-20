@@ -2,6 +2,7 @@ from __future__ import annotations
 import re
 import sys
 import asyncio
+from enum import Enum
 from subprocess import DEVNULL, check_call
 from typing import TYPE_CHECKING, Callable, Awaitable, Optional, Union
 
@@ -155,6 +156,12 @@ def get_emoji(guild: Guild, string: str) -> Optional[Union[str, Emoji]]:
         if emoji:
             return emoji
     return utils.get(guild.emojis, name=string)
+
+
+# StrEnum doesn't exist in Python < 3.11
+class StrEnum(str, Enum):
+    def __str__(self):
+        return self._value_
 
 
 class Timer:
