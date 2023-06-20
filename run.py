@@ -100,6 +100,6 @@ except KeyboardInterrupt:
     print(p.stdout.read(), end="")
 
 exit_code = p.wait()
-if exit_code != 0:
+if exit_code != 0 and sys.stdin.isatty():
     input("Press Enter to exit... ")
 sys.exit(exit_code)
