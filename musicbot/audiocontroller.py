@@ -264,7 +264,7 @@ class AudioController(object):
 
     def shuffle(self):
         self.playlist.shuffle()
-        self.add_task(self.preload_queue())
+        self.preload_queue()
 
     def next_song(self, error=None, *, forced=False):
         """Invoked after a song is finished
@@ -340,7 +340,7 @@ class AudioController(object):
                 embed=song.info.format_output(config.SONGINFO_NOW_PLAYING)
             )
 
-        self.add_task(self.preload_queue())
+        self.preload_queue()
 
     async def process_song(self, track: str) -> Optional[Song]:
         """Adds the track to the playlist instance
@@ -369,7 +369,7 @@ class AudioController(object):
         self._tasks.add(task)
         task.add_done_callback(lambda t: self._tasks.remove(t))
 
-    async def preload_queue(self):
+    async def _preload_queue(self):
         rerun_needed = False
         for song in list(
             islice(self.playlist.playque, 1, config.MAX_SONG_PRELOAD)
@@ -382,7 +382,11 @@ class AudioController(object):
                     # already removed
                     pass
         if rerun_needed:
-            self.add_task(self.preload_queue())
+            self.add_task(self._preload_queue())
+
+    def preload_queue(self):
+        "Preloads the first MAX_SONG_PRELOAD songs asynchronously"
+        self.add_task(self._preload_queue())
 
     def stop_player(self):
         """Stops the player and removes all songs from the queue"""
