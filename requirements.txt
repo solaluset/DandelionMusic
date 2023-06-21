@@ -1,9 +1,9 @@
-py-cord[voice] @ https://github.com/Krutyi-4el/pycord/archive/d784edee7016009fd69eab9f666440e538c8d19b.zip
-yt-dlp==2023.3.4
+py-cord[voice] @ https://github.com/Krutyi-4el/pycord/archive/bd32b8d66579abd51daa381c26df59e449067df5.zip
+yt-dlp==2023.6.21
 aiohttp==3.8.4
 beautifulsoup4==4.12.2
 spotipy==2.23.0
 emoji==2.2.0
-SQLAlchemy[asyncio]==2.0.13
+SQLAlchemy[asyncio]==2.0.16
 alembic==1.11.1
 ./config
