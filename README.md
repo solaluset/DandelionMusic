@@ -1,4 +1,4 @@
-![](https://repository-images.githubusercontent.com/494393877/c7c7a9a7-321a-48a0-b19d-b1e7dcf2a1c0) 
+![](https://repository-images.githubusercontent.com/494393877/c7c7a9a7-321a-48a0-b19d-b1e7dcf2a1c0)
 
 
 # DandelionMusic
@@ -205,6 +205,13 @@ d!addbot
 ```
 
 * Displays information on how to add the bot to another server of yours.
+
+```
+d!shutdown
+```
+
+* Stops the bot completely. May be useful after you move the bot to background. Works only for bot owner.
+* Note that unlike other commands, this one doesn't have a slash variant. This allows it to be hidden.
 
 ## License
 
