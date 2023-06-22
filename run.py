@@ -35,8 +35,30 @@ def main():
 
         @handler_type
         def handler(event):
-            if event == signal.CTRL_C_EVENT:
-                os.kill(child_pid, signal.SIGTERM)
+            if event != signal.CTRL_C_EVENT:
+                return
+            try:
+                grandchildren = subprocess.check_output(
+                    [
+                        "wmic",
+                        "process",
+                        "where",
+                        f"(ParentProcessId={child_pid})",
+                        "get",
+                        "ProcessId",
+                    ],
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                )
+            except Exception:
+                print("Can't get grandchildren", file=sys.stderr)
+                grandchildren = ""
+            # kill all descendants
+            for p in grandchildren.splitlines()[1:]:
+                p = p.strip()
+                if p:
+                    os.kill(int(p), signal.SIGTERM)
+            os.kill(child_pid, signal.SIGTERM)
 
         kwargs = {
             "creationflags": subprocess.CREATE_NO_WINDOW
