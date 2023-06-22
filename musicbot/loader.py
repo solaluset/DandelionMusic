@@ -1,3 +1,4 @@
+import sys
 import asyncio
 import threading
 from concurrent.futures import ProcessPoolExecutor
@@ -8,7 +9,11 @@ import yt_dlp
 from config import config
 from musicbot import linkutils
 from musicbot.songinfo import Song
+from musicbot.utils import OutputWrapper
 
+
+sys.stdout = OutputWrapper(sys.stdout)
+sys.stderr = OutputWrapper(sys.stderr)
 
 _loop = asyncio.new_event_loop()
 _executor = ProcessPoolExecutor(1)

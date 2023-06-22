@@ -9,7 +9,7 @@ from discord.ext import commands, bridge
 
 from config import config
 from musicbot.bot import MusicBot
-from musicbot.utils import OutputWrapper, check_dependencies
+from musicbot.utils import check_dependencies
 
 del bridge
 
@@ -44,9 +44,6 @@ bot = MusicBot(
 
 
 if __name__ == "__main__":
-    sys.stdout = OutputWrapper(sys.stdout)
-    sys.stderr = OutputWrapper(sys.stderr)
-
     if "--run" in sys.argv:
         print(os.getpid())
 
