@@ -180,7 +180,7 @@ class MusicBot(bridge.Bot):
         return [
             c.qualified_name
             for c in ctx.bot.walk_commands()
-            if c.qualified_name.startswith(ctx.value)
+            if c.qualified_name.startswith(ctx.value) and not c.hidden
         ]
 
     @bridge.bridge_command(name="help", description=config.HELP_HELP_SHORT)
