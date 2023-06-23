@@ -234,5 +234,9 @@ class ShutdownReader(Thread):
         super().__init__(name=type(self).__name__)
 
     def run(self):
-        if input() == "shutdown":
+        try:
+            line = input()
+        except EOFError:
+            return
+        if line == "shutdown":
             _thread.interrupt_main()
