@@ -211,12 +211,19 @@ class OutputWrapper:
         try:
             ret = self.stream.write(text)
             if not self.using_log_file:
-                self.stream.flush()
+                self.flush()
         except Exception:
             self.using_log_file = True
             self.stream = self.get_log_file()
             ret = self.stream.write(text)
         return ret
+
+    def flush(self):
+        try:
+            self.stream.flush()
+        except Exception:
+            self.using_log_file = True
+            self.stream = self.get_log_file()
 
     def __getattr__(self, key):
         return getattr(self.stream, key)
