@@ -1,4 +1,3 @@
-import os
 import sys
 from traceback import print_exc
 
@@ -8,8 +7,9 @@ import discord
 from discord.ext import commands, bridge
 
 from config import config
+from musicbot import loader
 from musicbot.bot import MusicBot
-from musicbot.utils import check_dependencies
+from musicbot.utils import check_dependencies, ShutdownReader
 
 del bridge
 
@@ -44,14 +44,15 @@ bot = MusicBot(
 
 
 if __name__ == "__main__":
-    if "--run" in sys.argv:
-        print(os.getpid())
-
     check_dependencies()
     config.warn_unknown_vars()
     config.save()
 
     bot.load_extensions(*initial_extensions)
+
+    if "--run" in sys.argv:
+        loader.init()
+        ShutdownReader().start()
 
     try:
         bot.run(config.BOT_TOKEN, reconnect=True)

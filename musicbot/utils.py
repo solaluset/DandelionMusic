@@ -1,8 +1,10 @@
 from __future__ import annotations
 import re
 import sys
+import _thread
 import asyncio
 from enum import Enum
+from threading import Thread
 from subprocess import DEVNULL, check_call
 from multiprocessing import parent_process
 from typing import TYPE_CHECKING, Callable, Awaitable, Optional, Union
@@ -209,12 +211,19 @@ class OutputWrapper:
         try:
             ret = self.stream.write(text)
             if not self.using_log_file:
-                self.stream.flush()
+                self.flush()
         except Exception:
             self.using_log_file = True
             self.stream = self.get_log_file()
             ret = self.stream.write(text)
         return ret
+
+    def flush(self):
+        try:
+            self.stream.flush()
+        except Exception:
+            self.using_log_file = True
+            self.stream = self.get_log_file()
 
     def __getattr__(self, key):
         return getattr(self.stream, key)
@@ -225,3 +234,16 @@ class OutputWrapper:
             return cls.log_file
         cls.log_file = open("log.txt", "w", encoding="utf-8")
         return cls.log_file
+
+
+class ShutdownReader(Thread):
+    def __init__(self):
+        super().__init__(name=type(self).__name__)
+
+    def run(self):
+        try:
+            line = input()
+        except EOFError:
+            return
+        if line == "shutdown":
+            _thread.interrupt_main()
