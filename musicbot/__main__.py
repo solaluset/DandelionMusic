@@ -1,4 +1,3 @@
-import os
 import sys
 from traceback import print_exc
 
@@ -9,7 +8,7 @@ from discord.ext import commands, bridge
 
 from config import config
 from musicbot.bot import MusicBot
-from musicbot.utils import check_dependencies
+from musicbot.utils import check_dependencies, ShutdownReader
 
 del bridge
 
@@ -45,7 +44,7 @@ bot = MusicBot(
 
 if __name__ == "__main__":
     if "--run" in sys.argv:
-        print(os.getpid())
+        ShutdownReader().start()
 
     check_dependencies()
     config.warn_unknown_vars()

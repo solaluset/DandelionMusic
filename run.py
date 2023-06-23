@@ -15,7 +15,6 @@ def main():
         # reminder: there's no `exit` in frozen environment
         sys.exit()
 
-    import os
     import signal
     import subprocess
 
@@ -37,28 +36,8 @@ def main():
         def handler(event):
             if event != signal.CTRL_C_EVENT:
                 return
-            try:
-                grandchildren = subprocess.check_output(
-                    [
-                        "wmic",
-                        "process",
-                        "where",
-                        f"(ParentProcessId={child_pid})",
-                        "get",
-                        "ProcessId",
-                    ],
-                    stderr=subprocess.STDOUT,
-                    text=True,
-                )
-            except Exception:
-                print("Can't get grandchildren", file=sys.stderr)
-                grandchildren = ""
-            # kill all descendants
-            for p in grandchildren.splitlines()[1:]:
-                p = p.strip()
-                if p:
-                    os.kill(int(p), signal.SIGTERM)
-            os.kill(child_pid, signal.SIGTERM)
+            p.stdin.write("shutdown\n")
+            p.stdin.flush()
 
         kwargs = {
             "creationflags": subprocess.CREATE_NO_WINDOW
@@ -67,29 +46,15 @@ def main():
     else:
         kwargs = {"start_new_session": True}
 
-    # disable interrupting until we have the pid
-    # (we don't want to have a wild process at this point)
-    default_sigint_handler = signal.signal(signal.SIGINT, lambda s, f: None)
-
     p = subprocess.Popen(
         # sys.executable may be python interpreter or pyinstaller exe
         [sys.executable, __file__, "--run"],
+        stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
         **kwargs,
     )
-
-    # the pid is passed via stdout because p.pid can be incorrect
-    line = p.stdout.readline()
-    try:
-        child_pid = int(line)
-    except ValueError:
-        # try using p.pid anyway and hope that it'll work
-        child_pid = p.pid
-        sys.stdout = sys.stderr
-        print("Can't grab subprocess id, something is wrong!")
-        print("The output is:", line, sep="\n", end="")
 
     def new_handler(sig, frame):
         """Handle the first interrupt and ignore others
@@ -100,7 +65,7 @@ def main():
             default_sigint_handler = None
             h(sig, frame)
 
-    signal.signal(signal.SIGINT, new_handler)
+    default_sigint_handler = signal.signal(signal.SIGINT, new_handler)
     if on_windows and not SetHandler(handler, True):
         print(
             "Failed to set Ctrl+C handler!\n"
@@ -116,7 +81,8 @@ def main():
             print(line, end="")
     except KeyboardInterrupt:
         if not on_windows:
-            os.kill(child_pid, signal.SIGINT)
+            p.stdin.write("shutdown\n")
+            p.stdin.flush()
         print(p.stdout.read(), end="")
 
     exit_code = p.wait()
