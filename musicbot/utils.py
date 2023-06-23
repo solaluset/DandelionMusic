@@ -6,7 +6,6 @@ import asyncio
 from enum import Enum
 from threading import Thread
 from subprocess import DEVNULL, check_call
-from multiprocessing import parent_process
 from typing import TYPE_CHECKING, Callable, Awaitable, Optional, Union
 
 from discord import (
@@ -199,13 +198,8 @@ class OutputWrapper:
     log_file = None
 
     def __init__(self, stream):
-        if parent_process() is None:
-            self.using_log_file = False
-            self.stream = stream
-        else:
-            # use log file if not in main process
-            self.using_log_file = True
-            self.stream = self.get_log_file()
+        self.using_log_file = False
+        self.stream = stream
 
     def write(self, text, /):
         try:
