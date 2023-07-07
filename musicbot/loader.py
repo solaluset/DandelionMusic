@@ -2,6 +2,7 @@ import sys
 import asyncio
 import threading
 from concurrent.futures import ProcessPoolExecutor
+from multiprocessing import get_context as mp_context
 from typing import List, Tuple, Optional, Union
 
 import yt_dlp
@@ -16,18 +17,10 @@ sys.stdout = OutputWrapper(sys.stdout)
 sys.stderr = OutputWrapper(sys.stderr)
 
 _loop = asyncio.new_event_loop()
-_executor = ProcessPoolExecutor(1)
+_executor = ProcessPoolExecutor(1, mp_context("spawn"))
 _cached_downloaders: List[Tuple[dict, yt_dlp.YoutubeDL]] = []
 _preloading = {}
 _search_lock = threading.Lock()
-
-
-def _noop():
-    pass
-
-
-def init():
-    _executor.submit(_noop).result()
 
 
 def extract_info(url: str, options: dict) -> dict:
