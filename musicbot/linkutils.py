@@ -29,6 +29,7 @@ url_regex = re.compile(
     )+""",
     re.VERBOSE,
 )
+album_regex = re.compile(r"^https://open\.spotify\.com/([^/]+/)?album")
 
 headers = {
     "User-Agent": " ".join(
@@ -68,7 +69,7 @@ async def get_spotify_playlist(url: str) -> list:
     if api:
         results = None
         try:
-            if "open.spotify.com/album" in url:
+            if is_sp_album(url):
                 results = sp_api.album_tracks(code)
 
             if "open.spotify.com/playlist" in url:
@@ -120,6 +121,10 @@ def get_urls(content: str) -> List[str]:
     return url_regex.findall(content)
 
 
+def is_sp_album(url: str) -> bool:
+    return bool(album_regex.match(url))
+
+
 class Sites(Enum):
     Spotify = "Spotify"
     Spotify_Playlist = "Spotify Playlist"
@@ -153,10 +158,7 @@ def identify_url(url: Optional[str]) -> Sites:
     if re.match(r"^https://open\.spotify\.com/([^/]+/)?track", url):
         return Sites.Spotify
 
-    if (
-        "https://open.spotify.com/playlist" in url
-        or "https://open.spotify.com/album" in url
-    ):
+    if "https://open.spotify.com/playlist" in url or is_sp_album(url):
         return Sites.Spotify_Playlist
 
     if "bandcamp.com/track/" in url:
@@ -182,10 +184,7 @@ def identify_playlist(url: Optional[str]) -> Union[Sites, Playlist_Types]:
     if "playlist?list=" in url:
         return Playlist_Types.YouTube_Playlist
 
-    if (
-        "https://open.spotify.com/playlist" in url
-        or "https://open.spotify.com/album" in url
-    ):
+    if "https://open.spotify.com/playlist" in url or is_sp_album(url):
         return Playlist_Types.Spotify_Playlist
 
     if "bandcamp.com/album/" in url:
