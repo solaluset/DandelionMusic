@@ -23,6 +23,15 @@ _preloading = {}
 _search_lock = threading.Lock()
 
 
+def _noop():
+    pass
+
+
+def init():
+    # wake it up to spawn the process immediately
+    _executor.submit(_noop).result()
+
+
 def extract_info(url: str, options: dict) -> dict:
     downloader = None
     for o, d in _cached_downloaders:
