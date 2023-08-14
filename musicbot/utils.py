@@ -4,7 +4,7 @@ import sys
 import _thread
 import asyncio
 from enum import Enum
-from threading import Thread
+from aioconsole import ainput
 from subprocess import DEVNULL, check_call
 from typing import TYPE_CHECKING, Callable, Awaitable, Optional, Union
 
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 
 def check_dependencies():
-    assert pycord_version == "2.5.2", (
+    assert pycord_version == "2.5.3", (
         "you don't have necessary version of Pycord."
         " Please install the version specified in requirements.txt"
     )
@@ -230,14 +230,10 @@ class OutputWrapper:
         return cls.log_file
 
 
-class ShutdownReader(Thread):
-    def __init__(self):
-        super().__init__(name=type(self).__name__)
-
-    def run(self):
-        try:
-            line = input()
-        except EOFError:
-            return
-        if line == "shutdown":
-            _thread.interrupt_main()
+async def read_shutdown():
+    try:
+        line = await ainput()
+    except EOFError:
+        return
+    if line == "shutdown":
+        _thread.interrupt_main()

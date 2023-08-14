@@ -7,8 +7,9 @@ import discord
 from discord.ext import commands, bridge
 
 from config import config
+from musicbot import loader
 from musicbot.bot import MusicBot
-from musicbot.utils import check_dependencies, ShutdownReader
+from musicbot.utils import check_dependencies, read_shutdown
 
 del bridge
 
@@ -43,14 +44,19 @@ bot = MusicBot(
 
 
 if __name__ == "__main__":
-    if "--run" in sys.argv:
-        ShutdownReader().start()
+    print("Loading...")
 
     check_dependencies()
     config.warn_unknown_vars()
     config.save()
 
     bot.load_extensions(*initial_extensions)
+
+    # start executor before reading from stdin to avoid deadlocks
+    loader.init()
+
+    if "--run" in sys.argv:
+        shutdown_task = bot.loop.create_task(read_shutdown())
 
     try:
         bot.run(config.BOT_TOKEN, reconnect=True)

@@ -16,11 +16,34 @@ from musicbot.utils import OutputWrapper
 sys.stdout = OutputWrapper(sys.stdout)
 sys.stderr = OutputWrapper(sys.stderr)
 
+_context = mp_context("spawn")
+
+
+class LoaderProcess(_context.Process):
+    def run(self):
+        try:
+            super().run()
+        # suppress noisy errors that happen on Ctrl+C
+        except (KeyboardInterrupt, InterruptedError):
+            pass
+
+
+_context.Process = LoaderProcess
+
 _loop = asyncio.new_event_loop()
-_executor = ProcessPoolExecutor(1, mp_context("spawn"))
+_executor = ProcessPoolExecutor(1, _context)
 _cached_downloaders: List[Tuple[dict, yt_dlp.YoutubeDL]] = []
 _preloading = {}
 _search_lock = threading.Lock()
+
+
+def _noop():
+    pass
+
+
+def init():
+    # wake it up to spawn the process immediately
+    _executor.submit(_noop).result()
 
 
 def extract_info(url: str, options: dict) -> dict:
