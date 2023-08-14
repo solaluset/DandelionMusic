@@ -8,7 +8,7 @@ from discord.ext import commands, bridge
 
 from config import config
 from musicbot.bot import MusicBot
-from musicbot.utils import check_dependencies, ShutdownReader
+from musicbot.utils import check_dependencies, read_shutdown
 
 del bridge
 
@@ -44,7 +44,7 @@ bot = MusicBot(
 
 if __name__ == "__main__":
     if "--run" in sys.argv:
-        ShutdownReader().start()
+        shutdown_task = bot.loop.create_task(read_shutdown())
 
     check_dependencies()
     config.warn_unknown_vars()

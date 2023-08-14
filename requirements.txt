@@ -6,4 +6,5 @@ spotipy==2.23.0
 emoji==2.7.0
 SQLAlchemy[asyncio]==2.0.19
 alembic==1.11.2
+aioconsole==0.6.2
 ./config
