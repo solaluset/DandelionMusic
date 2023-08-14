@@ -44,6 +44,8 @@ bot = MusicBot(
 
 
 if __name__ == "__main__":
+    print("Loading...")
+
     check_dependencies()
     config.warn_unknown_vars()
     config.save()
