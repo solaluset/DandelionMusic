@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 
 def check_dependencies():
-    assert pycord_version == "2.5.2", (
+    assert pycord_version == "2.5.3", (
         "you don't have necessary version of Pycord."
         " Please install the version specified in requirements.txt"
     )
