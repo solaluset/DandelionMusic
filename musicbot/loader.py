@@ -1,4 +1,5 @@
 import sys
+import signal
 import asyncio
 import threading
 from concurrent.futures import ProcessPoolExecutor
@@ -23,13 +24,14 @@ _preloading = {}
 _search_lock = threading.Lock()
 
 
-def _noop():
-    pass
+def _set_sigint_handler():
+    # suppress noisy error which happens on Ctrl+C
+    signal.signal(signal.SIGINT, lambda *_: None)
 
 
 def init():
     # wake it up to spawn the process immediately
-    _executor.submit(_noop).result()
+    _executor.submit(_set_sigint_handler).result()
 
 
 def extract_info(url: str, options: dict) -> dict:
