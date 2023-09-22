@@ -97,6 +97,8 @@ class AudioController(object):
         bot_vc = self.guild.voice_client
         if bot_vc:
             await bot_vc.move_to(channel)
+            # to avoid ClientException: Not connected to voice
+            await asyncio.sleep(1)
         else:
             await channel.connect(reconnect=True)
 
