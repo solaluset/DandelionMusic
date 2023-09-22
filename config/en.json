@@ -12,6 +12,7 @@
   "USER_MISSING_PERMISSIONS": "You don't have permissions for this",
   "CHANNEL_NOT_FOUND_MESSAGE": "Error: Could not find channel",
   "VOICE_PERMISSIONS_MISSING": "The bot needs VC permissions connect and speak",
+  "PLAY_ARGS_MISSING": "You need to specify the track or attach a file.",
 
   "ADD_MESSAGE": "To add this bot to your own Server, click [here]({link})",
 

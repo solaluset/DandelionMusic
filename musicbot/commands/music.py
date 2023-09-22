@@ -1,4 +1,4 @@
-from discord import Option
+from discord import Option, Attachment
 from discord.ext import commands, bridge
 
 from config import config
@@ -42,7 +42,17 @@ class Music(commands.Cog):
         help=config.HELP_YT_SHORT,
         aliases=["p", "yt", "pl"],
     )
-    async def _play_song(self, ctx: AudioContext, *, track: str):
+    async def _play_song(
+        self, ctx: AudioContext, *, track: str = None, file: Attachment = None
+    ):
+        if ctx.message and ctx.message.attachments:
+            file = ctx.message.attachments[0]
+        if file is not None:
+            track = file.url
+        elif track is None:
+            await ctx.send(config.PLAY_ARGS_MISSING)
+            return
+
         await ctx.defer()
 
         # reset timer
