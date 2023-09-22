@@ -37,6 +37,10 @@ _preloading = {}
 _search_lock = threading.Lock()
 
 
+class SongError(Exception):
+    pass
+
+
 def _noop():
     pass
 
@@ -146,7 +150,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
         song.update(data)
     else:
         if not fetch_song_info(song):
-            return None
+            raise SongError(config.SONGINFO_ERROR)
 
     return song
 

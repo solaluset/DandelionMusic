@@ -3,6 +3,7 @@ from discord.ext import commands, bridge
 
 from config import config
 from musicbot import linkutils, utils
+from musicbot.loader import SongError
 from musicbot.bot import MusicBot, Context
 from musicbot.audiocontroller import AudioController
 from musicbot.playlist import PlaylistError, LoopMode
@@ -58,9 +59,13 @@ class Music(commands.Cog):
         # reset timer
         await ctx.audiocontroller.timer.start(True)
 
-        song = await ctx.audiocontroller.process_song(track)
+        try:
+            song = await ctx.audiocontroller.process_song(track)
+        except SongError as e:
+            await ctx.send(e)
+            return
         if song is None:
-            await ctx.send(config.SONGINFO_ERROR)
+            await ctx.send(config.SONGINFO_UNSUPPORTED)
             return
 
         if song.origin == linkutils.Origins.Playlist:
