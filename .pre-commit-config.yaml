@@ -1,6 +1,6 @@
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
+    rev: v4.4.0
     hooks:
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
@@ -8,13 +8,13 @@ repos:
     -   id: check-added-large-files
 
 -   repo: https://github.com/psf/black
-    rev: 23.3.0
+    rev: 23.9.1
     hooks:
     -   id: black
         args: ["-l", "79"]
 
 -   repo: https://github.com/pycqa/flake8
-    rev: 6.0.0
+    rev: 6.1.0
     hooks:
     -   id: flake8
 
@@ -28,7 +28,7 @@ repos:
         types: [json]
         require_serial: true
         additional_dependencies: &jsonc
-        -   "json-with-comments==1.2.1"
+        -   "json-with-comments==1.2.2"
 
     -   id: update-dockerfile
         name: update-dockerfile
