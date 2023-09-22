@@ -47,6 +47,15 @@ FFMPEG_ZIP_URL = (
 NEWEST_FFMPEG_TIMESTAMP = "1695376413"
 
 
+def extract_ffmpeg_timestamp(version):
+    version = version.split()
+    if len(version) > 2:
+        timestamp = version[2].partition("-K4_")[2]
+        if timestamp:
+            return timestamp
+    return None
+
+
 def check_dependencies():
     assert pycord_version == "2.5.3", (
         "you don't have necessary version of Pycord."
@@ -65,17 +74,13 @@ def check_dependencies():
             download_ffmpeg()
         else:
             raise RuntimeError("ffmpeg was not found") from e
-    if (
-        sys.platform == "win32"
-        and ffmpeg_output
-        and (
-            ffmpeg_output == OLD_FFMPEG_CONF
-            or ffmpeg_output.split()[2].partition("-K4_")[2]
-            < NEWEST_FFMPEG_TIMESTAMP
-        )
-    ):
-        print("Updating FFmpeg...")
-        download_ffmpeg()
+    if sys.platform == "win32" and ffmpeg_output:
+        ffmpeg_timestamp = extract_ffmpeg_timestamp(ffmpeg_output)
+        if ffmpeg_output == OLD_FFMPEG_CONF or (
+            ffmpeg_timestamp and ffmpeg_timestamp < NEWEST_FFMPEG_TIMESTAMP
+        ):
+            print("Updating FFmpeg...")
+            download_ffmpeg()
 
     try:
         opus.Encoder.get_opus_version()
