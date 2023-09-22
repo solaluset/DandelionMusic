@@ -100,7 +100,8 @@ def download_ffmpeg():
 
         data = stream.read(BLOCK_SIZE)
         received_size = BLOCK_SIZE
-        percentage = -1
+        percentage = 0
+        print("0%", end="")
         while data:
             file.write(data)
             data = stream.read(BLOCK_SIZE)
