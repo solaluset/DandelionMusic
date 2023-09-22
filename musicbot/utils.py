@@ -54,7 +54,7 @@ def check_dependencies():
     )
 
     flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
-    ffmpeg_output = ""
+    ffmpeg_output = None
     try:
         ffmpeg_output = check_output(
             ("ffmpeg", "-version"), text=True, creationflags=flags
@@ -65,10 +65,14 @@ def check_dependencies():
             download_ffmpeg()
         else:
             raise RuntimeError("ffmpeg was not found") from e
-    if sys.platform == "win32" and (
-        ffmpeg_output == OLD_FFMPEG_CONF
-        or ffmpeg_output.split()[2].partition("-K4_")[2]
-        < NEWEST_FFMPEG_TIMESTAMP
+    if (
+        sys.platform == "win32"
+        and ffmpeg_output
+        and (
+            ffmpeg_output == OLD_FFMPEG_CONF
+            or ffmpeg_output.split()[2].partition("-K4_")[2]
+            < NEWEST_FFMPEG_TIMESTAMP
+        )
     ):
         print("Updating FFmpeg...")
         download_ffmpeg()
