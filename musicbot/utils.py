@@ -3,9 +3,10 @@ import re
 import sys
 import _thread
 import asyncio
+import subprocess
 from enum import Enum
 from aioconsole import ainput
-from subprocess import DEVNULL, check_call
+from subprocess import CalledProcessError, check_output
 from typing import TYPE_CHECKING, Callable, Awaitable, Optional, Union
 
 from discord import (
@@ -25,18 +26,53 @@ if TYPE_CHECKING:
     from musicbot.bot import Context
 
 
+OLD_FFMPEG_CONF = """
+ffmpeg version 5.1.git Copyright (c) 2000-2022 the FFmpeg developers
+built with gcc 12.1.0 (Rev2, Built by MSYS2 project)
+configuration: --disable-programs --enable-ffmpeg --disable-doc\
+ --enable-w32threads --enable-openssl --extra-ldflags=-static\
+ --pkg-config='pkg-config --static --with-path=/usr/local/lib/pkgconfig'
+libavutil      57. 33.101 / 57. 33.101
+libavcodec     59. 42.102 / 59. 42.102
+libavformat    59. 30.100 / 59. 30.100
+libavdevice    59.  8.101 / 59.  8.101
+libavfilter     8. 46.103 /  8. 46.103
+libswscale      6.  8.103 /  6.  8.103
+libswresample   4.  8.100 /  4.  8.100
+""".strip()
+FFMPEG_ZIP_URL = (
+    "https://github.com/Krutyi-4el/FFmpeg/"
+    "releases/download/v6.0.git/ffmpeg.zip"
+)
+NEWEST_FFMPEG_TIMESTAMP = "1695376413"
+
+
 def check_dependencies():
     assert pycord_version == "2.5.3", (
         "you don't have necessary version of Pycord."
         " Please install the version specified in requirements.txt"
     )
+
+    flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+    ffmpeg_output = ""
     try:
-        check_call("ffmpeg --help", stdout=DEVNULL, stderr=DEVNULL, shell=True)
-    except Exception as e:
+        ffmpeg_output = check_output(
+            ("ffmpeg", "-version"), text=True, creationflags=flags
+        ).strip()
+    except (FileNotFoundError, CalledProcessError) as e:
         if sys.platform == "win32":
+            print("Downloading FFmpeg...")
             download_ffmpeg()
         else:
             raise RuntimeError("ffmpeg was not found") from e
+    if sys.platform == "win32" and (
+        ffmpeg_output == OLD_FFMPEG_CONF
+        or ffmpeg_output.split()[2].partition("-K4_")[2]
+        < NEWEST_FFMPEG_TIMESTAMP
+    ):
+        print("Updating FFmpeg...")
+        download_ffmpeg()
+
     try:
         opus.Encoder.get_opus_version()
     except opus.OpusNotLoaded as e:
@@ -49,10 +85,8 @@ def download_ffmpeg():
     from zipfile import ZipFile
     from urllib.request import urlopen
 
-    print("Downloading ffmpeg automatically...")
     stream = urlopen(
-        "https://github.com/Krutyi-4el/FFmpeg/"
-        "releases/download/v5.1.git/ffmpeg.zip",
+        FFMPEG_ZIP_URL,
         context=SSLContext(),
     )
     total_size = int(stream.getheader("content-length") or 0)
