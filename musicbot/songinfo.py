@@ -61,7 +61,7 @@ class Song:
                 value=(
                     str(datetime.timedelta(seconds=self.duration))
                     if self.duration is not None
-                    else config.SONGINFO_UNKNOWN_DURATION
+                    else config.SONGINFO_UNKNOWN
                 ),
                 inline=False,
             )

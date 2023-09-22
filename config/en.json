@@ -24,7 +24,7 @@
   "SONGINFO_SONGINFO": "Song info",
   "SONGINFO_ERROR": "Error: Unsupported site or age restricted content. To enable age restricted content check the documentation/wiki.",
   "SONGINFO_PLAYLIST_QUEUED": "Queued playlist :page_with_curl:",
-  "SONGINFO_UNKNOWN_DURATION": "Unknown",
+  "SONGINFO_UNKNOWN": "Unknown",
   "QUEUE_EMPTY": "Playlist is empty :x:",
   "QUEUE_TITLE": ":scroll: Queue [{tracks_number}]",
 
