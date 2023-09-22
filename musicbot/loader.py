@@ -133,6 +133,14 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
     elif host == linkutils.Sites.YouTube:
         track = track.split("&list=")[0]
 
+    elif host == linkutils.Sites.Custom:
+        data = {
+            "url": track,
+            "webpage_url": track,
+            "title": track.rpartition("/")[2],
+            "uploader": config.SONGINFO_UNKNOWN,
+        }
+
     song = Song(linkutils.Origins.Default, host, webpage_url=track)
     if data:
         song.update(data)
