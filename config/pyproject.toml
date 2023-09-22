@@ -3,7 +3,7 @@ requires = [
    "setuptools",
    "wheel",
    "tomli; python_version<'3.11'",
-   "json-with-comments==1.2.1",
+   "json-with-comments==1.2.2",
 ]
 
 [project]
