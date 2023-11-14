@@ -420,16 +420,13 @@ class AudioController(object):
         if not self.guild.voice_client:
             return
 
-        if all(m.bot for m in self.guild.voice_client.channel.members):
-            await self.udisconnect()
-            return
-
         sett = self.bot.settings[self.guild]
 
-        if not sett.vc_timeout or self.guild.voice_client.is_playing():
-            return
-
-        await self.udisconnect()
+        if sett.vc_timeout and (
+            not self.guild.voice_client.is_playing()
+            or all(m.bot for m in self.guild.voice_client.channel.members)
+        ):
+            await self.udisconnect()
 
     async def uconnect(self, ctx, move=False):
         author_vc = ctx.author.voice
