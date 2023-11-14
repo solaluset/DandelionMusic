@@ -1,5 +1,6 @@
 import sys
 import asyncio
+from traceback import print_exception
 from typing import Dict, Union, List
 
 import discord
@@ -74,6 +75,7 @@ class MusicBot(bridge.Bot):
 
     async def on_command_error(self, ctx, error):
         await ctx.send(error)
+        print_exception(error)
 
     async def on_application_command_error(self, ctx, error):
         await self.on_command_error(ctx, error)
