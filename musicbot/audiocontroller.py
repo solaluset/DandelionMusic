@@ -325,7 +325,7 @@ class AudioController(object):
                 song.base_url,
                 before_options="-reconnect 1 -reconnect_streamed 1"
                 " -reconnect_delay_max 5",
-                options="-loglevel fatal",
+                options="-loglevel error",
             ),
             after=self.next_song,
         )
