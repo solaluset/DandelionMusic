@@ -17,6 +17,7 @@ from musicbot.settings import (
     run_migrations,
     extract_legacy_settings,
 )
+from musicbot.utils import CheckError
 
 
 class MusicBot(bridge.Bot):
@@ -75,7 +76,8 @@ class MusicBot(bridge.Bot):
 
     async def on_command_error(self, ctx, error):
         await ctx.send(error)
-        print_exception(error)
+        if not isinstance(error, CheckError):
+            print_exception(error)
 
     async def on_application_command_error(self, ctx, error):
         await self.on_command_error(ctx, error)
