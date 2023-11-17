@@ -131,6 +131,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             return None
 
         data = search_youtube(track)
+        host = linkutils.Sites.YouTube
 
     elif host == linkutils.Sites.Spotify:
         title = _loop.run_until_complete(linkutils.convert_spotify(track))
