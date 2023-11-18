@@ -327,6 +327,7 @@ class AudioController(object):
                 before_options="-reconnect 1 -reconnect_streamed 1"
                 " -reconnect_delay_max 5",
                 options="-loglevel error",
+                stderr=sys.stderr,
             ),
             after=self.next_song,
         )
