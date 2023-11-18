@@ -57,7 +57,7 @@ def extract_ffmpeg_timestamp(version):
 
 
 def check_dependencies():
-    assert pycord_version == "2.5.4", (
+    assert pycord_version == "2.5.5", (
         "you don't have necessary version of Pycord."
         " Please install the version specified in requirements.txt"
     )
