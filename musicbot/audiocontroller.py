@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from musicbot.bot import MusicBot
 
 
+VC_TIMEOUT = 10
 _not_provided = object()
 
 
@@ -100,7 +101,7 @@ class AudioController(object):
             # to avoid ClientException: Not connected to voice
             await asyncio.sleep(1)
         else:
-            await channel.connect(reconnect=True)
+            await channel.connect(reconnect=True, timeout=VC_TIMEOUT)
 
     def make_view(self):
         if not self.is_active():
@@ -325,6 +326,7 @@ class AudioController(object):
                 song.base_url,
                 before_options="-reconnect 1 -reconnect_streamed 1"
                 " -reconnect_delay_max 5",
+                options="-loglevel error",
             ),
             after=self.next_song,
         )
@@ -419,16 +421,13 @@ class AudioController(object):
         if not self.guild.voice_client:
             return
 
-        if all(m.bot for m in self.guild.voice_client.channel.members):
-            await self.udisconnect()
-            return
-
         sett = self.bot.settings[self.guild]
 
-        if not sett.vc_timeout or self.guild.voice_client.is_playing():
-            return
-
-        await self.udisconnect()
+        if sett.vc_timeout and (
+            not self.guild.voice_client.is_playing()
+            or all(m.bot for m in self.guild.voice_client.channel.members)
+        ):
+            await self.udisconnect()
 
     async def uconnect(self, ctx, move=False):
         author_vc = ctx.author.voice

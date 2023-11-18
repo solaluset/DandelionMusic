@@ -1,6 +1,8 @@
 import sys
 import asyncio
 import threading
+from urllib.request import urlparse
+from datetime import datetime, timezone
 from concurrent.futures import ProcessPoolExecutor
 from multiprocessing import get_context as mp_context
 from typing import List, Tuple, Optional, Union
@@ -129,6 +131,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             return None
 
         data = search_youtube(track)
+        host = linkutils.Sites.YouTube
 
     elif host == linkutils.Sites.Spotify:
         title = _loop.run_until_complete(linkutils.convert_spotify(track))
@@ -223,8 +226,27 @@ def _preload(song: Song) -> Optional[Song]:
 
 
 async def preload(song: Song) -> bool:
-    if song.info.title is not None or song.info.webpage_url is None:
+    if song.base_url is not None:
+        if song.host not in (linkutils.Sites.YouTube, linkutils.Sites.Spotify):
+            return True
+
+        expire = (
+            ("&" + urlparse(song.base_url).query)
+            .partition("&expire=")[2]
+            .partition("&")[0]
+        )
+        try:
+            expire = int(expire)
+        except ValueError:
+            return True
+        if datetime.now(timezone.utc) < datetime.fromtimestamp(
+            expire, timezone.utc
+        ):
+            return True
+
+    if song.info.webpage_url is None:
         return True
+
     future = _preloading.get(song)
     if future:
         return await future
