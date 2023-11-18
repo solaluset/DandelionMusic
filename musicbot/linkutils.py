@@ -99,7 +99,9 @@ async def get_spotify_playlist(url: str) -> list:
                 )
 
     async with aiohttp.ClientSession(headers=headers) as session:
-        async with session.get(url + "&nd=1") as response:
+        if "?si=" in url:
+            url += "&nd=1"
+        async with session.get(url) as response:
             page = await response.text()
 
     soup = BeautifulSoup(page, "html.parser")

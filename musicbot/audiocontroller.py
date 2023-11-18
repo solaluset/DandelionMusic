@@ -327,6 +327,7 @@ class AudioController(object):
                 before_options="-reconnect 1 -reconnect_streamed 1"
                 " -reconnect_delay_max 5",
                 options="-loglevel error",
+                stderr=sys.stderr,
             ),
             after=self.next_song,
         )
@@ -351,16 +352,16 @@ class AudioController(object):
         Starts playing if it is the first song"""
 
         loaded_song = await loader.load_song(track)
-        if isinstance(loaded_song, Song):
+        if not loaded_song:
+            return None
+        elif isinstance(loaded_song, Song):
             self.playlist.add(loaded_song)
-        elif isinstance(loaded_song, list):
+        else:
             for song in loaded_song:
                 self.playlist.add(song)
             loaded_song = Song(
                 linkutils.Origins.Playlist, linkutils.Sites.Unknown
             )
-        else:
-            return None
 
         if self.current_song is None:
             print("Playing {}".format(track))
