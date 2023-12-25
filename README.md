@@ -192,7 +192,7 @@ d!history
 d!reset / d!rs
 ```
 
-* Disconnect and reconnect to the voice channel
+* Resets the player. May recover the bot after unexpected problems.
 
 ```
 d!ping
