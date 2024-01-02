@@ -1,4 +1,3 @@
-import sys
 import asyncio
 
 import discord
@@ -78,17 +77,6 @@ class General(commands.Cog):
     )
     async def _ping(self, ctx):
         await ctx.send(f"Pong ({int(ctx.bot.latency * 1000)} ms)")
-
-    @commands.command(
-        name="shutdown",
-        hidden=True,
-    )
-    @commands.is_owner()
-    async def _shutdown(self, ctx: Context):
-        await ctx.send("Shutting down...")
-        # hide SystemExit error message
-        sys.excepthook = lambda *_: None
-        sys.exit()
 
     @bridge.bridge_group(
         name="setting",
