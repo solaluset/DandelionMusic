@@ -207,6 +207,7 @@ class Context(bridge.BridgeContext):
     guild: discord.Guild
 
     async def send(self, *args, **kwargs):
+        kwargs.pop("reference", None)  # not supported
         audiocontroller = self.bot.audio_controllers[self.guild]
         channel = audiocontroller.command_channel
         if kwargs.get("ephemeral", False) or (
