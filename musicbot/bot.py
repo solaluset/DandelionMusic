@@ -6,7 +6,7 @@ from typing import Dict, Union, List
 import discord
 from discord import Option
 from discord.ext import bridge, tasks
-from discord.ext.commands import DefaultHelpCommand
+from discord.ext.commands import DefaultHelpCommand, NotOwner
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -76,7 +76,7 @@ class MusicBot(bridge.Bot):
 
     async def on_command_error(self, ctx, error):
         await ctx.send(error)
-        if not isinstance(error, CheckError):
+        if not isinstance(error, (CheckError, NotOwner)):
             print_exception(error)
 
     async def on_application_command_error(self, ctx, error):
