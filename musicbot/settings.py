@@ -270,7 +270,11 @@ class GuildSettings(Base):
 
             elif key == "button_emote":
                 emote = get_emoji(ctx.bot, self.button_emote)
-                embed.add_field(name=key, value=emote, inline=False)
+                embed.add_field(
+                    name=key,
+                    value=emote or SettingsEmbed.INVALID_EMOJI,
+                    inline=False,
+                )
                 continue
 
             embed.add_field(name=key, value=getattr(self, key), inline=False)

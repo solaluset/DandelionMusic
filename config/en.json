@@ -109,5 +109,6 @@
     "INVALID_CHANNEL": "Invalid Channel",
     "INVALID_VOICE_CHANNEL": "Invalid VChannel",
     "INVALID_ROLE": "Invalid Role",
+    "INVALID_EMOJI": "Invalid Emoji",
   },
 }
