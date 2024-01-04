@@ -1,5 +1,4 @@
 from __future__ import annotations
-import re
 import sys
 import _thread
 import asyncio
@@ -13,17 +12,15 @@ from discord import (
     __version__ as pycord_version,
     opus,
     utils,
-    Guild,
     Emoji,
 )
 from discord.ext.commands import CommandError
-from emoji import is_emoji
 
 from config import config
 
 # avoiding circular import
 if TYPE_CHECKING:
-    from musicbot.bot import Context
+    from musicbot.bot import Context, MusicBot
 
 
 OLD_FFMPEG_CONF = """
@@ -193,15 +190,10 @@ async def play_check(ctx: Context):
     return True
 
 
-def get_emoji(guild: Guild, string: str) -> Optional[Union[str, Emoji]]:
-    if is_emoji(string):
-        return string
-    ids = re.findall(r"\d{15,20}", string)
-    if ids:
-        emoji = utils.get(guild.emojis, id=int(ids[-1]))
-        if emoji:
-            return emoji
-    return utils.get(guild.emojis, name=string)
+def get_emoji(bot: MusicBot, string: str) -> Optional[Union[str, Emoji]]:
+    if string.isdecimal():
+        return utils.get(bot.emojis, id=int(string))
+    return string
 
 
 # StrEnum doesn't exist in Python < 3.11

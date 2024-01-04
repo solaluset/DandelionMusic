@@ -35,7 +35,7 @@ class Button(commands.Cog):
         if not button:
             return
 
-        emoji = utils.get_emoji(message.guild, button)
+        emoji = utils.get_emoji(self.bot, button)
         if not emoji:
             return
 
