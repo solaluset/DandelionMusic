@@ -51,8 +51,12 @@ class MusicBot(bridge.Bot):
         return await super().start(*args, **kwargs)
 
     async def close(self):
-        for audiocontroller in self.audio_controllers.values():
-            await audiocontroller.udisconnect()
+        await asyncio.gather(
+            *(
+                audiocontroller.udisconnect()
+                for audiocontroller in self.audio_controllers.values()
+            )
+        )
         return await super().close()
 
     async def on_ready(self):
@@ -109,8 +113,12 @@ class MusicBot(bridge.Bot):
 
     @tasks.loop(seconds=1)
     async def update_views(self):
-        for audiocontroller in self.audio_controllers.values():
-            await audiocontroller.update_view()
+        await asyncio.gather(
+            *(
+                audiocontroller.update_view()
+                for audiocontroller in self.audio_controllers.values()
+            )
+        )
 
     def add_application_command(self, command):
         if not config.ENABLE_SLASH_COMMANDS:
