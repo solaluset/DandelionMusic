@@ -38,10 +38,10 @@ libswscale      6.  8.103 /  6.  8.103
 libswresample   4.  8.100 /  4.  8.100
 """.strip()
 FFMPEG_ZIP_URL = (
-    "https://github.com/Krutyi-4el/FFmpeg/"
-    "releases/download/v6.0.git/ffmpeg.zip"
+    "https://github.com/Krutyi-4el/FFmpeg"
+    "/releases/latest/download/ffmpeg.zip"
 )
-NEWEST_FFMPEG_TIMESTAMP = "1695376413"
+NEWEST_FFMPEG_TIMESTAMP = "1704887962"
 
 
 def extract_ffmpeg_timestamp(version):
