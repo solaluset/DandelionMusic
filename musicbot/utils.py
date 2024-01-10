@@ -4,10 +4,10 @@ import _thread
 import asyncio
 import subprocess
 from enum import Enum
-from aioconsole import ainput
 from subprocess import CalledProcessError, check_output
 from typing import TYPE_CHECKING, Callable, Awaitable, Optional, Union
 
+from aioconsole import ainput
 from discord import (
     __version__ as pycord_version,
     opus,
