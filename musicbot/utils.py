@@ -41,15 +41,17 @@ FFMPEG_ZIP_URL = (
     "https://github.com/Krutyi-4el/FFmpeg"
     "/releases/latest/download/ffmpeg.zip"
 )
-NEWEST_FFMPEG_TIMESTAMP = "1704887962"
+NEWEST_FFMPEG_TIMESTAMP = 1704887962
 
 
-def extract_ffmpeg_timestamp(version):
+def extract_ffmpeg_timestamp(version: str) -> int:
     version = version.split()
     if len(version) > 2:
         timestamp = version[2].partition("-K4_")[2]
-        if timestamp:
-            return timestamp
+        try:
+            return int(timestamp)
+        except ValueError:
+            pass
     return None
 
 
