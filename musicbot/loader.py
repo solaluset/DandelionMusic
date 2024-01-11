@@ -5,14 +5,21 @@ from urllib.request import urlparse
 from datetime import datetime, timezone
 from concurrent.futures import ProcessPoolExecutor
 from multiprocessing import get_context as mp_context
-from typing import List, Tuple, Optional, Union
+from typing import List, Optional, Union
 
-import yt_dlp
+from yt_dlp import YoutubeDL, DownloadError
 
 from config import config
-from musicbot import linkutils
 from musicbot.songinfo import Song
 from musicbot.utils import OutputWrapper
+from musicbot.linkutils import (
+    YT_IE,
+    Origins,
+    SiteTypes,
+    fetch_spotify,
+    identify_url,
+    url_regex,
+)
 
 
 sys.stdout = OutputWrapper(sys.stdout)
@@ -34,7 +41,19 @@ _context.Process = LoaderProcess
 
 _loop = asyncio.new_event_loop()
 _executor = ProcessPoolExecutor(1, _context)
-_cached_downloaders: List[Tuple[dict, yt_dlp.YoutubeDL]] = []
+_downloader = YoutubeDL(
+    {
+        "format": "bestaudio/best",
+        "extract_flat": True,
+        "noplaylist": True,
+        # default_search shouldn't be needed as long as
+        # we don't pass plain text to the downloader.
+        # still leaving it just in case
+        "default_search": "auto",
+        "cookiefile": config.COOKIE_PATH,
+        "quiet": True,
+    }
+)
 _preloading = {}
 _search_lock = threading.Lock()
 
@@ -52,60 +71,20 @@ def init():
     _executor.submit(_noop).result()
 
 
-def extract_info(url: str, options: dict) -> dict:
-    downloader = None
-    for o, d in _cached_downloaders:
-        if o == options:
-            downloader = d
-            break
-    else:
-        # we need to copy options because
-        # downloader modifies the given dict
-        downloader = yt_dlp.YoutubeDL(options.copy())
-        _cached_downloaders.append((options, downloader))
+def extract_info(url: str) -> Optional[dict]:
+    # TODO: different locks for different sites?
     with _search_lock:
-        return downloader.extract_info(url, False)
-
-
-def fetch_song_info(song: Song) -> bool:
-    try:
-        info = extract_info(
-            song.info.webpage_url,
-            {
-                "format": "bestaudio",
-                "title": True,
-                "cookiefile": config.COOKIE_PATH,
-                "quiet": True,
-            },
-        )
-    except Exception as e:
-        if isinstance(e, yt_dlp.DownloadError) and e.exc_info[1].expected:
-            return False
-        info = extract_info(
-            song.info.webpage_url,
-            {
-                "title": True,
-                "cookiefile": config.COOKIE_PATH,
-                "quiet": True,
-            },
-        )
-    song.update(info)
-    return True
+        try:
+            return _downloader.extract_info(url, False)
+        except DownloadError:
+            return None
 
 
 def search_youtube(title: str) -> Optional[dict]:
     """Searches youtube for the video title
     Returns the first results video link"""
 
-    options = {
-        "format": "bestaudio/best",
-        "default_search": "auto",
-        "noplaylist": True,
-        "cookiefile": config.COOKIE_PATH,
-        "quiet": True,
-    }
-
-    r = extract_info("ytsearch:" + title, options)
+    r = extract_info("ytsearch:" + title)
 
     if not r:
         return None
@@ -118,29 +97,22 @@ async def load_song(track: str) -> Union[Optional[Song], List[Song]]:
 
 
 def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
-    host = linkutils.identify_url(track)
-    is_playlist = linkutils.identify_playlist(track)
+    host = identify_url(track)
 
-    if is_playlist != linkutils.Playlist_Types.Unknown:
-        return load_playlist(is_playlist, track)
-
-    data = None
-
-    if host == linkutils.Sites.Unknown:
-        if linkutils.get_urls(track):
+    if host == SiteTypes.UNKNOWN:
+        if url_regex.fullmatch(track):
             return None
 
         data = search_youtube(track)
-        host = linkutils.Sites.YouTube
+        host = SiteTypes.YT_DLP
 
-    elif host == linkutils.Sites.Spotify:
-        title = _loop.run_until_complete(linkutils.convert_spotify(track))
-        data = search_youtube(title)
+    elif host == SiteTypes.SPOTIFY:
+        data = _loop.run_until_complete(fetch_spotify(track))
 
-    elif host == linkutils.Sites.YouTube:
-        track = track.split("&list=")[0]
+    elif host == SiteTypes.YT_DLP:
+        data = extract_info(track)
 
-    elif host == linkutils.Sites.Custom:
+    elif host == SiteTypes.CUSTOM:
         data = {
             "url": track,
             "webpage_url": track,
@@ -148,104 +120,64 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             "uploader": config.SONGINFO_UNKNOWN,
         }
 
-    song = Song(linkutils.Origins.Default, host, webpage_url=track)
-    if data:
-        song.update(data)
-    else:
-        if not fetch_song_info(song):
-            raise SongError(config.SONGINFO_ERROR)
+    if not data:
+        return None
+
+    if isinstance(data, dict):
+        if "entries" in data:
+            # assuming a playlist
+            data = [entry["url"] for entry in data["entries"]]
+        elif YT_IE.suitable(data["url"]):
+            # the URL wasn't extracted, do it now
+            data = extract_info(data["url"])
+            if not data:
+                return None
+
+    if isinstance(data, list):
+        return [
+            Song(
+                Origins.Playlist,
+                host,
+                webpage_url=entry,
+            )
+            for entry in data
+        ]
+
+    song = Song(Origins.Default, host, webpage_url=track)
+    song.update(data)
 
     return song
 
 
-def load_playlist(
-    playlist_type: linkutils.Playlist_Types, url: str
-) -> List[Song]:
-    if playlist_type == linkutils.Playlist_Types.YouTube_Playlist:
-        options = {
-            "format": "bestaudio/best",
-            "extract_flat": True,
-            "cookiefile": config.COOKIE_PATH,
-            "quiet": True,
-        }
-
-        r = extract_info(url, options)
-
-        return [
-            Song(
-                linkutils.Origins.Playlist,
-                linkutils.Sites.YouTube,
-                webpage_url=f"https://www.youtube.com/watch?v={entry['id']}",
-            )
-            for entry in r["entries"]
-        ]
-
-    if playlist_type == linkutils.Playlist_Types.Spotify_Playlist:
-        links = _loop.run_until_complete(linkutils.get_spotify_playlist(url))
-        return [
-            Song(
-                linkutils.Origins.Playlist,
-                linkutils.Sites.Spotify,
-                webpage_url=link,
-            )
-            for link in links
-        ]
-
-    if playlist_type == linkutils.Playlist_Types.BandCamp_Playlist:
-        options = {
-            "format": "bestaudio/best",
-            "extract_flat": True,
-            "quiet": True,
-        }
-        r = extract_info(url, options)
-        return [
-            Song(
-                linkutils.Origins.Playlist,
-                linkutils.Sites.Bandcamp,
-                webpage_url=entry["url"],
-            )
-            for entry in r["entries"]
-        ]
-
-
 def _preload(song: Song) -> Optional[Song]:
-    if song.host == linkutils.Sites.Spotify:
-        title = _loop.run_until_complete(
-            linkutils.convert_spotify(song.info.webpage_url)
-        )
-        data = search_youtube(title)
-        if data:
-            song.update(data)
-            return song
-        else:
-            return None
-
-    elif fetch_song_info(song):
-        return song
+    loaded = _load_song(song.info.webpage_url)
+    if loaded:
+        return loaded
     return None
 
 
-async def preload(song: Song) -> bool:
-    if song.base_url is not None:
-        if song.host not in (linkutils.Sites.YouTube, linkutils.Sites.Spotify):
-            return True
+def _parse_expire(url: str) -> Optional[int]:
+    expire = (
+        ("&" + urlparse(url).query).partition("&expire=")[2].partition("&")[0]
+    )
+    try:
+        return int(expire)
+    except ValueError:
+        return None
 
-        expire = (
-            ("&" + urlparse(song.base_url).query)
-            .partition("&expire=")[2]
-            .partition("&")[0]
-        )
-        try:
-            expire = int(expire)
-        except ValueError:
+
+async def preload(song: Song) -> bool:
+    if song.info.webpage_url is None:
+        return True
+
+    if song.base_url is not None:
+        expire = _parse_expire(song.base_url)
+        if expire is None or expire == _parse_expire(song.info.webpage_url):
             return True
         if datetime.now(timezone.utc) < datetime.fromtimestamp(
             expire, timezone.utc
         ):
             return True
-
-    if song.info.webpage_url is None:
-        return True
 
     future = _preloading.get(song)
     if future:

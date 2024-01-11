@@ -360,7 +360,7 @@ class AudioController(object):
             for song in loaded_song:
                 self.playlist.add(song)
             loaded_song = Song(
-                linkutils.Origins.Playlist, linkutils.Sites.Unknown
+                linkutils.Origins.Playlist, linkutils.SiteTypes.UNKNOWN
             )
 
         if self.current_song is None:

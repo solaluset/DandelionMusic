@@ -3,10 +3,10 @@ from discord.ext import commands
 from musicbot import linkutils, utils
 from musicbot.bot import MusicBot
 
+
 SUPPORTED_SITES = (
-    linkutils.Sites.Spotify,
-    linkutils.Sites.Spotify_Playlist,
-    linkutils.Sites.YouTube,
+    linkutils.SiteTypes.SPOTIFY,
+    linkutils.SiteTypes.YT_DLP,
 )
 
 
