@@ -1,4 +1,5 @@
 import sys
+import atexit
 import asyncio
 import threading
 from urllib.request import urlparse
@@ -19,6 +20,8 @@ from musicbot.linkutils import (
     fetch_spotify,
     identify_url,
     url_regex,
+    init as init_session,
+    stop as stop_session,
 )
 
 
@@ -40,6 +43,8 @@ class LoaderProcess(_context.Process):
 _context.Process = LoaderProcess
 
 _loop = asyncio.new_event_loop()
+_loop.run_until_complete(init_session())
+atexit.register(lambda: _loop.run_until_complete(stop_session()))
 _executor = ProcessPoolExecutor(1, _context)
 _downloader = YoutubeDL(
     {

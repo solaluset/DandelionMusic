@@ -1,11 +1,12 @@
 import re
 import sys
+import asyncio
 from enum import Enum, auto
 from typing import Optional, Union, List
 
-import aiohttp
 import spotipy
 from bs4 import BeautifulSoup
+from aiohttp import ClientSession
 from spotipy.oauth2 import SpotifyClientCredentials
 from yt_dlp.extractor import gen_extractor_classes
 
@@ -51,11 +52,23 @@ headers = {
     )
 }
 
+_session = None
+
+
+async def init():
+    global _session
+    _session = ClientSession(headers=headers)
+
+
+async def stop():
+    await _session.close()
+    # according to aiohttp docs, we need to wait a little after closing session
+    await asyncio.sleep(0.5)
+
 
 async def get_soup(url: str) -> BeautifulSoup:
-    async with aiohttp.ClientSession(headers=headers) as session:
-        async with session.get(url) as response:
-            page = await response.text()
+    async with _session.get(url) as response:
+        page = await response.text()
 
     return BeautifulSoup(page, "html.parser")
 
