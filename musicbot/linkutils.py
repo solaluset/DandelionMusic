@@ -52,23 +52,22 @@ headers = {
 }
 
 
-# TODO: split into functions
+async def get_soup(url: str) -> BeautifulSoup:
+    async with aiohttp.ClientSession(headers=headers) as session:
+        async with session.get(url) as response:
+            page = await response.text()
+
+    return BeautifulSoup(page, "html.parser")
+
+
 async def fetch_spotify(url: str) -> Union[dict, List[str]]:
-    "Fetches song name from Spotify URL"
+    """Searches YouTube for Spotify song or loads Spotify playlist"""
     match = spotify_regex.match(url)
     url_type = match.group("type")
     if url_type != "track":
         return await get_spotify_playlist(url, url_type, match.group("code"))
 
-    result = url_regex.search(url)
-    if result and "?si=" in url:
-        url = result.group(0) + "&nd=1"
-
-    async with aiohttp.ClientSession(headers=headers) as session:
-        async with session.get(url) as response:
-            page = await response.text()
-
-    soup = BeautifulSoup(page, "html.parser")
+    soup = await get_soup(url)
 
     title = soup.find("title").string
     title = re.sub(
@@ -112,25 +111,10 @@ async def get_spotify_playlist(
                     file=sys.stderr,
                 )
 
-    async with aiohttp.ClientSession(headers=headers) as session:
-        if "?si=" in url:
-            url += "&nd=1"
-        async with session.get(url) as response:
-            page = await response.text()
-
-    soup = BeautifulSoup(page, "html.parser")
-
+    soup = await get_soup(url)
     results = soup.find_all(attrs={"name": "music:song", "content": True})
 
-    links = []
-
-    for item in results:
-        links.append(item["content"])
-
-    title = soup.find("title")
-    title = title.string
-
-    return links
+    return [item["content"] for item in results]
 
 
 def get_urls(content: str) -> List[str]:
