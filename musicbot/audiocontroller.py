@@ -372,7 +372,7 @@ class AudioController(object):
     def add_task(self, coro: Coroutine):
         task = self.bot.loop.create_task(coro)
         self._tasks.add(task)
-        task.add_done_callback(lambda t: self._tasks.remove(t))
+        task.add_done_callback(self._tasks.remove)
 
     async def _preload_queue(self):
         rerun_needed = False
