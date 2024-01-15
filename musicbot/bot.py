@@ -1,3 +1,4 @@
+import re
 import sys
 import asyncio
 from traceback import print_exception
@@ -131,7 +132,19 @@ class MusicBot(bridge.Bot):
         if isinstance(message, bridge.BridgeApplicationContext):
             # display this as prefix for slash commands
             return "/"
-        return await super().get_prefix(message)
+        prefixes = await super().get_prefix(message)
+        if not self.case_insensitive:
+            return prefixes
+        if isinstance(prefixes, str):
+            prefixes = [prefixes]
+        # perform case-insensitive search
+        for prefix in prefixes:
+            if match := re.match(
+                re.escape(prefix), message.content, re.IGNORECASE
+            ):
+                return match.group()
+        # did not match
+        return " "
 
     async def get_application_context(self, interaction):
         return await super().get_application_context(
