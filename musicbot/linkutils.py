@@ -51,7 +51,7 @@ url_regex = re.compile(
 )
 spotify_regex = re.compile(
     r"^https?://open\.spotify\.com/([^/]+/)?"
-    r"(?P<type>track|playlist|album)/(?P<code>[^?]+)"
+    r"(?P<type>track|playlist|album)/(?P<code>\w+)"
 )
 
 headers = {
@@ -97,7 +97,7 @@ class Origins(Enum):
 
 
 async def get_soup(url: str) -> BeautifulSoup:
-    async with _session.get(url) as response:
+    async with _session.get(spotify_regex.match(url).group()) as response:
         response.raise_for_status()
         page = await response.text()
 
