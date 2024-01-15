@@ -366,6 +366,8 @@ class AudioController(object):
         if self.current_song is None:
             print("Playing {}".format(track))
             await self.play_song(self.playlist.playque[0])
+        else:
+            self.preload_queue()
 
         return loaded_song
 
