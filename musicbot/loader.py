@@ -8,6 +8,7 @@ from concurrent.futures import ProcessPoolExecutor
 from multiprocessing import get_context as mp_context
 from typing import List, Optional, Union
 
+from aiohttp import ClientResponseError
 from yt_dlp import YoutubeDL, DownloadError
 
 from config import config
@@ -112,7 +113,10 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
         host = SiteTypes.YT_DLP
 
     elif host == SiteTypes.SPOTIFY:
-        data = _loop.run_until_complete(fetch_spotify(track))
+        try:
+            data = _loop.run_until_complete(fetch_spotify(track))
+        except ClientResponseError:
+            return None
 
     elif host == SiteTypes.YT_DLP:
         data = extract_info(track)

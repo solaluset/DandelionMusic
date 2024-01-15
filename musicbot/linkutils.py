@@ -98,6 +98,7 @@ class Origins(Enum):
 
 async def get_soup(url: str) -> BeautifulSoup:
     async with _session.get(url) as response:
+        response.raise_for_status()
         page = await response.text()
 
     return BeautifulSoup(page, "html.parser")
