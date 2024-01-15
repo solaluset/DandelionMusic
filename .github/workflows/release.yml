@@ -19,7 +19,7 @@ jobs:
 
     - name: Build
       run: >
-        pip install -r requirements.txt pyinstaller==6.3.0
+        pip install -r config/build-requirements.txt
         && python -m config.build
 
     - name: Upload binaries to release
