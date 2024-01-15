@@ -147,6 +147,13 @@ class Config:
         for key, default in current_cfg.items():
             current_cfg[key] = get_env_var(key, default)
 
+        for key, alias in (
+            ("SPOTIFY_ID", "SPOTIPY_CLIENT_ID"),
+            ("SPOTIFY_SECRET", "SPOTIPY_CLIENT_SECRET"),
+        ):
+            if not current_cfg[key]:
+                current_cfg[key] = get_env_var(alias, current_cfg[key])
+
         # Embeds are limited to 25 fields
         current_cfg["MAX_SONG_PRELOAD"] = min(
             current_cfg["MAX_SONG_PRELOAD"], 25
