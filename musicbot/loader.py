@@ -127,7 +127,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
         try:
             data = _loop.run_until_complete(fetch_spotify(track))
         except ClientResponseError:
-            return None
+            raise SongError(config.SONGINFO_ERROR)
 
     elif host == SiteTypes.CUSTOM:
         data = {
@@ -142,7 +142,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
         host = SiteTypes.YT_DLP
 
     if not data:
-        return None
+        raise SongError(config.SONGINFO_ERROR)
 
     if isinstance(data, dict):
         if "entries" in data:
@@ -152,7 +152,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             # the URL wasn't extracted, do it now
             data = extract_info(data["url"])
             if not data:
-                return None
+                raise SongError(config.SONGINFO_ERROR)
 
     if isinstance(data, list):
         return [
