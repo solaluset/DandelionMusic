@@ -2,9 +2,11 @@ import re
 import sys
 import asyncio
 from enum import Enum, auto
+from traceback import print_exc
+from multiprocessing import current_process
 from typing import Optional, Union, List
 
-import spotipy
+from spotipy import Spotify
 from bs4 import BeautifulSoup
 from aiohttp import ClientSession
 from spotipy.oauth2 import SpotifyClientCredentials
@@ -14,15 +16,27 @@ from config import config
 from musicbot import loader
 
 
-try:
-    sp_api = spotipy.Spotify(
-        auth_manager=SpotifyClientCredentials(
-            client_id=config.SPOTIFY_ID, client_secret=config.SPOTIFY_SECRET
+spotify_api = None
+if config.SPOTIFY_ID or config.SPOTIFY_SECRET:
+    try:
+        spotify_api = Spotify(
+            auth_manager=SpotifyClientCredentials(
+                client_id=config.SPOTIFY_ID,
+                client_secret=config.SPOTIFY_SECRET,
+            )
         )
-    )
-    api = True
-except Exception:
-    api = False
+    except Exception:
+        if (
+            # avoid printing this twice
+            current_process().name
+            == "MainProcess"
+        ):
+            print_exc(file=sys.stderr)
+            print(
+                "Failed to connect to Spotify API"
+                " because of the above exception.",
+                file=sys.stderr,
+            )
 
 EXTRACTORS = gen_extractor_classes()
 YT_IE = next(ie for ie in EXTRACTORS if ie.IE_NAME == "youtube")
@@ -65,6 +79,23 @@ async def stop():
     await asyncio.sleep(0.5)
 
 
+class SiteTypes(Enum):
+    SPOTIFY = auto()
+    YT_DLP = auto()
+    CUSTOM = auto()
+    UNKNOWN = auto()
+
+
+class SpotifyPlaylistTypes(Enum):
+    PLAYLIST = "playlist"
+    ALBUM = "album"
+
+
+class Origins(Enum):
+    Default = "Default"
+    Playlist = "Playlist"
+
+
 async def get_soup(url: str) -> BeautifulSoup:
     async with _session.get(url) as response:
         page = await response.text()
@@ -77,7 +108,7 @@ async def fetch_spotify(url: str) -> Union[dict, List[str]]:
     match = spotify_regex.match(url)
     url_type = match.group("type")
     if url_type != "track":
-        return await get_spotify_playlist(url, url_type, match.group("code"))
+        return await fetch_spotify_playlist(url, url_type, match.group("code"))
 
     soup = await get_soup(url)
 
@@ -88,40 +119,13 @@ async def fetch_spotify(url: str) -> Union[dict, List[str]]:
     return loader.search_youtube(title)
 
 
-async def get_spotify_playlist(
+async def fetch_spotify_playlist(
     url: str, list_type: str, code: str
 ) -> List[str]:
     """Returns list of Spotify links"""
 
-    if api:
-        try:
-            if list_type == "album":
-                results = sp_api.album_tracks(code)
-            elif list_type == "playlist":
-                results = sp_api.playlist_items(code)
-
-            if results:  # XXX: Needed?
-                tracks = results["items"]
-                while results["next"]:
-                    results = sp_api.next(results)
-                    tracks.extend(results["items"])
-                links = []
-                for track in tracks:
-                    try:
-                        links.append(
-                            track.get("track", track)["external_urls"][
-                                "spotify"
-                            ]
-                        )
-                    except KeyError:
-                        pass
-                return links
-        except Exception:
-            if config.SPOTIFY_ID != "" or config.SPOTIFY_SECRET != "":
-                print(
-                    "ERROR: Check spotify CLIENT_ID and SECRET",
-                    file=sys.stderr,
-                )
+    if spotify_api:
+        return fetch_playlist_with_api(SpotifyPlaylistTypes(list_type), code)
 
     soup = await get_soup(url)
     results = soup.find_all(attrs={"name": "music:song", "content": True})
@@ -129,20 +133,48 @@ async def get_spotify_playlist(
     return [item["content"] for item in results]
 
 
+def fetch_playlist_with_api(
+    list_type: SpotifyPlaylistTypes, code: str
+) -> List[str]:
+    tracks = []
+    try:
+        if list_type == SpotifyPlaylistTypes.ALBUM:
+            results = spotify_api.album_tracks(code)
+        elif list_type == SpotifyPlaylistTypes.PLAYLIST:
+            results = spotify_api.playlist_items(code)
+
+        if results:
+            while results:
+                tracks.extend(results["items"])
+                results = spotify_api.next(results)
+        else:
+            print(
+                f"Warning: Spotify API returned nothing"
+                f" for {list_type} {code}",
+                file=sys.stderr,
+            )
+    except Exception:
+        print(
+            f"ERROR: Spotify API returned error for {list_type} {code}:",
+            file=sys.stderr,
+        )
+        print_exc(file=sys.stderr)
+
+    links = []
+    for track in tracks:
+        try:
+            links.append(track.get("track", track)["external_urls"]["spotify"])
+        except KeyError as e:
+            print(
+                f"Warning: Cannot extract URL from {track}:"
+                f" field {e.args[0]!r} is missing",
+                file=sys.stderr,
+            )
+    return links
+
+
 def get_urls(content: str) -> List[str]:
     return url_regex.findall(content)
-
-
-class SiteTypes(Enum):
-    SPOTIFY = auto()
-    YT_DLP = auto()
-    CUSTOM = auto()
-    UNKNOWN = auto()
-
-
-class Origins(Enum):
-    Default = "Default"
-    Playlist = "Playlist"
 
 
 def identify_url(url: Optional[str]) -> SiteTypes:
