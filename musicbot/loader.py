@@ -2,6 +2,7 @@ import sys
 import atexit
 import asyncio
 import threading
+from inspect import getmodule
 from urllib.request import urlparse
 from datetime import datetime, timezone
 from concurrent.futures import ProcessPoolExecutor
@@ -16,8 +17,10 @@ from musicbot.songinfo import Song
 from musicbot.utils import OutputWrapper
 from musicbot.linkutils import (
     YT_IE,
+    ExtractorT,
     Origins,
     SiteTypes,
+    get_ie,
     fetch_spotify,
     identify_url,
     url_regex,
@@ -61,7 +64,7 @@ _downloader = YoutubeDL(
     }
 )
 _preloading = {}
-_search_lock = threading.Lock()
+_site_locks = {}
 
 
 class SongError(Exception):
@@ -77,11 +80,19 @@ def init():
     _executor.submit(_noop).result()
 
 
-def extract_info(url: str) -> Optional[dict]:
-    # TODO: different locks for different sites?
-    with _search_lock:
+def extract_info(url: str, ie: Optional[ExtractorT] = None) -> Optional[dict]:
+    if ie is None:
+        ie = get_ie(url)
+    # cache by module (effectively means by site)
+    # extractor *may* be lazy
+    module = getmodule(getattr(ie, "real_class", ie))
+    try:
+        lock = _site_locks[module]
+    except KeyError:
+        lock = _site_locks[module] = threading.Lock()
+    with lock:
         try:
-            return _downloader.extract_info(url, False)
+            return _downloader.extract_info(url, False, ie.ie_key())
         except DownloadError:
             return None
 
@@ -118,9 +129,6 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
         except ClientResponseError:
             return None
 
-    elif host == SiteTypes.YT_DLP:
-        data = extract_info(track)
-
     elif host == SiteTypes.CUSTOM:
         data = {
             "url": track,
@@ -128,6 +136,10 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             "title": track.rpartition("/")[2],
             "uploader": config.SONGINFO_UNKNOWN,
         }
+
+    else:
+        data = extract_info(track, host)
+        host = SiteTypes.YT_DLP
 
     if not data:
         return None

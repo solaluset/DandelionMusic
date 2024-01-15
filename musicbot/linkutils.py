@@ -11,6 +11,8 @@ from bs4 import BeautifulSoup
 from aiohttp import ClientSession
 from spotipy.oauth2 import SpotifyClientCredentials
 from yt_dlp.extractor import gen_extractor_classes
+from yt_dlp.extractor.common import InfoExtractor
+from yt_dlp.extractor.lazy_extractors import LazyLoadExtractor
 
 from config import config
 from musicbot import loader
@@ -38,6 +40,7 @@ if config.SPOTIFY_ID or config.SPOTIFY_SECRET:
                 file=sys.stderr,
             )
 
+ExtractorT = Union[InfoExtractor, LazyLoadExtractor]
 EXTRACTORS = gen_extractor_classes()
 YT_IE = next(ie for ie in EXTRACTORS if ie.IE_NAME == "youtube")
 # Modified version of
@@ -178,16 +181,22 @@ def get_urls(content: str) -> List[str]:
     return url_regex.findall(content)
 
 
-def identify_url(url: Optional[str]) -> SiteTypes:
+def get_ie(url: str) -> Optional[ExtractorT]:
+    for ie in EXTRACTORS:
+        if ie.suitable(url) and ie.IE_NAME != "generic":
+            return ie
+    return None
+
+
+def identify_url(url: Optional[str]) -> Union[SiteTypes, ExtractorT]:
     if url is None or not url_regex.fullmatch(url):
         return SiteTypes.UNKNOWN
 
     if spotify_regex.match(url):
         return SiteTypes.SPOTIFY
 
-    for ie in EXTRACTORS:
-        if ie.suitable(url) and ie.IE_NAME != "generic":
-            return SiteTypes.YT_DLP
+    if ie := get_ie(url):
+        return ie
 
     if url.lower().endswith(
         config.SUPPORTED_EXTENSIONS
