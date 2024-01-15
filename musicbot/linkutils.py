@@ -26,15 +26,14 @@ except Exception:
 
 EXTRACTORS = gen_extractor_classes()
 YT_IE = next(ie for ie in EXTRACTORS if ie.IE_NAME == "youtube")
+# Modified version of
+# https://gist.github.com/gruber/249502#gistcomment-1328838
 url_regex = re.compile(
-    r"""http[s]?://(?:
-        [a-zA-Z]
-        |[0-9]
-        |[$-_@.&+]
-        |[!*\(\),]
-        |(?:%[0-9a-fA-F][0-9a-fA-F])
-    )+""",
-    re.VERBOSE,
+    r"(?i)\b((?:[a-z][\w.+-]+:(?:/{1,3}|[?+]?[a-z0-9%]))"
+    r"(?:[^\s()<>]|\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\))+"
+    r"(?:\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'"
+    r'"'
+    r".,<>?«»“”‘’]))"
 )
 spotify_regex = re.compile(
     r"^https?://open\.spotify\.com/([^/]+/)?"
