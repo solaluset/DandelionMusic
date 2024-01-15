@@ -59,6 +59,7 @@ class Developer(commands.Cog):
     @commands.command(
         name="execute",
         hidden=True,
+        aliases=("exec",),
     )
     @commands.is_owner()
     async def _execute(self, ctx: Context, *, code: str):
