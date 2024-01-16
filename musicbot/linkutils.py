@@ -3,6 +3,7 @@ import sys
 import asyncio
 from enum import Enum, auto
 from traceback import print_exc
+from urllib.request import urlparse
 from multiprocessing import current_process
 from typing import Optional, Union, List
 
@@ -198,9 +199,7 @@ def identify_url(url: Optional[str]) -> Union[SiteTypes, ExtractorT]:
     if ie := get_ie(url):
         return ie
 
-    if url.lower().endswith(
-        config.SUPPORTED_EXTENSIONS
-    ) and url_regex.fullmatch(url):
+    if urlparse(url).path.lower().endswith(config.SUPPORTED_EXTENSIONS):
         return SiteTypes.CUSTOM
 
     # If no match
