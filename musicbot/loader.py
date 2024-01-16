@@ -170,13 +170,6 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
     return song
 
 
-def _preload(song: Song) -> Optional[Song]:
-    loaded = _load_song(song.info.webpage_url)
-    if loaded:
-        return loaded
-    return None
-
-
 def _parse_expire(url: str) -> Optional[int]:
     expire = (
         ("&" + urlparse(url).query).partition("&expire=")[2].partition("&")[0]
@@ -205,7 +198,7 @@ async def preload(song: Song) -> bool:
         return await future
     _preloading[song] = asyncio.Future()
 
-    preloaded = await _run_sync(_preload, song)
+    preloaded = await load_song(song.info.webpage_url)
     success = preloaded is not None
     if success:
         song.update(preloaded)
