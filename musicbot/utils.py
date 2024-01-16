@@ -1,29 +1,26 @@
 from __future__ import annotations
-import re
 import sys
 import _thread
 import asyncio
 import subprocess
 from enum import Enum
-from aioconsole import ainput
 from subprocess import CalledProcessError, check_output
 from typing import TYPE_CHECKING, Callable, Awaitable, Optional, Union
 
+from aioconsole import ainput
 from discord import (
     __version__ as pycord_version,
     opus,
     utils,
-    Guild,
     Emoji,
 )
 from discord.ext.commands import CommandError
-from emoji import is_emoji
 
 from config import config
 
 # avoiding circular import
 if TYPE_CHECKING:
-    from musicbot.bot import Context
+    from musicbot.bot import Context, MusicBot
 
 
 OLD_FFMPEG_CONF = """
@@ -41,26 +38,29 @@ libswscale      6.  8.103 /  6.  8.103
 libswresample   4.  8.100 /  4.  8.100
 """.strip()
 FFMPEG_ZIP_URL = (
-    "https://github.com/Krutyi-4el/FFmpeg/"
-    "releases/download/v6.0.git/ffmpeg.zip"
+    "https://github.com/Krutyi-4el/FFmpeg"
+    "/releases/latest/download/ffmpeg.zip"
 )
-NEWEST_FFMPEG_TIMESTAMP = "1695376413"
+NEWEST_FFMPEG_TIMESTAMP = 1704887962
 
 
-def extract_ffmpeg_timestamp(version):
+def extract_ffmpeg_timestamp(version: str) -> int:
     version = version.split()
     if len(version) > 2:
         timestamp = version[2].partition("-K4_")[2]
-        if timestamp:
-            return timestamp
+        try:
+            return int(timestamp)
+        except ValueError:
+            pass
     return None
 
 
 def check_dependencies():
-    assert pycord_version == "2.5.6", (
-        "you don't have necessary version of Pycord."
-        " Please install the version specified in requirements.txt"
-    )
+    if pycord_version != "2.5.6":
+        raise ImportError(
+            "you have wrong version of Pycord."
+            " Please install the version specified in requirements.txt"
+        )
 
     flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
     ffmpeg_output = None
@@ -193,15 +193,10 @@ async def play_check(ctx: Context):
     return True
 
 
-def get_emoji(guild: Guild, string: str) -> Optional[Union[str, Emoji]]:
-    if is_emoji(string):
-        return string
-    ids = re.findall(r"\d{15,20}", string)
-    if ids:
-        emoji = utils.get(guild.emojis, id=int(ids[-1]))
-        if emoji:
-            return emoji
-    return utils.get(guild.emojis, name=string)
+def get_emoji(bot: MusicBot, string: str) -> Optional[Union[str, Emoji]]:
+    if string.isdecimal():
+        return utils.get(bot.emojis, id=int(string))
+    return string
 
 
 # StrEnum doesn't exist in Python < 3.11

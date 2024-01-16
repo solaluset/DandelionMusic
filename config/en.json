@@ -74,6 +74,8 @@
   "HELP_REMOVE_SHORT": "Remove a song",
   "HELP_REMOVE_LONG": "Allows to remove a song from the queue by typing it's position (defaults to the last song).",
 
+  "SETTINGS_EMOJI_CHECK_MSG": "Checking the emoji...",
+
   "PauseState": {
     "NOTHING_TO_PAUSE": "Nothing to pause or resume.",
     "PAUSED": "Playback Paused :pause_button:",
@@ -97,6 +99,7 @@
   "ConversionError": {
     "BUTTON_DISABLED": "Button plugin is disabled",
     "INVALID_EMOJI": "Invalid emote",
+    "NO_REACTION_PERMS": "Missing permission to add reactions",
     "INVALID_VOLUME": "Value must be a number in range 0-100",
   },
   "SettingsEmbed": {
@@ -106,5 +109,6 @@
     "INVALID_CHANNEL": "Invalid Channel",
     "INVALID_VOICE_CHANNEL": "Invalid VChannel",
     "INVALID_ROLE": "Invalid Role",
+    "INVALID_EMOJI": "Invalid Emoji",
   },
 }

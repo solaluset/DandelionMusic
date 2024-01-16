@@ -1,35 +1,62 @@
 import re
 import sys
-from enum import Enum
+import asyncio
+from enum import Enum, auto
+from traceback import print_exc
+from urllib.request import urlparse
+from multiprocessing import current_process
 from typing import Optional, Union, List
 
-import aiohttp
-import spotipy
+from spotipy import Spotify
 from bs4 import BeautifulSoup
-from config import config
+from aiohttp import ClientSession
 from spotipy.oauth2 import SpotifyClientCredentials
+from yt_dlp.extractor import gen_extractor_classes
+from yt_dlp.extractor.common import InfoExtractor
+from yt_dlp.extractor.lazy_extractors import LazyLoadExtractor
 
-try:
-    sp_api = spotipy.Spotify(
-        auth_manager=SpotifyClientCredentials(
-            client_id=config.SPOTIFY_ID, client_secret=config.SPOTIFY_SECRET
+from config import config
+from musicbot import loader
+
+
+spotify_api = None
+if config.SPOTIFY_ID or config.SPOTIFY_SECRET:
+    try:
+        spotify_api = Spotify(
+            auth_manager=SpotifyClientCredentials(
+                client_id=config.SPOTIFY_ID,
+                client_secret=config.SPOTIFY_SECRET,
+            )
         )
-    )
-    api = True
-except Exception:
-    api = False
+    except Exception:
+        if (
+            # avoid printing this twice
+            current_process().name
+            == "MainProcess"
+        ):
+            print_exc(file=sys.stderr)
+            print(
+                "Failed to connect to Spotify API"
+                " because of the above exception.",
+                file=sys.stderr,
+            )
 
+ExtractorT = Union[InfoExtractor, LazyLoadExtractor]
+EXTRACTORS = gen_extractor_classes()
+YT_IE = next(ie for ie in EXTRACTORS if ie.IE_NAME == "youtube")
+# Modified version of
+# https://gist.github.com/gruber/249502#gistcomment-1328838
 url_regex = re.compile(
-    r"""http[s]?://(?:
-        [a-zA-Z]
-        |[0-9]
-        |[$-_@.&+]
-        |[!*\(\),]
-        |(?:%[0-9a-fA-F][0-9a-fA-F])
-    )+""",
-    re.VERBOSE,
+    r"(?i)\b((?:[a-z][\w.+-]+:(?:/{1,3}|[?+]?[a-z0-9%]))"
+    r"(?:[^\s()<>]|\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\))+"
+    r"(?:\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'"
+    r'"'
+    r".,<>?«»“”‘’]))"
 )
-album_regex = re.compile(r"^https://open\.spotify\.com/([^/]+/)?album")
+spotify_regex = re.compile(
+    r"^https?://open\.spotify\.com/([^/]+/)?"
+    r"(?P<type>track|playlist|album)/(?P<code>\w+)"
+)
 
 headers = {
     "User-Agent": " ".join(
@@ -42,107 +69,30 @@ headers = {
     )
 }
 
-
-async def convert_spotify(url: str) -> str:
-    "Fetches song name from Spotify URL"
-    result = url_regex.search(url)
-    if result and "?si=" in url:
-        url = result.group(0) + "&nd=1"
-
-    async with aiohttp.ClientSession(headers=headers) as session:
-        async with session.get(url) as response:
-            page = await response.text()
-
-    soup = BeautifulSoup(page, "html.parser")
-
-    title = soup.find("title").string
-    return re.sub(
-        r"(.*) - song( and lyrics)? by (.*) \| Spotify", r"\1 \3", title
-    )
+_session = None
 
 
-async def get_spotify_playlist(url: str) -> list:
-    """Returns list of Spotify links"""
-
-    code = url.split("/")[4].split("?")[0]
-
-    if api:
-        results = None
-        try:
-            if is_sp_album(url):
-                results = sp_api.album_tracks(code)
-
-            if "open.spotify.com/playlist" in url:
-                results = sp_api.playlist_items(code)
-
-            if results:
-                tracks = results["items"]
-                while results["next"]:
-                    results = sp_api.next(results)
-                    tracks.extend(results["items"])
-                links = []
-                for track in tracks:
-                    try:
-                        links.append(
-                            track.get("track", track)["external_urls"][
-                                "spotify"
-                            ]
-                        )
-                    except KeyError:
-                        pass
-                return links
-        except Exception:
-            if config.SPOTIFY_ID != "" or config.SPOTIFY_SECRET != "":
-                print(
-                    "ERROR: Check spotify CLIENT_ID and SECRET",
-                    file=sys.stderr,
-                )
-
-    async with aiohttp.ClientSession(headers=headers) as session:
-        if "?si=" in url:
-            url += "&nd=1"
-        async with session.get(url) as response:
-            page = await response.text()
-
-    soup = BeautifulSoup(page, "html.parser")
-
-    results = soup.find_all(attrs={"name": "music:song", "content": True})
-
-    links = []
-
-    for item in results:
-        links.append(item["content"])
-
-    title = soup.find("title")
-    title = title.string
-
-    return links
+async def init():
+    global _session
+    _session = ClientSession(headers=headers)
 
 
-def get_urls(content: str) -> List[str]:
-    return url_regex.findall(content)
+async def stop():
+    await _session.close()
+    # according to aiohttp docs, we need to wait a little after closing session
+    await asyncio.sleep(0.5)
 
 
-def is_sp_album(url: str) -> bool:
-    return bool(album_regex.match(url))
+class SiteTypes(Enum):
+    SPOTIFY = auto()
+    YT_DLP = auto()
+    CUSTOM = auto()
+    UNKNOWN = auto()
 
 
-class Sites(Enum):
-    Spotify = "Spotify"
-    Spotify_Playlist = "Spotify Playlist"
-    YouTube = "YouTube"
-    Twitter = "Twitter"
-    SoundCloud = "SoundCloud"
-    Bandcamp = "Bandcamp"
-    Custom = "Custom"
-    Unknown = "Unknown"
-
-
-class Playlist_Types(Enum):
-    Spotify_Playlist = "Spotify Playlist"
-    YouTube_Playlist = "YouTube Playlist"
-    BandCamp_Playlist = "BandCamp Playlist"
-    Unknown = "Unknown"
+class SpotifyPlaylistTypes(Enum):
+    PLAYLIST = "playlist"
+    ALBUM = "album"
 
 
 class Origins(Enum):
@@ -150,46 +100,107 @@ class Origins(Enum):
     Playlist = "Playlist"
 
 
-def identify_url(url: Optional[str]) -> Sites:
-    if url is None:
-        return Sites.Unknown
+async def get_soup(url: str) -> BeautifulSoup:
+    async with _session.get(spotify_regex.match(url).group()) as response:
+        response.raise_for_status()
+        page = await response.text()
 
-    if "https://www.youtu" in url or "https://youtu.be" in url:
-        return Sites.YouTube
+    return BeautifulSoup(page, "html.parser")
 
-    if re.match(r"^https://open\.spotify\.com/([^/]+/)?track", url):
-        return Sites.Spotify
 
-    if "https://open.spotify.com/playlist" in url or is_sp_album(url):
-        return Sites.Spotify_Playlist
+async def fetch_spotify(url: str) -> Union[dict, List[str]]:
+    """Searches YouTube for Spotify song or loads Spotify playlist"""
+    match = spotify_regex.match(url)
+    url_type = match.group("type")
+    if url_type != "track":
+        return await fetch_spotify_playlist(url, url_type, match.group("code"))
 
-    if "bandcamp.com/track/" in url:
-        return Sites.Bandcamp
+    soup = await get_soup(url)
 
-    if "https://twitter.com/" in url:
-        return Sites.Twitter
+    title = soup.find("title").string
+    title = re.sub(
+        r"(.*) - song( and lyrics)? by (.*) \| Spotify", r"\1 \3", title
+    )
+    return loader.search_youtube(title)
 
-    if url.lower().endswith(config.SUPPORTED_EXTENSIONS):
-        return Sites.Custom
 
-    if "soundcloud.com/" in url:
-        return Sites.SoundCloud
+async def fetch_spotify_playlist(
+    url: str, list_type: str, code: str
+) -> List[str]:
+    """Returns list of Spotify links"""
+
+    if spotify_api:
+        return fetch_playlist_with_api(SpotifyPlaylistTypes(list_type), code)
+
+    soup = await get_soup(url)
+    results = soup.find_all(attrs={"name": "music:song", "content": True})
+
+    return [item["content"] for item in results]
+
+
+def fetch_playlist_with_api(
+    list_type: SpotifyPlaylistTypes, code: str
+) -> List[str]:
+    tracks = []
+    try:
+        if list_type == SpotifyPlaylistTypes.ALBUM:
+            results = spotify_api.album_tracks(code)
+        elif list_type == SpotifyPlaylistTypes.PLAYLIST:
+            results = spotify_api.playlist_items(code)
+
+        if results:
+            while results:
+                tracks.extend(results["items"])
+                results = spotify_api.next(results)
+        else:
+            print(
+                f"Warning: Spotify API returned nothing"
+                f" for {list_type} {code}",
+                file=sys.stderr,
+            )
+    except Exception:
+        print(
+            f"ERROR: Spotify API returned error for {list_type} {code}:",
+            file=sys.stderr,
+        )
+        print_exc(file=sys.stderr)
+
+    links = []
+    for track in tracks:
+        try:
+            links.append(track.get("track", track)["external_urls"]["spotify"])
+        except KeyError as e:
+            print(
+                f"Warning: Cannot extract URL from {track}:"
+                f" field {e.args[0]!r} is missing",
+                file=sys.stderr,
+            )
+    return links
+
+
+def get_urls(content: str) -> List[str]:
+    return url_regex.findall(content)
+
+
+def get_ie(url: str) -> Optional[ExtractorT]:
+    for ie in EXTRACTORS:
+        if ie.suitable(url) and ie.IE_NAME != "generic":
+            return ie
+    return None
+
+
+def identify_url(url: Optional[str]) -> Union[SiteTypes, ExtractorT]:
+    if url is None or not url_regex.fullmatch(url):
+        return SiteTypes.UNKNOWN
+
+    if spotify_regex.match(url):
+        return SiteTypes.SPOTIFY
+
+    if ie := get_ie(url):
+        return ie
+
+    if urlparse(url).path.lower().endswith(config.SUPPORTED_EXTENSIONS):
+        return SiteTypes.CUSTOM
 
     # If no match
-    return Sites.Unknown
-
-
-def identify_playlist(url: Optional[str]) -> Union[Sites, Playlist_Types]:
-    if url is None:
-        return Sites.Unknown
-
-    if "playlist?list=" in url:
-        return Playlist_Types.YouTube_Playlist
-
-    if "https://open.spotify.com/playlist" in url or is_sp_album(url):
-        return Playlist_Types.Spotify_Playlist
-
-    if "bandcamp.com/album/" in url:
-        return Playlist_Types.BandCamp_Playlist
-
-    return Playlist_Types.Unknown
+    return SiteTypes.UNKNOWN

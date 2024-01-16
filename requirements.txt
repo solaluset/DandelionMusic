@@ -3,7 +3,6 @@ yt-dlp==2023.11.16
 aiohttp==3.9.1
 beautifulsoup4==4.12.2
 spotipy==2.23.0
-emoji==2.8.0
 SQLAlchemy[asyncio]==2.0.23
 alembic==1.13.1
 aioconsole==0.7.0

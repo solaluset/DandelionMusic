@@ -1,3 +1,4 @@
+import re
 import sys
 import asyncio
 from traceback import print_exception
@@ -6,7 +7,7 @@ from typing import Dict, Union, List
 import discord
 from discord import Option
 from discord.ext import bridge, tasks
-from discord.ext.commands import DefaultHelpCommand
+from discord.ext.commands import DefaultHelpCommand, NotOwner
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -51,8 +52,12 @@ class MusicBot(bridge.Bot):
         return await super().start(*args, **kwargs)
 
     async def close(self):
-        for audiocontroller in self.audio_controllers.values():
-            await audiocontroller.udisconnect()
+        await asyncio.gather(
+            *(
+                audiocontroller.udisconnect()
+                for audiocontroller in self.audio_controllers.values()
+            )
+        )
         return await super().close()
 
     async def on_ready(self):
@@ -76,7 +81,7 @@ class MusicBot(bridge.Bot):
 
     async def on_command_error(self, ctx, error):
         await ctx.send(error)
-        if not isinstance(error, CheckError):
+        if not isinstance(error, (CheckError, NotOwner)):
             print_exception(error)
 
     async def on_application_command_error(self, ctx, error):
@@ -109,8 +114,12 @@ class MusicBot(bridge.Bot):
 
     @tasks.loop(seconds=1)
     async def update_views(self):
-        for audiocontroller in self.audio_controllers.values():
-            await audiocontroller.update_view()
+        await asyncio.gather(
+            *(
+                audiocontroller.update_view()
+                for audiocontroller in self.audio_controllers.values()
+            )
+        )
 
     def add_application_command(self, command):
         if not config.ENABLE_SLASH_COMMANDS:
@@ -123,7 +132,19 @@ class MusicBot(bridge.Bot):
         if isinstance(message, bridge.BridgeApplicationContext):
             # display this as prefix for slash commands
             return "/"
-        return await super().get_prefix(message)
+        prefixes = await super().get_prefix(message)
+        if not self.case_insensitive:
+            return prefixes
+        if isinstance(prefixes, str):
+            prefixes = [prefixes]
+        # perform case-insensitive search
+        for prefix in prefixes:
+            if match := re.match(
+                re.escape(prefix), message.content, re.IGNORECASE
+            ):
+                return match.group()
+        # did not match
+        return " "
 
     async def get_application_context(self, interaction):
         return await super().get_application_context(
@@ -207,6 +228,7 @@ class Context(bridge.BridgeContext):
     guild: discord.Guild
 
     async def send(self, *args, **kwargs):
+        kwargs.pop("reference", None)  # not supported
         audiocontroller = self.bot.audio_controllers[self.guild]
         channel = audiocontroller.command_channel
         if kwargs.get("ephemeral", False) or (

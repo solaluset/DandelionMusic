@@ -1,9 +1,19 @@
 import json
 import os
+import re
+from inspect import isawaitable
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import discord
-from discord import Option, TextChannel, VoiceChannel, Role
+from discord import (
+    Option,
+    TextChannel,
+    VoiceChannel,
+    Role,
+    Forbidden,
+    HTTPException,
+    utils,
+)
 import sqlalchemy
 from sqlalchemy import String, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -13,8 +23,7 @@ from alembic.operations import Operations
 from typing_extensions import Annotated
 
 from config import config
-from musicbot import utils
-from musicbot.utils import StrEnum
+from musicbot.utils import StrEnum, get_emoji
 
 # avoiding circular import
 if TYPE_CHECKING:
@@ -53,17 +62,31 @@ class ConversionError(Exception):
     pass
 
 
-def convert_emoji(ctx: "Context", value: Optional[str]) -> Optional[str]:
+async def convert_emoji(ctx: "Context", value: Optional[str]) -> Optional[str]:
     if not config.ENABLE_BUTTON_PLUGIN:
         raise ConversionError(ConversionErrorText.BUTTON_DISABLED)
 
     if value is None:
         return None
 
-    emoji = utils.get_emoji(ctx.guild, value)
-    if emoji is None:
-        raise ConversionError(ConversionErrorText.INVALID_EMOJI)
-    elif isinstance(emoji, discord.Emoji):
+    ids = re.findall(r"\d{15,20}", value)
+    emoji = (
+        (utils.get(ctx.bot.emojis, id=int(ids[-1])) if ids else None)
+        or utils.get(ctx.guild.emojis, name=value)
+        or value
+    )
+
+    msg = await ctx.send(config.SETTINGS_EMOJI_CHECK_MSG)
+    try:
+        await msg.add_reaction(emoji)
+    except Forbidden as e:
+        raise ConversionError(ConversionErrorText.NO_REACTION_PERMS) from e
+    except HTTPException as e:
+        if e.code == 10014:  # Unknown Emoji
+            raise ConversionError(ConversionErrorText.INVALID_EMOJI) from e
+        raise
+
+    if isinstance(emoji, discord.Emoji):
         emoji = str(emoji.id)
     return emoji
 
@@ -246,8 +269,12 @@ class GuildSettings(Base):
                 continue
 
             elif key == "button_emote":
-                emote = utils.get_emoji(ctx.guild, self.button_emote)
-                embed.add_field(name=key, value=emote, inline=False)
+                emote = get_emoji(ctx.bot, self.button_emote)
+                embed.add_field(
+                    name=key,
+                    value=emote or SettingsEmbed.INVALID_EMOJI,
+                    inline=False,
+                )
                 continue
 
             embed.add_field(name=key, value=getattr(self, key), inline=False)
@@ -261,6 +288,8 @@ class GuildSettings(Base):
             return False
 
         value = CONFIG_CONVERTERS[setting](ctx, value)
+        if isawaitable(value):
+            value = await value
         setattr(self, setting, value)
         async with ctx.bot.DbSession() as session:
             session.add(self)

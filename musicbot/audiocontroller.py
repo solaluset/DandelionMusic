@@ -360,19 +360,21 @@ class AudioController(object):
             for song in loaded_song:
                 self.playlist.add(song)
             loaded_song = Song(
-                linkutils.Origins.Playlist, linkutils.Sites.Unknown
+                linkutils.Origins.Playlist, linkutils.SiteTypes.UNKNOWN
             )
 
         if self.current_song is None:
             print("Playing {}".format(track))
             await self.play_song(self.playlist.playque[0])
+        else:
+            self.preload_queue()
 
         return loaded_song
 
     def add_task(self, coro: Coroutine):
         task = self.bot.loop.create_task(coro)
         self._tasks.add(task)
-        task.add_done_callback(lambda t: self._tasks.remove(t))
+        task.add_done_callback(self._tasks.remove)
 
     async def _preload_queue(self):
         rerun_needed = False

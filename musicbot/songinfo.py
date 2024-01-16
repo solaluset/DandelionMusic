@@ -3,14 +3,14 @@ from typing import Optional, Union
 
 import discord
 from config import config
-from musicbot.linkutils import Origins, Sites
+from musicbot.linkutils import Origins, SiteTypes
 
 
 class Song:
     def __init__(
         self,
         origin: Origins,
-        host: Sites,
+        host: SiteTypes,
         base_url: Optional[str] = None,
         uploader: Optional[str] = None,
         title: Optional[str] = None,
