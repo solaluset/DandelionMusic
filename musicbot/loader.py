@@ -23,7 +23,6 @@ from musicbot.linkutils import (
     get_ie,
     fetch_spotify,
     identify_url,
-    url_regex,
     init as init_session,
     stop as stop_session,
 )
@@ -116,12 +115,12 @@ async def load_song(track: str) -> Union[Optional[Song], List[Song]]:
 def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
     host = identify_url(track)
 
-    if host == SiteTypes.UNKNOWN:
-        if url_regex.fullmatch(track):
-            return None
-
+    if host == SiteTypes.NOT_URL:
         data = search_youtube(track)
         host = SiteTypes.YT_DLP
+
+    elif host == SiteTypes.UNKNOWN:
+        return None
 
     elif host == SiteTypes.SPOTIFY:
         try:
@@ -137,7 +136,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             "uploader": config.SONGINFO_UNKNOWN,
         }
 
-    else:
+    else:  # host is info extractor
         data = extract_info(track, host)
         host = SiteTypes.YT_DLP
 

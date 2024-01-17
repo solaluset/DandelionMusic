@@ -88,6 +88,7 @@ class SiteTypes(Enum):
     YT_DLP = auto()
     CUSTOM = auto()
     UNKNOWN = auto()
+    NOT_URL = auto()
 
 
 class SpotifyPlaylistTypes(Enum):
@@ -189,9 +190,9 @@ def get_ie(url: str) -> Optional[ExtractorT]:
     return None
 
 
-def identify_url(url: Optional[str]) -> Union[SiteTypes, ExtractorT]:
-    if url is None or not url_regex.fullmatch(url):
-        return SiteTypes.UNKNOWN
+def identify_url(url: str) -> Union[SiteTypes, ExtractorT]:
+    if not url_regex.fullmatch(url):
+        return SiteTypes.NOT_URL
 
     if spotify_regex.match(url):
         return SiteTypes.SPOTIFY
