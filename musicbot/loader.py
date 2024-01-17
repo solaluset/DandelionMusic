@@ -125,8 +125,8 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
     elif host == SiteTypes.SPOTIFY:
         try:
             data = _loop.run_until_complete(fetch_spotify(track))
-        except ClientResponseError:
-            raise SongError(config.SONGINFO_ERROR)
+        except ClientResponseError as e:
+            raise SongError(config.SONGINFO_ERROR) from e
 
     elif host == SiteTypes.CUSTOM:
         data = {
