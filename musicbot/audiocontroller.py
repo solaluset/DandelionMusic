@@ -225,7 +225,8 @@ class AudioController(object):
                 except discord.NotFound:
                     self.last_message = None
             else:
-                print("Failed to update view:", e, file=sys.stderr)
+                print("Failed to update view:", file=sys.stderr)
+                print_exc(file=sys.stderr)
 
     def is_active(self) -> bool:
         client = self.guild.voice_client
