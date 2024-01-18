@@ -14,4 +14,4 @@ jobs:
         run: pip install pre-commit
 
       - name: Run checks
-        run: pre-commit
+        run: pre-commit run --all
