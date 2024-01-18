@@ -2,6 +2,7 @@ import sys
 import asyncio
 from itertools import islice
 from inspect import isawaitable
+from traceback import print_exc
 from typing import TYPE_CHECKING, Coroutine, Optional
 
 import discord
@@ -81,8 +82,11 @@ class AudioController(object):
         self._volume = value
         try:
             self.guild.voice_client.source.volume = float(value) / 100.0
-        except Exception:
+        except AttributeError:
             pass
+        except Exception:
+            print("Unknown error when setting volume:", file=sys.stderr)
+            print_exc(file=sys.stderr)
 
     def volume_up(self):
         self.volume = min(self.volume + 10, 100)
