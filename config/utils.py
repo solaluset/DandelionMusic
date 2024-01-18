@@ -24,7 +24,8 @@ def get_env_var(key: str, default: T) -> T:
             value = ast.literal_eval(value)
         except (SyntaxError, ValueError):
             pass
-    assert type(value) is type(default), f"invalid value for {key}: {value!r}"
+    if type(value) is not type(default):
+        raise TypeError(f"invalid value for {key}: {value!r}")
     return value
 
 
