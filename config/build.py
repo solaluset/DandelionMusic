@@ -27,7 +27,7 @@ sys.argv.extend(
         ],
         "-p=config",
         "-n=DandelionMusic",
-        "-i=ui/note.ico",
+        "-i=assets/note.ico",
         "run.py",
     ]
 )
