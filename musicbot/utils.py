@@ -1,4 +1,5 @@
 from __future__ import annotations
+import os
 import sys
 import _thread
 import asyncio
@@ -124,6 +125,20 @@ def download_ffmpeg():
     with open("ffmpeg.exe", "wb") as f:
         f.write(zipf.read(filename))
     print("\nSuccess!")
+
+
+ASSETS_PATH = os.path.join(
+    getattr(
+        sys,
+        "_MEIPASS",
+        os.path.dirname(os.path.abspath(sys.argv[0] or "dummy")),
+    ),
+    "assets",
+)
+
+
+def asset(name: str) -> str:
+    return os.path.join(ASSETS_PATH, name)
 
 
 class CheckError(CommandError):

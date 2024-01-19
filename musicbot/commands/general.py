@@ -43,6 +43,7 @@ class General(commands.Cog):
     )
     @commands.check(voice_check)
     async def _disconnect(self, ctx: Context):
+        await ctx.defer()  # ANNOUNCE_DISCONNECT will take a while
         audiocontroller = ctx.bot.audio_controllers[ctx.guild]
         if await audiocontroller.udisconnect():
             await ctx.send("Disconnected.")

@@ -26,6 +26,7 @@ ENV EMBED_COLOR=0x4DD4D0
 ENV SUPPORTED_EXTENSIONS="('.webm', '.mp4', '.mp3', '.avi', '.wav', '.m4v', '.ogg', '.mov')"
 ENV COOKIE_PATH=config/cookies/cookies.txt
 ENV GLOBAL_DISABLE_AUTOJOIN_VC=False
+ENV ANNOUNCE_DISCONNECT=True
 
 RUN pip --no-cache-dir install -r requirements.txt \
     && apt-get update \

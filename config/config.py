@@ -69,6 +69,9 @@ class Config:
 
     GLOBAL_DISABLE_AUTOJOIN_VC = False
 
+    # whether to tell users the bot is disconnecting
+    ANNOUNCE_DISCONNECT = True
+
     def __init__(self):
         current_cfg = self.load()
 

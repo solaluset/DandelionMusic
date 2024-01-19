@@ -11,7 +11,7 @@ from config import config
 from musicbot import linkutils, utils, loader
 from musicbot.playlist import Playlist, LoopMode, LoopState, PauseState
 from musicbot.songinfo import Song
-from musicbot.utils import CheckError, play_check
+from musicbot.utils import CheckError, asset, play_check
 
 # avoiding circular import
 if TYPE_CHECKING:
@@ -453,6 +453,17 @@ class AudioController(object):
         await self.update_view(None)
         if self.guild.voice_client is None:
             return False
+        if config.ANNOUNCE_DISCONNECT:
+            try:
+                await self.guild.voice_client.play(
+                    discord.FFmpegPCMAudio(asset("disconnect.mp3")),
+                    wait_finish=True,
+                )
+            except Exception:
+                print_exc(file=sys.stderr)
+            else:
+                # let it finish
+                await asyncio.sleep(1)
         await self.guild.voice_client.disconnect(force=True)
         self.timer.cancel()
         return True
