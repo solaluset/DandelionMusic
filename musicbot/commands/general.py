@@ -29,8 +29,10 @@ class General(commands.Cog):
     )
     @commands.check(voice_check)
     async def _connect(self, ctx: Context):
-        audiocontroller = ctx.bot.audio_controllers[ctx.guild]
-        await audiocontroller.uconnect(ctx, move=True)
+        # connect only if not connected yet
+        if not ctx.guild.voice_client:
+            audiocontroller = ctx.bot.audio_controllers[ctx.guild]
+            await audiocontroller.uconnect(ctx, move=True)
         await ctx.send("Connected.")
 
     @bridge.bridge_command(
