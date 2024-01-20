@@ -6,7 +6,14 @@ import asyncio
 import subprocess
 from enum import Enum
 from subprocess import CalledProcessError, check_output
-from typing import TYPE_CHECKING, Callable, Awaitable, Optional, Union
+from typing import (
+    TYPE_CHECKING,
+    Awaitable,
+    Callable,
+    Iterable,
+    Optional,
+    Union,
+)
 
 from aioconsole import ainput
 from discord import (
@@ -14,10 +21,13 @@ from discord import (
     opus,
     utils,
     Emoji,
+    Embed,
 )
 from discord.ext.commands import CommandError
 
 from config import config
+from musicbot.songinfo import Song
+from musicbot.linkutils import url_regex
 
 # avoiding circular import
 if TYPE_CHECKING:
@@ -212,6 +222,26 @@ def get_emoji(bot: MusicBot, string: str) -> Optional[Union[str, Emoji]]:
     if string.isdecimal():
         return utils.get(bot.emojis, id=int(string))
     return string
+
+
+def songs_embed(title: str, songs: Iterable[Song]) -> Embed:
+    embed = Embed(
+        title=title,
+        color=config.EMBED_COLOR,
+    )
+
+    for counter, song in enumerate(songs, start=1):
+        embed.add_field(
+            name=f"{counter}.",
+            value="[{}]({})".format(
+                song.info.title
+                or url_regex.fullmatch(song.info.webpage_url).group("bare"),
+                song.info.webpage_url,
+            ),
+            inline=False,
+        )
+
+    return embed
 
 
 # StrEnum doesn't exist in Python < 3.11

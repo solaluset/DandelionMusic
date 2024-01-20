@@ -48,10 +48,10 @@ YT_IE = next(ie for ie in EXTRACTORS if ie.IE_NAME == "youtube")
 # https://gist.github.com/gruber/249502#gistcomment-1328838
 url_regex = re.compile(
     r"(?i)\b((?:[a-z][\w.+-]+:(?:/{1,3}|[?+]?[a-z0-9%]))"
-    r"(?:[^\s()<>]|\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\))+"
+    r"(?P<bare>(?:[^\s()<>]|\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\))+"
     r"(?:\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'"
     r'"'
-    r".,<>?«»“”‘’]))"
+    r".,<>?«»“”‘’])))"
 )
 spotify_regex = re.compile(
     r"^https?://open\.spotify\.com/([^/]+/)?"
@@ -180,7 +180,7 @@ def fetch_playlist_with_api(
 
 
 def get_urls(content: str) -> List[str]:
-    return url_regex.findall(content)
+    return [m[0] for m in url_regex.findall(content)]
 
 
 def get_ie(url: str) -> Optional[ExtractorT]:
