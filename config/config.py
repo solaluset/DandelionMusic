@@ -40,6 +40,9 @@ class Config:
 
     # maximum of 25
     MAX_SONG_PRELOAD = 5
+    # how many results to display in d!search
+    SEARCH_RESULTS = 5
+
     MAX_HISTORY_LENGTH = 10
     MAX_TRACKNAME_HISTORY_LENGTH = 15
 

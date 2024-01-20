@@ -23,14 +23,15 @@ _not_provided = object()
 
 
 class MusicButton(discord.ui.Button):
-    def __init__(self, callback, **kwargs):
+    def __init__(self, callback, check=play_check, **kwargs):
         super().__init__(**kwargs)
         self._callback = callback
+        self._check = check
 
     async def callback(self, inter):
         ctx = await inter.client.get_application_context(inter)
         try:
-            await play_check(ctx)
+            await self._check(ctx)
         except CheckError as e:
             await ctx.send(e, ephemeral=True)
             return

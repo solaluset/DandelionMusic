@@ -78,7 +78,9 @@ class Song:
         self.info.uploader = data.get("uploader")
         self.info.title = data.get("title")
         self.info.duration = data.get("duration")
-        self.info.webpage_url = data.get("webpage_url")
+        self.info.webpage_url = (
+            data.get("webpage_url") or self.info.webpage_url
+        )
         thumbnails = data.get("thumbnails")
         if thumbnails:
             # last thumbnail has the best resolution
