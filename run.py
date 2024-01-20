@@ -80,9 +80,12 @@ def main():
         while line := p.stdout.readline():
             print(line, end="")
     except KeyboardInterrupt:
+        print()
         if not on_windows:
             p.stdin.write("shutdown\n")
             p.stdin.flush()
+        # display shutdown message
+        print(p.stdout.readline(), end="")
         print(p.stdout.read(), end="")
 
     exit_code = p.wait()
