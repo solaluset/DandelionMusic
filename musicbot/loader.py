@@ -197,8 +197,13 @@ async def preload(song: Song) -> bool:
         return await future
     _preloading[song] = asyncio.Future()
 
-    preloaded = await load_song(song.info.webpage_url)
-    success = preloaded is not None
+    try:
+        preloaded = await load_song(song.info.webpage_url)
+    except SongError:
+        success = False
+    else:
+        success = preloaded is not None
+
     if success:
         song.update(preloaded)
 
