@@ -149,7 +149,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             data = [entry["url"] for entry in data["entries"]]
         elif YT_IE.suitable(data["url"]):
             # the URL wasn't extracted, do it now
-            data = extract_info(data["url"])
+            data = extract_info(data["url"], YT_IE)
             if not data:
                 raise SongError(config.SONGINFO_ERROR)
 
