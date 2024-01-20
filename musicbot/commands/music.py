@@ -43,7 +43,7 @@ class Music(commands.Cog):
         help=config.HELP_YT_SHORT,
         aliases=["p", "yt", "pl"],
     )
-    async def _play_song(
+    async def _play(
         self, ctx: AudioContext, *, track: str = None, file: Attachment = None
     ):
         if ctx.message and ctx.message.attachments:
@@ -54,6 +54,9 @@ class Music(commands.Cog):
             await ctx.send(config.PLAY_ARGS_MISSING)
             return
 
+        await self._play_song(ctx, track)
+
+    async def _play_song(self, ctx: AudioContext, track: str):
         await ctx.defer()
 
         # reset timer
