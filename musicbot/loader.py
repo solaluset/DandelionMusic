@@ -96,16 +96,16 @@ def extract_info(url: str, ie: Optional[ExtractorT] = None) -> Optional[dict]:
             return None
 
 
-def search_youtube(title: str) -> Optional[dict]:
+def search_youtube(title: str, count: int = 1) -> Optional[dict]:
     """Searches youtube for the video title
     Returns the first results video link"""
 
-    r = extract_info("ytsearch:" + title)
+    r = extract_info(f"ytsearch{count}:{title}")
 
     if not r:
         return None
 
-    return r["entries"][0]
+    return r["entries"]
 
 
 async def load_song(track: str) -> Union[Optional[Song], List[Song]]:
@@ -116,7 +116,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
     host = identify_url(track)
 
     if host == SiteTypes.NOT_URL:
-        data = search_youtube(track)
+        data = search_youtube(track)[0]
         host = SiteTypes.YT_DLP
 
     elif host == SiteTypes.UNKNOWN:
