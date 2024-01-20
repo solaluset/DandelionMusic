@@ -23,7 +23,6 @@ from musicbot.linkutils import (
     get_ie,
     fetch_spotify,
     identify_url,
-    url_regex,
     init as init_session,
     stop as stop_session,
 )
@@ -97,16 +96,20 @@ def extract_info(url: str, ie: Optional[ExtractorT] = None) -> Optional[dict]:
             return None
 
 
-def search_youtube(title: str) -> Optional[dict]:
+async def search_youtube(title: str, count: int = 1) -> Optional[dict]:
+    return await _run_sync(_search_youtube, title, count)
+
+
+def _search_youtube(title: str, count: int = 1) -> Optional[dict]:
     """Searches youtube for the video title
     Returns the first results video link"""
 
-    r = extract_info("ytsearch:" + title)
+    r = extract_info(f"ytsearch{count}:{title}")
 
     if not r:
         return None
 
-    return r["entries"][0]
+    return r["entries"]
 
 
 async def load_song(track: str) -> Union[Optional[Song], List[Song]]:
@@ -116,18 +119,18 @@ async def load_song(track: str) -> Union[Optional[Song], List[Song]]:
 def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
     host = identify_url(track)
 
-    if host == SiteTypes.UNKNOWN:
-        if url_regex.fullmatch(track):
-            return None
-
-        data = search_youtube(track)
+    if host == SiteTypes.NOT_URL:
+        data = _search_youtube(track)[0]
         host = SiteTypes.YT_DLP
+
+    elif host == SiteTypes.UNKNOWN:
+        return None
 
     elif host == SiteTypes.SPOTIFY:
         try:
             data = _loop.run_until_complete(fetch_spotify(track))
-        except ClientResponseError:
-            raise SongError(config.SONGINFO_ERROR)
+        except ClientResponseError as e:
+            raise SongError(config.SONGINFO_ERROR) from e
 
     elif host == SiteTypes.CUSTOM:
         data = {
@@ -137,7 +140,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             "uploader": config.SONGINFO_UNKNOWN,
         }
 
-    else:
+    else:  # host is info extractor
         data = extract_info(track, host)
         host = SiteTypes.YT_DLP
 
@@ -150,7 +153,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             data = [entry["url"] for entry in data["entries"]]
         elif YT_IE.suitable(data["url"]):
             # the URL wasn't extracted, do it now
-            data = extract_info(data["url"])
+            data = extract_info(data["url"], YT_IE)
             if not data:
                 raise SongError(config.SONGINFO_ERROR)
 
@@ -198,8 +201,13 @@ async def preload(song: Song) -> bool:
         return await future
     _preloading[song] = asyncio.Future()
 
-    preloaded = await load_song(song.info.webpage_url)
-    success = preloaded is not None
+    try:
+        preloaded = await load_song(song.info.webpage_url)
+    except SongError:
+        success = False
+    else:
+        success = preloaded is not None
+
     if success:
         song.update(preloaded)
 

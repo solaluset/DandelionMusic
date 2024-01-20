@@ -52,6 +52,8 @@ class MusicBot(bridge.Bot):
         return await super().start(*args, **kwargs)
 
     async def close(self):
+        print("Shutting down...", flush=True)
+
         await asyncio.gather(
             *(
                 audiocontroller.udisconnect()

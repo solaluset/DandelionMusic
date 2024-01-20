@@ -5,8 +5,8 @@ from collections import deque
 from discord import Embed
 
 from config import config
-from musicbot.utils import StrEnum
 from musicbot.songinfo import Song
+from musicbot.utils import StrEnum, songs_embed
 
 
 LoopMode = StrEnum("LoopMode", config.get_dict("LoopMode"))
@@ -133,22 +133,7 @@ class Playlist:
         self.playhistory.clear()
 
     def queue_embed(self) -> Embed:
-        embed = Embed(
-            title=config.QUEUE_TITLE.format(tracks_number=len(self.playque)),
-            color=config.EMBED_COLOR,
+        return songs_embed(
+            config.QUEUE_TITLE.format(tracks_number=len(self.playque)),
+            list(self.playque)[: config.MAX_SONG_PRELOAD],
         )
-
-        for counter, song in enumerate(
-            list(self.playque)[: config.MAX_SONG_PRELOAD], start=1
-        ):
-            embed.add_field(
-                name="{}.".format(str(counter)),
-                value="[{}]({})".format(
-                    song.info.title
-                    or song.info.webpage_url.partition("://")[2],
-                    song.info.webpage_url,
-                ),
-                inline=False,
-            )
-
-        return embed

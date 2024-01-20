@@ -40,6 +40,9 @@ class Config:
 
     # maximum of 25
     MAX_SONG_PRELOAD = 5
+    # how many results to display in d!search
+    SEARCH_RESULTS = 5
+
     MAX_HISTORY_LENGTH = 10
     MAX_TRACKNAME_HISTORY_LENGTH = 15
 
@@ -68,6 +71,9 @@ class Config:
     COOKIE_PATH = "config/cookies/cookies.txt"
 
     GLOBAL_DISABLE_AUTOJOIN_VC = False
+
+    # whether to tell users the bot is disconnecting
+    ANNOUNCE_DISCONNECT = True
 
     def __init__(self):
         current_cfg = self.load()

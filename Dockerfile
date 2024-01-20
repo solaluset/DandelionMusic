@@ -18,6 +18,7 @@ ENV VC_TIMEOUT=600
 ENV VC_TIMEOUT_DEFAULT=True
 ENV ALLOW_VC_TIMEOUT_EDIT=True
 ENV MAX_SONG_PRELOAD=5
+ENV SEARCH_RESULTS=5
 ENV MAX_HISTORY_LENGTH=10
 ENV MAX_TRACKNAME_HISTORY_LENGTH=15
 ENV DATABASE_URL=sqlite:///settings.db
@@ -26,6 +27,7 @@ ENV EMBED_COLOR=0x4DD4D0
 ENV SUPPORTED_EXTENSIONS="('.webm', '.mp4', '.mp3', '.avi', '.wav', '.m4v', '.ogg', '.mov')"
 ENV COOKIE_PATH=config/cookies/cookies.txt
 ENV GLOBAL_DISABLE_AUTOJOIN_VC=False
+ENV ANNOUNCE_DISCONNECT=True
 
 RUN pip --no-cache-dir install -r requirements.txt \
     && apt-get update \

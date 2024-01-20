@@ -29,8 +29,10 @@ class General(commands.Cog):
     )
     @commands.check(voice_check)
     async def _connect(self, ctx: Context):
-        audiocontroller = ctx.bot.audio_controllers[ctx.guild]
-        await audiocontroller.uconnect(ctx, move=True)
+        # connect only if not connected yet
+        if not ctx.guild.voice_client:
+            audiocontroller = ctx.bot.audio_controllers[ctx.guild]
+            await audiocontroller.uconnect(ctx, move=True)
         await ctx.send("Connected.")
 
     @bridge.bridge_command(
@@ -41,6 +43,7 @@ class General(commands.Cog):
     )
     @commands.check(voice_check)
     async def _disconnect(self, ctx: Context):
+        await ctx.defer()  # ANNOUNCE_DISCONNECT will take a while
         audiocontroller = ctx.bot.audio_controllers[ctx.guild]
         if await audiocontroller.udisconnect():
             await ctx.send("Disconnected.")

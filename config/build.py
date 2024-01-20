@@ -25,9 +25,13 @@ sys.argv.extend(
             "--add-data=" + file + os.pathsep + "."
             for file in glob.glob("config/*.json")
         ],
+        *[
+            "--add-data=" + file + os.pathsep + "assets"
+            for file in glob.glob("assets/*.mp3")
+        ],
         "-p=config",
         "-n=DandelionMusic",
-        "-i=ui/note.ico",
+        "-i=assets/note.ico",
         "run.py",
     ]
 )

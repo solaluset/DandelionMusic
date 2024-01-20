@@ -1,16 +1,31 @@
 from discord import Option, Attachment
+from discord.ui import View
 from discord.ext import commands, bridge
 
 from config import config
 from musicbot import linkutils, utils
-from musicbot.loader import SongError
+from musicbot.songinfo import Song
 from musicbot.bot import MusicBot, Context
-from musicbot.audiocontroller import AudioController
+from musicbot.audiocontroller import AudioController, MusicButton
+from musicbot.loader import SongError, search_youtube
 from musicbot.playlist import PlaylistError, LoopMode
 
 
 class AudioContext(Context):
     audiocontroller: AudioController
+
+
+class SongButton(MusicButton):
+    def __init__(self, cog: "Music", num: int, song: str):
+        async def play(ctx):
+            view = self.view
+            view.stop()
+            view.disable_all_items()
+            async with ctx.channel.typing():
+                await view.message.edit(view=view)
+                await cog._play_song(ctx, song)
+
+        super().__init__(play, cog.cog_check, emoji=f"{num}⃣")
 
 
 @commands.check
@@ -43,7 +58,7 @@ class Music(commands.Cog):
         help=config.HELP_YT_SHORT,
         aliases=["p", "yt", "pl"],
     )
-    async def _play_song(
+    async def _play(
         self, ctx: AudioContext, *, track: str = None, file: Attachment = None
     ):
         if ctx.message and ctx.message.attachments:
@@ -55,7 +70,9 @@ class Music(commands.Cog):
             return
 
         await ctx.defer()
+        await self._play_song(ctx, track)
 
+    async def _play_song(self, ctx: AudioContext, track: str):
         # reset timer
         await ctx.audiocontroller.timer.start(True)
 
@@ -80,6 +97,35 @@ class Music(commands.Cog):
                 await ctx.send(
                     embed=song.info.format_output(config.SONGINFO_NOW_PLAYING)
                 )
+
+    @bridge.bridge_command(
+        name="search",
+        description=config.HELP_SEARCH_LONG,
+        help=config.HELP_SEARCH_SHORT,
+        aliases=["sc"],
+    )
+    async def _search(self, ctx: AudioContext, *, query: str):
+        await ctx.defer()
+        results = await search_youtube(query, config.SEARCH_RESULTS)
+        songs = []
+        for data in results:
+            song = Song(
+                linkutils.Origins.Default,
+                linkutils.SiteTypes.YT_DLP,
+                webpage_url=data["url"],
+            )
+            song.update(data)
+            songs.append(song)
+
+        await ctx.send(
+            embed=utils.songs_embed(config.SEARCH_EMBED_TITLE, songs),
+            view=View(
+                *(
+                    SongButton(self, i, data["url"])
+                    for i, data in enumerate(results, start=1)
+                )
+            ),
+        )
 
     @bridge.bridge_command(
         name="loop",
