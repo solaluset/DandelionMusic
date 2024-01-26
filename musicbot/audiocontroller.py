@@ -376,9 +376,13 @@ class AudioController(object):
         else:
             for song in loaded_song:
                 self.playlist.add(song)
-            loaded_song = Song(
-                linkutils.Origins.Playlist, linkutils.SiteTypes.UNKNOWN
-            )
+            if len(loaded_song) == 1:
+                # special-case one-item playlists
+                loaded_song = loaded_song[0]
+            else:
+                loaded_song = Song(
+                    linkutils.Origins.Playlist, linkutils.SiteTypes.UNKNOWN
+                )
 
         if self.current_song is None:
             print("Playing {}".format(track))
