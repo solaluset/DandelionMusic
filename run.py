@@ -45,6 +45,7 @@ def main():
             if event != signal.CTRL_C_EVENT:
                 return
             shutdown(config, p)
+            SetHandler(handler, False)
 
         kwargs = {
             "creationflags": subprocess.CREATE_NO_WINDOW
