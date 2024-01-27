@@ -52,7 +52,8 @@ class MusicBot(bridge.Bot):
         return await super().start(*args, **kwargs)
 
     async def close(self):
-        print("Shutting down...", flush=True)
+        if "--run" not in sys.argv:
+            print(config.SHUTDOWN_MESSAGE, flush=True)
 
         await asyncio.gather(
             *(

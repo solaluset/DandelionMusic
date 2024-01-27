@@ -1,5 +1,6 @@
 {
   "STARTUP_MESSAGE": "Starting Bot...",
+  "SHUTDOWN_MESSAGE": "\nShutting down...",
   "STARTUP_COMPLETE_MESSAGE": "Startup Complete",
   "STATUS_TEXT": "Music, type {prefix}help",
 
