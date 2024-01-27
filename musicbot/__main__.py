@@ -65,3 +65,6 @@ if __name__ == "__main__":
         print_exc(file=sys.stderr)
         print("Set the correct token in config.json", file=sys.stderr)
         sys.exit(1)
+    except RuntimeError as e:
+        if e.args != ("Event loop is closed",):
+            raise

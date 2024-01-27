@@ -4,7 +4,7 @@
   "STATUS_TEXT": "Music, type {prefix}help",
 
   "NO_GUILD_MESSAGE": "Error: Please use guild channels to interact with the bot",
-  "USER_NOT_IN_VC_MESSAGE": "Error: Please join the active voice channel to use commands and buttons",
+  "USER_NOT_IN_VC_MESSAGE": "Error: Please join the (active) voice channel to use commands and buttons",
   "WRONG_CHANNEL_MESSAGE": "Error: Please use configured command channel",
   "NOT_CONNECTED_MESSAGE": "Error: Bot not connected to any voice channel",
   "ALREADY_CONNECTED_MESSAGE": "Error: Already connected to a voice channel",
@@ -12,7 +12,7 @@
   "USER_MISSING_PERMISSIONS": "You don't have permissions for this",
   "CHANNEL_NOT_FOUND_MESSAGE": "Error: Could not find channel",
   "VOICE_PERMISSIONS_MISSING": "The bot needs VC permissions connect and speak",
-  "PLAY_ARGS_MISSING": "You need to specify the track or attach a file.",
+  "PLAY_ARGS_MISSING": "You need to specify the track, attach a file or reply to a message with the file.",
 
   "ADD_MESSAGE": "To add this bot to your own Server, click [here]({link})",
 

@@ -1,3 +1,5 @@
+from typing import Iterable, Union
+
 from discord import Option, Attachment
 from discord.ui import View
 from discord.ext import commands, bridge
@@ -61,18 +63,24 @@ class Music(commands.Cog):
     async def _play(
         self, ctx: AudioContext, *, track: str = None, file: Attachment = None
     ):
-        if ctx.message and ctx.message.attachments:
-            file = ctx.message.attachments[0]
-        if file is not None:
-            track = file.url
-        elif track is None:
+        if track is None and ctx.message:
+            if ctx.message.attachments:
+                track = [file.url for file in ctx.message.attachments]
+            elif ctx.message.reference and ctx.message.reference.resolved:
+                track = [
+                    file.url
+                    for file in ctx.message.reference.resolved.attachments
+                ]
+        if not track:
             await ctx.send(config.PLAY_ARGS_MISSING)
             return
 
         await ctx.defer()
         await self._play_song(ctx, track)
 
-    async def _play_song(self, ctx: AudioContext, track: str):
+    async def _play_song(
+        self, ctx: AudioContext, track: Union[str, Iterable[str]]
+    ):
         # reset timer
         await ctx.audiocontroller.timer.start(True)
 

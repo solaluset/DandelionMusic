@@ -3,7 +3,7 @@ import asyncio
 from itertools import islice
 from inspect import isawaitable
 from traceback import print_exc
-from typing import TYPE_CHECKING, Coroutine, Optional
+from typing import TYPE_CHECKING, Coroutine, Iterable, Optional, Union
 
 import discord
 from config import config
@@ -351,11 +351,24 @@ class AudioController(object):
 
         self.preload_queue()
 
-    async def process_song(self, track: str) -> Optional[Song]:
+    async def process_song(
+        self, track: Union[str, Iterable[str]]
+    ) -> Optional[Song]:
         """Adds the track to the playlist instance
         Starts playing if it is the first song"""
 
-        loaded_song = await loader.load_song(track)
+        if isinstance(track, str):
+            loaded_song = await loader.load_song(track)
+        else:
+            loaded_song = []
+            for t in track:
+                loaded_t = await loader.load_song(t)
+                if not loaded_t:
+                    continue
+                elif isinstance(loaded_t, Song):
+                    loaded_song.append(loaded_t)
+                else:
+                    loaded_song.extend(loaded_t)
         if not loaded_song:
             return None
         elif isinstance(loaded_song, Song):
@@ -363,9 +376,13 @@ class AudioController(object):
         else:
             for song in loaded_song:
                 self.playlist.add(song)
-            loaded_song = Song(
-                linkutils.Origins.Playlist, linkutils.SiteTypes.UNKNOWN
-            )
+            if len(loaded_song) == 1:
+                # special-case one-item playlists
+                loaded_song = loaded_song[0]
+            else:
+                loaded_song = Song(
+                    linkutils.Origins.Playlist, linkutils.SiteTypes.UNKNOWN
+                )
 
         if self.current_song is None:
             print("Playing {}".format(track))
