@@ -5,6 +5,12 @@ Head to musicbot/__main__.py if you want to see "real" main file
 """
 
 
+def shutdown(config, p):
+    print(config.SHUTDOWN_MESSAGE)
+    p.stdin.write("shutdown\n")
+    p.stdin.flush()
+
+
 def main():
     import sys
 
@@ -17,6 +23,8 @@ def main():
 
     import signal
     import subprocess
+
+    from config import config
 
     print("You can close this window and the bot will run in the background")
     print("To stop the bot, press Ctrl+C")
@@ -36,8 +44,8 @@ def main():
         def handler(event):
             if event != signal.CTRL_C_EVENT:
                 return
-            p.stdin.write("shutdown\n")
-            p.stdin.flush()
+            shutdown(config, p)
+            SetHandler(handler, False)
 
         kwargs = {
             "creationflags": subprocess.CREATE_NO_WINDOW
@@ -80,12 +88,9 @@ def main():
         while line := p.stdout.readline():
             print(line, end="")
     except KeyboardInterrupt:
-        print()
         if not on_windows:
-            p.stdin.write("shutdown\n")
-            p.stdin.flush()
+            shutdown(config, p)
         # display shutdown message
-        print(p.stdout.readline(), end="")
         print(p.stdout.read(), end="")
 
     exit_code = p.wait()
