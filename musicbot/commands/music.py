@@ -65,13 +65,14 @@ class Music(commands.Cog):
     ):
         if track is None and ctx.message:
             if ctx.message.attachments:
-                track = [file.url for file in ctx.message.attachments]
-            elif ctx.message.reference and ctx.message.reference.resolved:
-                track = [
-                    file.url
-                    for file in ctx.message.reference.resolved.attachments
-                ]
-        if not track:
+                track = ctx.message.jump_url
+            elif (
+                ctx.message.reference
+                and ctx.message.reference.resolved
+                and ctx.message.reference.resolved.attachments
+            ):
+                track = ctx.message.reference.resolved.jump_url
+        if track is None:
             await ctx.send(config.PLAY_ARGS_MISSING)
             return
 

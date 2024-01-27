@@ -45,9 +45,18 @@ class LoaderProcess(_context.Process):
 
 _context.Process = LoaderProcess
 
+
+async def close_bot_session():
+    # close session opened in musicbot/yt_dlp_plugins/extractor/discord.py
+    from musicbot.__main__ import bot
+
+    await bot.http.close()
+
+
 _loop = asyncio.new_event_loop()
 _loop.run_until_complete(init_session())
 atexit.register(lambda: _loop.run_until_complete(stop_session()))
+atexit.register(lambda: _loop.run_until_complete(close_bot_session()))
 _executor = ProcessPoolExecutor(1, _context)
 _downloader = YoutubeDL(
     {

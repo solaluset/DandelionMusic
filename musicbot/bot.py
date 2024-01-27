@@ -233,10 +233,14 @@ class Context(bridge.BridgeContext):
         kwargs.pop("reference", None)  # not supported
         audiocontroller = self.bot.audio_controllers[self.guild]
         channel = audiocontroller.command_channel
-        if kwargs.get("ephemeral", False) or (
-            channel
-            # unwrap channel from context
-            and getattr(channel, "channel", channel) != self.channel
+        if (
+            "view" in kwargs
+            or kwargs.get("ephemeral", False)
+            or (
+                channel
+                # unwrap channel from context
+                and getattr(channel, "channel", channel) != self.channel
+            )
         ):
             # sending ephemeral message or using different channel
             # don't bother with views
