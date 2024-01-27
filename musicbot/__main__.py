@@ -1,3 +1,4 @@
+import os
 import sys
 from traceback import print_exc
 
@@ -12,6 +13,11 @@ from musicbot.bot import MusicBot
 from musicbot.utils import check_dependencies, read_shutdown
 
 del bridge
+
+
+# to load yt-dlp plugin
+sys.path.append(os.path.dirname(__file__))
+
 
 initial_extensions = [
     "musicbot.commands.music",
