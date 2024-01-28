@@ -18,7 +18,8 @@ if TYPE_CHECKING:
     from musicbot.bot import MusicBot
 
 
-VC_TIMEOUT = 10
+VC_CONNECT_TIMEOUT = 10
+
 PLAYLIST = object()
 _not_provided = object()
 
@@ -107,7 +108,7 @@ class AudioController(object):
             # to avoid ClientException: Not connected to voice
             await asyncio.sleep(1)
         else:
-            await channel.connect(reconnect=True, timeout=VC_TIMEOUT)
+            await channel.connect(reconnect=True, timeout=VC_CONNECT_TIMEOUT)
 
     def make_view(self):
         if not self.is_active():
