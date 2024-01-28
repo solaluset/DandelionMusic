@@ -11,7 +11,7 @@ class Song:
         self,
         origin: Origins,
         host: SiteTypes,
-        base_url: Optional[str] = None,
+        url: Optional[str] = None,
         uploader: Optional[str] = None,
         title: Optional[str] = None,
         duration: Optional[int] = None,
@@ -20,7 +20,7 @@ class Song:
     ):
         self.host = host
         self.origin = origin
-        self.base_url = base_url
+        self.url = url
         self.info = self.Sinfo(
             uploader, title, duration, webpage_url, thumbnail
         )
@@ -70,11 +70,11 @@ class Song:
 
     def update(self, data: Union[dict, "Song"]):
         if isinstance(data, Song):
-            self.base_url = data.base_url
+            self.url = data.url
             self.info = data.info
             return
 
-        self.base_url = data.get("url")
+        self.url = data.get("url")
         self.info.uploader = data.get("uploader")
         self.info.title = data.get("title")
         self.info.duration = data.get("duration")

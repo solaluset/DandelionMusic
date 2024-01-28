@@ -201,8 +201,8 @@ async def preload(song: Song) -> bool:
     if song.info.webpage_url is None:
         return True
 
-    if song.base_url is not None:
-        expire = _parse_expire(song.base_url)
+    if song.url is not None:
+        expire = _parse_expire(song.url)
         if expire is None or expire == _parse_expire(song.info.webpage_url):
             return True
         if datetime.now(timezone.utc) < datetime.fromtimestamp(
