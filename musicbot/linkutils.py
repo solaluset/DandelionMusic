@@ -122,7 +122,8 @@ async def fetch_spotify(url: str) -> Union[dict, List[str]]:
     title = re.sub(
         r"(.*) - song( and lyrics)? by (.*) \| Spotify", r"\1 \3", title
     )
-    return loader.search_youtube(title)
+    # use sync function because we're already in executor
+    return loader._search_youtube(title)[0]
 
 
 async def fetch_spotify_playlist(
