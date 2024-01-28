@@ -3,12 +3,12 @@ import asyncio
 from itertools import islice
 from inspect import isawaitable
 from traceback import print_exc
-from typing import TYPE_CHECKING, Coroutine, Optional
+from typing import TYPE_CHECKING, Coroutine, Literal, Optional, Union
 
 import discord
 from config import config
 
-from musicbot import linkutils, utils, loader
+from musicbot import loader, utils
 from musicbot.playlist import Playlist, LoopMode, LoopState, PauseState
 from musicbot.songinfo import Song
 from musicbot.utils import CheckError, asset, play_check
@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
 
 VC_TIMEOUT = 10
+PLAYLIST = object()
 _not_provided = object()
 
 
@@ -351,7 +352,9 @@ class AudioController(object):
 
         self.preload_queue()
 
-    async def process_song(self, track: str) -> Optional[Song]:
+    async def process_song(
+        self, track: str
+    ) -> Union[Optional[Song], Literal[PLAYLIST]]:
         """Adds the track to the playlist instance
         Starts playing if it is the first song"""
 
@@ -367,9 +370,7 @@ class AudioController(object):
                 # special-case one-item playlists
                 loaded_song = loaded_song[0]
             else:
-                loaded_song = Song(
-                    linkutils.Origins.Playlist, linkutils.SiteTypes.UNKNOWN
-                )
+                loaded_song = PLAYLIST
 
         if self.current_song is None:
             print("Playing {}".format(track))

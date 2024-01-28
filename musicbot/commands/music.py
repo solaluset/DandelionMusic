@@ -8,7 +8,7 @@ from config import config
 from musicbot import linkutils, utils
 from musicbot.songinfo import Song
 from musicbot.bot import MusicBot, Context
-from musicbot.audiocontroller import AudioController, MusicButton
+from musicbot.audiocontroller import PLAYLIST, AudioController, MusicButton
 from musicbot.loader import SongError, search_youtube
 from musicbot.playlist import PlaylistError, LoopMode
 
@@ -94,7 +94,7 @@ class Music(commands.Cog):
             await ctx.send(config.SONGINFO_UNSUPPORTED)
             return
 
-        if song.origin == linkutils.Origins.Playlist:
+        if song is PLAYLIST:
             await ctx.send(config.SONGINFO_PLAYLIST_QUEUED)
         else:
             if len(ctx.audiocontroller.playlist) != 1:
