@@ -26,7 +26,7 @@ from discord import (
 from discord.ext.commands import CommandError
 
 from config import config
-from musicbot.songinfo import Song
+from musicbot.song import Song
 from musicbot.linkutils import url_regex
 
 # avoiding circular import
@@ -234,9 +234,9 @@ def songs_embed(title: str, songs: Iterable[Song]) -> Embed:
         embed.add_field(
             name=f"{counter}.",
             value="[{}]({})".format(
-                song.info.title
-                or url_regex.fullmatch(song.info.webpage_url).group("bare"),
-                song.info.webpage_url,
+                song.title
+                or url_regex.fullmatch(song.webpage_url).group("bare"),
+                song.webpage_url,
             ),
             inline=False,
         )

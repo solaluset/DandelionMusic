@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from config import config
-from musicbot.audiocontroller import VC_TIMEOUT, AudioController
+from musicbot.audiocontroller import VC_CONNECT_TIMEOUT, AudioController
 from musicbot.settings import (
     GuildSettings,
     run_migrations,
@@ -95,7 +95,7 @@ class MusicBot(bridge.Bot):
         if member == self.user:
             audiocontroller = self.audio_controllers[guild]
             if not guild.voice_client:
-                await asyncio.sleep(VC_TIMEOUT)
+                await asyncio.sleep(VC_CONNECT_TIMEOUT)
             if guild.voice_client:
                 is_playing = guild.voice_client.is_playing()
                 await audiocontroller.timer.start(is_playing)

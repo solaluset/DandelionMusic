@@ -3,14 +3,14 @@ import asyncio
 from itertools import islice
 from inspect import isawaitable
 from traceback import print_exc
-from typing import TYPE_CHECKING, Coroutine, Optional
+from typing import TYPE_CHECKING, Coroutine, Literal, Optional, Union
 
 import discord
 from config import config
 
-from musicbot import linkutils, utils, loader
+from musicbot import loader, utils
+from musicbot.song import Song
 from musicbot.playlist import Playlist, LoopMode, LoopState, PauseState
-from musicbot.songinfo import Song
 from musicbot.utils import CheckError, asset, play_check
 
 # avoiding circular import
@@ -18,7 +18,9 @@ if TYPE_CHECKING:
     from musicbot.bot import MusicBot
 
 
-VC_TIMEOUT = 10
+VC_CONNECT_TIMEOUT = 10
+
+PLAYLIST = object()
 _not_provided = object()
 
 
@@ -106,7 +108,7 @@ class AudioController(object):
             # to avoid ClientException: Not connected to voice
             await asyncio.sleep(1)
         else:
-            await channel.connect(reconnect=True, timeout=VC_TIMEOUT)
+            await channel.connect(reconnect=True, timeout=VC_CONNECT_TIMEOUT)
 
     def make_view(self):
         if not self.is_active():
@@ -189,9 +191,7 @@ class AudioController(object):
 
     async def current_song_callback(self, ctx):
         await ctx.send(
-            embed=self.current_song.info.format_output(
-                config.SONGINFO_SONGINFO
-            ),
+            embed=self.current_song.format_output(config.SONGINFO_SONGINFO),
         )
 
     async def queue_callback(self, ctx):
@@ -285,7 +285,7 @@ class AudioController(object):
             return
 
         if self.current_song:
-            self.playlist.add_name(self.current_song.info.title)
+            self.playlist.add_name(self.current_song.title)
             self.current_song = None
 
         if self._next_song:
@@ -316,10 +316,10 @@ class AudioController(object):
             self.next_song(forced=True)
             return
 
-        if song.base_url is None:
+        if song.url is None:
             print(
                 "Something is wrong."
-                " Refusing to play a song without base_url.",
+                " Refusing to play a song without direct url.",
                 file=sys.stderr,
             )
             self.next_song(forced=True)
@@ -330,7 +330,7 @@ class AudioController(object):
         self.guild.voice_client.play(
             discord.PCMVolumeTransformer(
                 discord.FFmpegPCMAudio(
-                    song.base_url,
+                    song.url,
                     before_options="-reconnect 1 -reconnect_streamed 1"
                     " -reconnect_delay_max 5",
                     options="-loglevel error",
@@ -346,12 +346,14 @@ class AudioController(object):
             and self.command_channel
         ):
             await self.command_channel.send(
-                embed=song.info.format_output(config.SONGINFO_NOW_PLAYING)
+                embed=song.format_output(config.SONGINFO_NOW_PLAYING)
             )
 
         self.preload_queue()
 
-    async def process_song(self, track: str) -> Optional[Song]:
+    async def process_song(
+        self, track: str
+    ) -> Union[Optional[Song], Literal[PLAYLIST]]:
         """Adds the track to the playlist instance
         Starts playing if it is the first song"""
 
@@ -367,9 +369,7 @@ class AudioController(object):
                 # special-case one-item playlists
                 loaded_song = loaded_song[0]
             else:
-                loaded_song = Song(
-                    linkutils.Origins.Playlist, linkutils.SiteTypes.UNKNOWN
-                )
+                loaded_song = PLAYLIST
 
         if self.current_song is None:
             print("Playing {}".format(track))

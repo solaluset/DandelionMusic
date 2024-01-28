@@ -13,7 +13,7 @@ from aiohttp import ClientResponseError
 from yt_dlp import YoutubeDL, DownloadError
 
 from config import config
-from musicbot.songinfo import Song
+from musicbot.song import Song
 from musicbot.utils import OutputWrapper
 from musicbot.linkutils import (
     YT_IE,
@@ -140,13 +140,14 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             data = _loop.run_until_complete(fetch_spotify(track))
         except ClientResponseError as e:
             raise SongError(config.SONGINFO_ERROR) from e
+        if isinstance(data, list):
+            data = [{"url": url} for url in data]
 
     elif host == SiteTypes.CUSTOM:
         data = {
             "url": track,
             "webpage_url": track,
             "title": urlparse(track).path.rpartition("/")[2],
-            "uploader": config.SONGINFO_UNKNOWN,
         }
 
     else:  # host is info extractor
@@ -159,7 +160,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
     if isinstance(data, dict):
         if "entries" in data:
             # assuming a playlist
-            data = [entry["url"] for entry in data["entries"]]
+            data = data["entries"]
         elif YT_IE.suitable(data["url"]):
             # the URL wasn't extracted, do it now
             data = extract_info(data["url"], YT_IE)
@@ -167,14 +168,17 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
                 raise SongError(config.SONGINFO_ERROR)
 
     if isinstance(data, list):
-        return [
-            Song(
+        results = []
+        for entry in data:
+            entry.pop("webpage_url", None)
+            song = Song(
                 Origins.Playlist,
                 host,
-                webpage_url=entry,
+                webpage_url=entry.pop("url"),
             )
-            for entry in data
-        ]
+            song.update(entry)
+            results.append(song)
+        return results
 
     song = Song(Origins.Default, host, webpage_url=track)
     song.update(data)
@@ -193,12 +197,12 @@ def _parse_expire(url: str) -> Optional[int]:
 
 
 async def preload(song: Song) -> bool:
-    if song.info.webpage_url is None:
+    if song.webpage_url is None:
         return True
 
-    if song.base_url is not None:
-        expire = _parse_expire(song.base_url)
-        if expire is None or expire == _parse_expire(song.info.webpage_url):
+    if song.url is not None:
+        expire = _parse_expire(song.url)
+        if expire is None or expire == _parse_expire(song.webpage_url):
             return True
         if datetime.now(timezone.utc) < datetime.fromtimestamp(
             expire, timezone.utc
@@ -211,7 +215,7 @@ async def preload(song: Song) -> bool:
     _preloading[song] = asyncio.Future()
 
     try:
-        preloaded = await load_song(song.info.webpage_url)
+        preloaded = await load_song(song.webpage_url)
     except SongError:
         success = False
     else:
