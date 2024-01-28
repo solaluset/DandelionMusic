@@ -39,7 +39,7 @@ class Song:
 
         embed.add_field(
             name=config.SONGINFO_UPLOADER,
-            value=self.uploader,
+            value=self.uploader or config.SONGINFO_UNKNOWN,
             inline=False,
         )
 

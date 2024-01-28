@@ -148,7 +148,6 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             "url": track,
             "webpage_url": track,
             "title": urlparse(track).path.rpartition("/")[2],
-            "uploader": config.SONGINFO_UNKNOWN,
         }
 
     else:  # host is info extractor
