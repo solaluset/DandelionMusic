@@ -9,8 +9,8 @@ import discord
 from config import config
 
 from musicbot import loader, utils
+from musicbot.song import Song
 from musicbot.playlist import Playlist, LoopMode, LoopState, PauseState
-from musicbot.songinfo import Song
 from musicbot.utils import CheckError, asset, play_check
 
 # avoiding circular import
@@ -191,9 +191,7 @@ class AudioController(object):
 
     async def current_song_callback(self, ctx):
         await ctx.send(
-            embed=self.current_song.info.format_output(
-                config.SONGINFO_SONGINFO
-            ),
+            embed=self.current_song.format_output(config.SONGINFO_SONGINFO),
         )
 
     async def queue_callback(self, ctx):
@@ -287,7 +285,7 @@ class AudioController(object):
             return
 
         if self.current_song:
-            self.playlist.add_name(self.current_song.info.title)
+            self.playlist.add_name(self.current_song.title)
             self.current_song = None
 
         if self._next_song:
@@ -348,7 +346,7 @@ class AudioController(object):
             and self.command_channel
         ):
             await self.command_channel.send(
-                embed=song.info.format_output(config.SONGINFO_NOW_PLAYING)
+                embed=song.format_output(config.SONGINFO_NOW_PLAYING)
             )
 
         self.preload_queue()

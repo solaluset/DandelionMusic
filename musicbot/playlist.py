@@ -5,7 +5,7 @@ from collections import deque
 from discord import Embed
 
 from config import config
-from musicbot.songinfo import Song
+from musicbot.song import Song
 from musicbot.utils import StrEnum, songs_embed
 
 

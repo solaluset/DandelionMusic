@@ -13,7 +13,7 @@ from aiohttp import ClientResponseError
 from yt_dlp import YoutubeDL, DownloadError
 
 from config import config
-from musicbot.songinfo import Song
+from musicbot.song import Song
 from musicbot.utils import OutputWrapper
 from musicbot.linkutils import (
     YT_IE,
@@ -198,12 +198,12 @@ def _parse_expire(url: str) -> Optional[int]:
 
 
 async def preload(song: Song) -> bool:
-    if song.info.webpage_url is None:
+    if song.webpage_url is None:
         return True
 
     if song.url is not None:
         expire = _parse_expire(song.url)
-        if expire is None or expire == _parse_expire(song.info.webpage_url):
+        if expire is None or expire == _parse_expire(song.webpage_url):
             return True
         if datetime.now(timezone.utc) < datetime.fromtimestamp(
             expire, timezone.utc
@@ -216,7 +216,7 @@ async def preload(song: Song) -> bool:
     _preloading[song] = asyncio.Future()
 
     try:
-        preloaded = await load_song(song.info.webpage_url)
+        preloaded = await load_song(song.webpage_url)
     except SongError:
         success = False
     else:
