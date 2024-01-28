@@ -29,8 +29,14 @@ class DiscordAttachmentsIE(InfoExtractor):
             )
         except Exception as e:
             raise DownloadError(str(e)) from e
+        uploader = resp["author"]["username"]
         entries = [
-            {"id": a["id"], "url": a["url"], "title": a["filename"]}
+            {
+                "id": a["id"],
+                "url": a["url"],
+                "title": a["filename"],
+                "uploader": uploader,
+            }
             for a in resp["attachments"]
         ]
         return {"_type": "playlist", "entries": entries}

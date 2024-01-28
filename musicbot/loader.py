@@ -140,6 +140,8 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             data = _loop.run_until_complete(fetch_spotify(track))
         except ClientResponseError as e:
             raise SongError(config.SONGINFO_ERROR) from e
+        if isinstance(data, list):
+            data = [{"url": url} for url in data]
 
     elif host == SiteTypes.CUSTOM:
         data = {
@@ -159,7 +161,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
     if isinstance(data, dict):
         if "entries" in data:
             # assuming a playlist
-            data = [entry["url"] for entry in data["entries"]]
+            data = data["entries"]
         elif YT_IE.suitable(data["url"]):
             # the URL wasn't extracted, do it now
             data = extract_info(data["url"], YT_IE)
@@ -167,14 +169,17 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
                 raise SongError(config.SONGINFO_ERROR)
 
     if isinstance(data, list):
-        return [
-            Song(
+        results = []
+        for entry in data:
+            entry.pop("webpage_url", None)
+            song = Song(
                 Origins.Playlist,
                 host,
-                webpage_url=entry,
+                webpage_url=entry.pop("url"),
             )
-            for entry in data
-        ]
+            song.update(entry)
+            results.append(song)
+        return results
 
     song = Song(Origins.Default, host, webpage_url=track)
     song.update(data)
