@@ -77,6 +77,8 @@ async def convert_emoji(ctx: "Context", value: Optional[str]) -> Optional[str]:
     )
 
     msg = await ctx.send(config.SETTINGS_EMOJI_CHECK_MSG)
+    if isinstance(msg, discord.Interaction):
+        msg = await msg.original_response()
     try:
         await msg.add_reaction(emoji)
     except Forbidden as e:
