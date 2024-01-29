@@ -5,8 +5,8 @@ from traceback import print_exception
 from typing import Dict, Union, List
 
 import discord
-from discord import Option
 from discord.ext import bridge, tasks
+from discord.ext.bridge import BridgeOption
 from discord.ext.commands import DefaultHelpCommand, NotOwner
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -215,7 +215,9 @@ class MusicBot(bridge.Bot):
 
     @bridge.bridge_command(name="help", description=config.HELP_HELP_SHORT)
     async def _help(
-        ctx, *, command: Option(str, autocomplete=_help_autocomplete) = None
+        ctx,
+        *,
+        command: BridgeOption(str, autocomplete=_help_autocomplete) = None,
     ):
         help_command = ctx.bot._default_help
         if ctx.is_app:
