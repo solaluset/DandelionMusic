@@ -243,9 +243,9 @@ class GuildSettings(Base):
                 vc = ctx.guild.get_channel(int(self.start_voice_channel))
                 embed.add_field(
                     name=key,
-                    value=vc.name
-                    if vc
-                    else SettingsEmbed.INVALID_VOICE_CHANNEL,
+                    value=(
+                        vc.name if vc else SettingsEmbed.INVALID_VOICE_CHANNEL
+                    ),
                     inline=False,
                 )
                 continue

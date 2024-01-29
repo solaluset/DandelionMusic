@@ -101,9 +101,11 @@ class Config:
             load_configs(
                 "en.json",
                 lambda d: {
-                    k: Formatter(v).format(current_cfg)
-                    if isinstance(v, str)
-                    else v
+                    k: (
+                        Formatter(v).format(current_cfg)
+                        if isinstance(v, str)
+                        else v
+                    )
                     for k, v in d.items()
                 },
             )

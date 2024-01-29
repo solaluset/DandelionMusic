@@ -63,9 +63,9 @@ class General(commands.Cog):
             # bot was connected and need some rest
             await asyncio.sleep(1)
 
-        audiocontroller = ctx.bot.audio_controllers[
-            ctx.guild
-        ] = AudioController(self.bot, ctx.guild)
+        audiocontroller = ctx.bot.audio_controllers[ctx.guild] = (
+            AudioController(self.bot, ctx.guild)
+        )
         await audiocontroller.uconnect(ctx)
         await ctx.send(
             "{} Connected to {}".format(
