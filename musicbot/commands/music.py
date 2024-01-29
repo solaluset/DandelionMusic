@@ -1,8 +1,9 @@
 from typing import Iterable, Union
 
-from discord import Option, Attachment
+from discord import Attachment
 from discord.ui import View
 from discord.ext import commands, bridge
+from discord.ext.bridge import BridgeOption
 
 from config import config
 from musicbot import linkutils, utils
@@ -146,7 +147,9 @@ class Music(commands.Cog):
     async def _loop(
         self,
         ctx: AudioContext,
-        mode: Option(str, choices=tuple(m.value for m in LoopMode)) = None,
+        mode: BridgeOption(
+            str, choices=tuple(m.value for m in LoopMode)
+        ) = None,
     ):
         result = ctx.audiocontroller.loop(mode)
         await ctx.send(result.value)
@@ -203,8 +206,8 @@ class Music(commands.Cog):
     async def _move(
         self,
         ctx: AudioContext,
-        src_pos: Option(int, min_value=2),
-        dest_pos: Option(int, min_value=2) = None,
+        src_pos: BridgeOption(int, min_value=2),
+        dest_pos: BridgeOption(int, min_value=2) = None,
     ):
         if dest_pos is None:
             dest_pos = len(ctx.audiocontroller.playlist)
@@ -224,7 +227,9 @@ class Music(commands.Cog):
     )
     @active_only
     async def _remove(
-        self, ctx: AudioContext, queue_number: Option(int, min_value=2) = None
+        self,
+        ctx: AudioContext,
+        queue_number: BridgeOption(int, min_value=2) = None,
     ):
         if queue_number is None:
             queue_number = len(ctx.audiocontroller.playlist)
@@ -297,7 +302,7 @@ class Music(commands.Cog):
     async def _volume(
         self,
         ctx: AudioContext,
-        value: Option(int, min_value=0, max_value=100) = None,
+        value: BridgeOption(int, min_value=0, max_value=100) = None,
     ):
         if value is None:
             await ctx.send(

@@ -3,16 +3,12 @@ import sys
 from traceback import print_exc
 
 import discord
-
-# import bridge here to override discord.Option with BridgeOption
-from discord.ext import commands, bridge
+from discord.ext import commands
 
 from config import config
 from musicbot import loader
 from musicbot.bot import MusicBot
 from musicbot.utils import check_dependencies, read_shutdown
-
-del bridge
 
 
 # to load yt-dlp plugin
