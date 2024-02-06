@@ -133,7 +133,8 @@ class Music(commands.Cog):
                 *(
                     SongButton(self, i, data["url"])
                     for i, data in enumerate(results, start=1)
-                )
+                ),
+                disable_on_timeout=True,
             ),
         )
 
