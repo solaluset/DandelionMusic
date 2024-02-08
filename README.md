@@ -5,7 +5,7 @@
 A Discord music bot written in Python with support for Youtube, SoundCloud, Spotify, Bandcamp, Twitter, and custom files.
 
 ### Keep in mind:
-* The Wiki may have the answer you are looking for https://github.com/Krutyi-4el/DandelionMusic/wiki
+* The Wiki may have the answer you are looking for https://github.com/solaluset/DandelionMusic/wiki
 * Known problems are listed in Issues. If you are interested in this project feel free to submit an Issue.
 
 
@@ -45,7 +45,7 @@ Install `ffmpeg` and `libopus` packages.
 1. Download release if available, alternatively download repository zip
 2. Complete Prerequisites
 3. Start ```run.py``` in project root (or the exe)
-4. See configuration options in config.json (more info at https://github.com/Krutyi-4el/DandelionMusic/wiki/Configuration)
+4. See configuration options in config.json (more info at https://github.com/solaluset/DandelionMusic/wiki/Configuration)
 
 Button play plugin:
 * Set emoji with the setting command to enable this feature
@@ -61,7 +61,7 @@ Custom Cookies:
 
 You can find pre-built Docker image at https://hub.docker.com/repository/docker/krutyi4el/dandelion-music/
 
-See https://github.com/Krutyi-4el/DandelionMusic/wiki/Configuration for description of environment variables.
+See https://github.com/solaluset/DandelionMusic/wiki/Configuration for description of environment variables.
 
 ## Commands:
 

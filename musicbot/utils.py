@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os
+import re
 import sys
 import _thread
 import asyncio
@@ -49,25 +50,23 @@ libswscale      6.  8.103 /  6.  8.103
 libswresample   4.  8.100 /  4.  8.100
 """.strip()
 FFMPEG_ZIP_URL = (
-    "https://github.com/Krutyi-4el/FFmpeg"
+    "https://github.com/solaluset/FFmpeg"
     "/releases/latest/download/ffmpeg.zip"
 )
-NEWEST_FFMPEG_TIMESTAMP = 1704887962
+NEWEST_FFMPEG_TIMESTAMP = 1707390766
 
 
 def extract_ffmpeg_timestamp(version: str) -> int:
     version = version.split()
     if len(version) > 2:
-        timestamp = version[2].partition("-K4_")[2]
-        try:
-            return int(timestamp)
-        except ValueError:
-            pass
+        mo = re.search(r"-(K4|SL)_(?P<timestamp>\d+)", version[2])
+        if mo:
+            return int(mo.group("timestamp"))
     return None
 
 
 def check_dependencies():
-    if pycord_version != "2.5.7":
+    if pycord_version != "2.5.8-SL":
         raise ImportError(
             "you have wrong version of Pycord."
             " Please install the version specified in requirements.txt"
