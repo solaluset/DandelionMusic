@@ -1,3 +1,3 @@
 # Netscape HTTP Cookie File
 # https://curl.haxx.se/rfc/cookie_spec.html
-# More info at https://github.com/Krutyi-4el/DandelionMusic/wiki/Configuration#custom-cookies
+# More info at https://github.com/solaluset/DandelionMusic/wiki/Configuration#custom-cookies
