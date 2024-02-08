@@ -23,7 +23,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: krutyi4el/dandelion-music
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/dandelion-music
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -39,4 +39,4 @@ jobs:
           DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKER_PASS: ${{ secrets.DOCKERHUB_PASSWORD }}
         with:
-          destination_container_repo: krutyi4el/dandelion-music
+          destination_container_repo: ${{ secrets.DOCKERHUB_USERNAME }}/dandelion-music

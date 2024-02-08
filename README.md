@@ -59,7 +59,7 @@ Custom Cookies:
 
 ### Docker image
 
-You can find pre-built Docker image at https://hub.docker.com/repository/docker/krutyi4el/dandelion-music/
+You can find pre-built Docker image at https://hub.docker.com/repository/docker/solaluset/dandelion-music/
 
 See https://github.com/solaluset/DandelionMusic/wiki/Configuration for description of environment variables.
 
