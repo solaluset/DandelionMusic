@@ -33,7 +33,7 @@ repos:
     -   id: update-dockerfile
         name: update-dockerfile
         description: 'Update env vars in Dockerfile'
-        entry: python -m config.update_dockerfile
+        entry: python config/update-dockerfile.py
         files: ^config/config\.py$
         language: python
         require_serial: true

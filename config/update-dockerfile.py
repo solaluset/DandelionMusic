@@ -1,5 +1,7 @@
-from config import config
+from config import Config
 
+
+config = Config()
 
 variables = config.as_dict()
 environ = []
