@@ -1,0 +1,56 @@
+# bump dependencies in pyproject.toml that dependabot doesn't for some reason
+import re
+import json
+import tomllib
+from urllib.request import urlopen
+from packaging.requirements import Requirement
+from packaging.version import Version, InvalidVersion
+
+
+def get_current_version(requirement):
+    try:
+        return Version(str(requirement.specifier).partition("==")[2])
+    except InvalidVersion:
+        return None
+
+
+def fetch_latest_version(requirement):
+    return Version(
+        json.load(urlopen(f"https://pypi.org/pypi/{requirement.name}/json"))[
+            "info"
+        ]["version"]
+    )
+
+
+pyproject_file = "config/pyproject.toml"
+pre_commit_file = ".pre-commit-config.yaml"
+jsonc_pattern = '"json-with-comments==[^"]+"'
+
+with open(pyproject_file, "rb") as f:
+    pyproject_content = f.read().decode()
+    f.seek(0)
+    requirements = tomllib.load(f)["build-system"]["requires"]
+
+for req in requirements:
+    req_obj = Requirement(req)
+    version = get_current_version(req_obj)
+    if version is not None:
+        new_version = fetch_latest_version(req_obj)
+        if new_version > version:
+            new_req = req.replace(str(version), str(new_version))
+            pyproject_content = pyproject_content.replace(req, new_req)
+
+with open(pyproject_file, "w") as f:
+    f.write(pyproject_content)
+
+with open(pre_commit_file, "r") as f:
+    pre_commit_content = f.read()
+
+with open(pre_commit_file, "w") as f:
+    f.write(
+        re.sub(
+            jsonc_pattern,
+            re.search(jsonc_pattern, pyproject_content).group(),
+            pre_commit_content,
+        )
+    )
