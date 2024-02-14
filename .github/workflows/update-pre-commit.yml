@@ -16,8 +16,8 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install pre-commit
-        run: pip install pre-commit
+      - name: Install packages
+        run: pip install pre-commit ./config
 
       - name: Run pre-commit autoupdate
         run: pre-commit autoupdate
