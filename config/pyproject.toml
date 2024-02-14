@@ -10,7 +10,7 @@ requires = [
 [project]
 name = "MusicBot-DB"
 description = "Package that installs DB library and jsonc as dependencies"
-version = "0.0.2"
+version = "0.0.3"
 dynamic = ["dependencies"]
 
 [tool.setuptools.dynamic]
