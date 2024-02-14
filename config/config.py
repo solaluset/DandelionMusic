@@ -93,7 +93,7 @@ class Config:
         ]
         db_req = Requirement(self.DATABASE_LIBRARY)
         self.DATABASE = self.DATABASE.replace(
-            self.DATABASE_LIBRARY, db_req.name
+            self.DATABASE_LIBRARY, db_req.name, 1
         )
         if not db_req.specifier:
             with open(
