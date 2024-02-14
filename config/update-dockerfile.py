@@ -1,9 +1,8 @@
 import os
 
-from config import Config
+from config import config
 
 
-config = Config()
 dockerfile = os.path.join(
     os.path.dirname(os.path.dirname(__file__)), "Dockerfile"
 )

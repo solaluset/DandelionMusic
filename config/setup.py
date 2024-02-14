@@ -14,8 +14,10 @@ from config import Config
 def main():
     with open("db.txt", "w") as f, open("pyproject.toml", "rb") as t:
         print(Config().DATABASE_LIBRARY, file=f)
-        # reuse jsonc already specified in toml
-        print(tomllib.load(t)["build-system"]["requires"][-1], file=f)
+        # reuse requirements already specified in toml
+        print(
+            *tomllib.load(t)["build-system"]["requires"][3:], sep="\n", file=f
+        )
 
     setup()
 
