@@ -3,8 +3,8 @@ requires = [
    "setuptools==69.1.0",
    "wheel==0.42.0",
    "tomli==2.0.1; python_version<'3.11'",
-   "packaging==23.1",
-   "json-with-comments==1.2.2",
+   "packaging==23.2",
+   "json-with-comments==1.2.3",
 ]
 
 [project]
