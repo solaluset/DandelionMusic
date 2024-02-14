@@ -1,6 +1,5 @@
 # bump dependencies in pyproject.toml that dependabot doesn't for some reason
 import os
-import re
 import json
 import tomllib
 from urllib.request import urlopen
@@ -10,8 +9,6 @@ from packaging.version import Version, InvalidVersion
 
 cfg_dir = os.path.dirname(__file__)
 pyproject_file = os.path.join(cfg_dir, "pyproject.toml")
-pre_commit_file = os.path.join(cfg_dir, "..", ".pre-commit-config.yaml")
-jsonc_pattern = '"json-with-comments==[^"]+"'
 
 
 def get_current_version(requirement):
@@ -45,15 +42,3 @@ for req in requirements:
 
 with open(pyproject_file, "w") as f:
     f.write(pyproject_content)
-
-with open(pre_commit_file, "r") as f:
-    pre_commit_content = f.read()
-
-with open(pre_commit_file, "w") as f:
-    f.write(
-        re.sub(
-            jsonc_pattern,
-            re.search(jsonc_pattern, pyproject_content).group(),
-            pre_commit_content,
-        )
-    )
