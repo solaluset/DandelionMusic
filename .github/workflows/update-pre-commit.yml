@@ -3,6 +3,7 @@ name: Pre-commit auto-update
 on:
   schedule:
     - cron: '0 0 * * 1'
+  workflow_dispatch:
 
 jobs:
   auto-update:
@@ -21,13 +22,8 @@ jobs:
       - name: Run pre-commit autoupdate
         run: pre-commit autoupdate
 
-      - name: Sync json-with-comments
-        run: |
-          pattern='"json-with-comments==[^"]+"'
-          content=$(cat .pre-commit-config.yaml)
-          current=$(echo "$content" | grep -Eo "$pattern")
-          actual=$(grep -Eo "$pattern" config/pyproject.toml)
-          echo "${content/$current/$actual}" > .pre-commit-config.yaml
+      - name: Update pyproject requirements
+        run: python config/update-deps.py
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6

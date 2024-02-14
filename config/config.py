@@ -6,6 +6,8 @@ import inspect
 import warnings
 from typing import Optional
 
+from packaging.requirements import Requirement
+
 sys.path.insert(0, os.path.dirname(__file__))
 from utils import (  # noqa: E402
     CONFIG_DIRS,
@@ -89,6 +91,19 @@ class Config:
         self.DATABASE_LIBRARY = self.DATABASE.partition("+")[2].partition(":")[
             0
         ]
+        db_req = Requirement(self.DATABASE_LIBRARY)
+        self.DATABASE = self.DATABASE.replace(
+            self.DATABASE_LIBRARY, db_req.name, 1
+        )
+        if not db_req.specifier:
+            with open(
+                os.path.join(os.path.dirname(__file__), "db-requirements.txt")
+            ) as f:
+                for line in f:
+                    req = Requirement(line)
+                    if req.name == db_req.name:
+                        self.DATABASE_LIBRARY = str(req)
+                        break
 
         self.EMBED_COLOR = int(self.EMBED_COLOR, 16)
         for dir_ in CONFIG_DIRS[::-1]:

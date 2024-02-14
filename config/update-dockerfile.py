@@ -1,5 +1,11 @@
+import os
+
 from config import config
 
+
+dockerfile = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), "Dockerfile"
+)
 
 variables = config.as_dict()
 environ = []
@@ -12,12 +18,12 @@ for k in config.get_comments():
         value = f'"{value}"'
     environ.append(f"ENV {k}={value}\n")
 
-with open("Dockerfile") as f:
+with open(dockerfile) as f:
     lines = f.readlines()
 
 start = lines.index("# config env vars\n") + 1
 end = lines.index("\n", start)
 lines[start:end] = environ
 
-with open("Dockerfile", "w") as f:
+with open(dockerfile, "w") as f:
     f.writelines(lines)

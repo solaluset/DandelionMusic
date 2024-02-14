@@ -23,18 +23,15 @@ repos:
     -   id: check-jsonc
         name: check-jsonc
         description: 'Check JSON with comments'
-        entry: python -c 'import sys, jsonc; jsonc.load(open(sys.argv[1]))'
+        entry: python -c 'import os, sys; os.system("pip install ./config"); import jsonc; jsonc.load(open(sys.argv[1]))'
         language: python
         types: [json]
         require_serial: true
-        additional_dependencies: &jsonc
-        -   "json-with-comments==1.2.2"
 
     -   id: update-dockerfile
         name: update-dockerfile
         description: 'Update env vars in Dockerfile'
-        entry: python -m config.update_dockerfile
+        entry: python -c 'import os, runpy; os.system("pip install ./config"); runpy.run_path("config/update-dockerfile.py")'
         files: ^config/config\.py$
         language: python
         require_serial: true
-        additional_dependencies: *jsonc
