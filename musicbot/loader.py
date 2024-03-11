@@ -129,7 +129,10 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
     host = identify_url(track)
 
     if host == SiteTypes.NOT_URL:
-        data = _search_youtube(track)[0]
+        data = _search_youtube(track)
+        if not data:
+            return None
+        data = data[0]
         host = SiteTypes.YT_DLP
 
     elif host == SiteTypes.UNKNOWN:
