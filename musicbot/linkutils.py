@@ -109,7 +109,7 @@ async def get_soup(url: str) -> BeautifulSoup:
     return BeautifulSoup(page, "html.parser")
 
 
-async def fetch_spotify(url: str) -> Union[dict, List[str]]:
+async def fetch_spotify(url: str) -> Optional[Union[dict, List[str]]]:
     """Searches YouTube for Spotify song or loads Spotify playlist"""
     match = spotify_regex.match(url)
     url_type = match.group("type")
@@ -123,7 +123,8 @@ async def fetch_spotify(url: str) -> Union[dict, List[str]]:
         r"(.*) - song( and lyrics)? by (.*) \| Spotify", r"\1 \3", title
     )
     # use sync function because we're already in executor
-    return loader._search_youtube(title)[0]
+    results = loader._search_youtube(title)
+    return results[0] if results else None
 
 
 async def fetch_spotify_playlist(
