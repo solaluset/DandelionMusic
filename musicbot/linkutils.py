@@ -102,7 +102,7 @@ class Origins(Enum):
 
 
 async def get_soup(url: str) -> BeautifulSoup:
-    async with _session.get(spotify_regex.match(url).group()) as response:
+    async with _session.get(url) as response:
         response.raise_for_status()
         page = await response.text()
 
@@ -112,6 +112,8 @@ async def get_soup(url: str) -> BeautifulSoup:
 async def fetch_spotify(url: str) -> Optional[Union[dict, List[str]]]:
     """Searches YouTube for Spotify song or loads Spotify playlist"""
     match = spotify_regex.match(url)
+    # strip any extra parts
+    url = match.group()
     url_type = match.group("type")
     if url_type != "track":
         return await fetch_spotify_playlist(url, url_type, match.group("code"))
