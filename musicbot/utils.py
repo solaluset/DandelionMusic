@@ -53,7 +53,7 @@ FFMPEG_ZIP_URL = (
     "https://github.com/solaluset/FFmpeg"
     "/releases/latest/download/ffmpeg.zip"
 )
-NEWEST_FFMPEG_TIMESTAMP = 1707390766
+NEWEST_FFMPEG_TIMESTAMP = 1720195398
 
 
 def extract_ffmpeg_timestamp(version: str) -> int:
