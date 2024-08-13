@@ -25,7 +25,7 @@ sys.argv.extend(
             for file in glob.glob("musicbot/**/*.py", recursive=True)
             if file not in yt_dlp_plugins
         ],
-        "--hidden-import=" + config.DATABASE_LIBRARY,
+        "--hidden-import=" + config.DATABASE_LIBRARY_NAME,
         *[
             "--add-data=" + file + os.pathsep + "."
             for file in glob.glob("config/*.json")

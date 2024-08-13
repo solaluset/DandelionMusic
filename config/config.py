@@ -95,6 +95,7 @@ class Config:
         self.DATABASE = self.DATABASE.replace(
             self.DATABASE_LIBRARY, db_req.name, 1
         )
+        self.DATABASE_LIBRARY_NAME = db_req.name
         if not db_req.specifier:
             with open(
                 os.path.join(os.path.dirname(__file__), "db-requirements.txt")
