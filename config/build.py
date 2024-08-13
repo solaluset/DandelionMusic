@@ -30,6 +30,12 @@ sys.argv.extend(
             "--add-data=" + file + os.pathsep + "."
             for file in glob.glob("config/*.json")
         ],
+        (
+            "--add-data="
+            + os.path.join("config", "db-requirements.txt")
+            + os.pathsep
+            + "config"
+        ),
         *[
             "--add-data=" + file + os.pathsep + "assets"
             for file in glob.glob("assets/*.mp3")
