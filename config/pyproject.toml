@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-   "setuptools==75.0.0",
+   "setuptools==75.1.0",
    "wheel==0.44.0",
    "tomli==2.0.1; python_version<'3.11'",
    "packaging==24.1",
