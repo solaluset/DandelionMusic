@@ -26,7 +26,7 @@ Obtained keys must be entered into ```config.json``` (or set as environment vari
 
 #### Requirements (skip this if you've decided to use pre-built exe)
 
-* Installation of Python 3.8+
+* Installation of Python 3.9+
 
 Install dependencies:
 ```
