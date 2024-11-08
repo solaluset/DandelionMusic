@@ -1,4 +1,4 @@
-py-cord[voice] @ https://github.com/solaluset/pycord/releases/download/v2.5.10/py_cord-2.5.10-py3-none-any.whl
+py-cord[voice] @ https://github.com/solaluset/pycord/releases/download/v2.5.11/py_cord-2.5.11-py3-none-any.whl
 yt-dlp[default]==2024.11.4
 aiohttp==3.10.10
 beautifulsoup4==4.12.3
