@@ -56,7 +56,6 @@ class AudioController(object):
     def __init__(self, bot: "MusicBot", guild: discord.Guild):
         self.bot = bot
         self.playlist = Playlist()
-        self.current_song = None
         self._next_song = None
         self.guild = guild
 
@@ -75,6 +74,12 @@ class AudioController(object):
         self._tasks = set()
 
         self.message_lock = asyncio.Lock()
+
+    @property
+    def current_song(self) -> Optional[Song]:
+        if self.is_active():
+            return self.playlist[0]
+        return None
 
     @property
     def volume(self) -> int:
@@ -286,7 +291,6 @@ class AudioController(object):
 
         if self.current_song:
             self.playlist.add_name(self.current_song.title)
-            self.current_song = None
 
         if self._next_song:
             next_song = self._next_song
@@ -324,8 +328,6 @@ class AudioController(object):
             )
             self.next_song(forced=True)
             return
-
-        self.current_song = song
 
         self.guild.voice_client.play(
             discord.PCMVolumeTransformer(
@@ -373,7 +375,7 @@ class AudioController(object):
 
         if self.current_song is None:
             print("Playing {}".format(track))
-            await self.play_song(self.playlist.playque[0])
+            await self.play_song(self.playlist[0])
         else:
             self.preload_queue()
 
