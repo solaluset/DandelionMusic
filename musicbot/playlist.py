@@ -39,6 +39,12 @@ class Playlist:
     def __len__(self):
         return len(self.playque)
 
+    def __bool__(self) -> bool:
+        return bool(self.playque)
+
+    def __getitem__(self, key: int) -> Song:
+        return self.playque[key]
+
     def add_name(self, trackname: str):
         self.trackname_history.append(trackname)
         if len(self.trackname_history) > config.MAX_TRACKNAME_HISTORY_LENGTH:
