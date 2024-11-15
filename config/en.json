@@ -86,6 +86,9 @@
   "HELP_REMOVE_PLAYLIST_SHORT": "Remove playlist",
   "HELP_REMOVE_PLAYLIST_LONG": "Removes playlist with the specified name",
   "PLAYLIST_REMOVED": "Playlist removed.",
+  "HELP_ADD_TO_PLAYLIST_SHORT": "Add song to playlist",
+  "HELP_ADD_TO_PLAYLIST_LONG": "Adds the song or playlist to the saved playlist",
+  "PLAYLIST_UPDATED": "Playlist updated.",
 
   "SETTINGS_EMOJI_CHECK_MSG": "Checking the emoji...",
   "SEARCH_EMBED_TITLE": "Results:",

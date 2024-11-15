@@ -9,7 +9,7 @@ from sqlalchemy import select, delete
 from sqlalchemy.exc import IntegrityError
 
 from config import config
-from musicbot import linkutils, utils
+from musicbot import linkutils, utils, loader
 from musicbot.song import Song
 from musicbot.bot import MusicBot, Context
 from musicbot.utils import dj_check
@@ -430,6 +430,46 @@ class Music(commands.Cog):
             await ctx.send(config.PLAYLIST_NOT_FOUND)
             return
         await ctx.send(config.PLAYLIST_REMOVED)
+
+    @bridge.bridge_command(
+        name="add_to_playlist",
+        aliases=["apl"],
+        description=config.HELP_ADD_TO_PLAYLIST_LONG,
+        help=config.HELP_ADD_TO_PLAYLIST_SHORT,
+    )
+    @commands.check(dj_check)
+    async def _add_to_playlist(
+        self,
+        ctx: AudioContext,
+        playlist: BridgeOption(str, autocomplete=_playlist_autocomplete),
+        track: str,
+    ):
+        await ctx.defer()
+        song = await loader.load_song(track)
+        if song is None:
+            await ctx.send(config.SONGINFO_ERROR)
+            return
+        if isinstance(song, Song):
+            urls = [song.webpage_url]
+        else:
+            urls = [s.webpage_url for s in song]
+
+        async with ctx.bot.DbSession() as session:
+            playlist = (
+                await session.execute(
+                    select(SavedPlaylist)
+                    .where(SavedPlaylist.guild_id == str(ctx.guild.id))
+                    .where(SavedPlaylist.name == playlist)
+                )
+            ).scalar_one_or_none()
+            if playlist is None:
+                await ctx.send(config.PLAYLIST_NOT_FOUND)
+                return
+            playlist.songs_json = json.dumps(
+                json.loads(playlist.songs_json) + urls
+            )
+            await session.commit()
+        await ctx.send(config.PLAYLIST_UPDATED)
 
 
 def setup(bot: MusicBot):
