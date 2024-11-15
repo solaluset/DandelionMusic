@@ -81,8 +81,11 @@
   "PLAYLIST_SAVED_MESSAGE": "Playlist saved.",
   "PLAYLIST_ALREADY_EXISTS": "Playlist with this name already exists.",
   "HELP_LOAD_PLAYLIST_SHORT": "Load and play playlist",
-  "HELP_LOAD_PLAYLIST_LONG": "Loads playlist with the specified name to and plays it",
+  "HELP_LOAD_PLAYLIST_LONG": "Loads playlist with the specified name and plays it",
   "PLAYLIST_NOT_FOUND": "Playlist not found.",
+  "HELP_REMOVE_PLAYLIST_SHORT": "Remove playlist",
+  "HELP_REMOVE_PLAYLIST_LONG": "Removes playlist with the specified name",
+  "PLAYLIST_REMOVED": "Playlist removed.",
 
   "SETTINGS_EMOJI_CHECK_MSG": "Checking the emoji...",
   "SEARCH_EMBED_TITLE": "Results:",
