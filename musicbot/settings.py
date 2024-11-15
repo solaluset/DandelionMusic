@@ -299,6 +299,14 @@ class GuildSettings(Base):
         return True
 
 
+class SavedPlaylist(Base):
+    __tablename__ = "playlists"
+
+    guild_id: Mapped[DiscordIdStr] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(primary_key=True)
+    songs_json: Mapped[str]
+
+
 def run_migrations(connection):
     """Automatically creates or deletes tables and columns
     Reflects code changes"""
