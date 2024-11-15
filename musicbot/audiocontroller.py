@@ -329,19 +329,23 @@ class AudioController(object):
             self.next_song(forced=True)
             return
 
-        self.guild.voice_client.play(
-            discord.PCMVolumeTransformer(
-                discord.FFmpegPCMAudio(
-                    song.url,
-                    before_options="-reconnect 1 -reconnect_streamed 1"
-                    " -reconnect_delay_max 5",
-                    options="-loglevel error",
-                    stderr=sys.stderr,
+        try:
+            self.guild.voice_client.play(
+                discord.PCMVolumeTransformer(
+                    discord.FFmpegPCMAudio(
+                        song.url,
+                        before_options="-reconnect 1 -reconnect_streamed 1"
+                        " -reconnect_delay_max 5",
+                        options="-loglevel error",
+                        stderr=sys.stderr,
+                    ),
+                    float(self.volume) / 100.0,
                 ),
-                float(self.volume) / 100.0,
-            ),
-            after=self.next_song,
-        )
+                after=self.next_song,
+            )
+        except discord.ClientException:
+            await self.udisconnect()
+            return
 
         if (
             self.bot.settings[self.guild].announce_songs

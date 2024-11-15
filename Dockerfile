@@ -28,6 +28,7 @@ ENV SUPPORTED_EXTENSIONS="('.webm', '.mp4', '.mp3', '.avi', '.wav', '.m4v', '.og
 ENV COOKIE_PATH=config/cookies/cookies.txt
 ENV GLOBAL_DISABLE_AUTOJOIN_VC=False
 ENV ANNOUNCE_DISCONNECT=True
+ENV ENABLE_PLAYLISTS=True
 
 RUN pip --no-cache-dir install -r requirements.txt \
     && apt-get update \

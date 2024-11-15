@@ -77,6 +77,8 @@ class Config:
     # whether to tell users the bot is disconnecting
     ANNOUNCE_DISCONNECT = True
 
+    ENABLE_PLAYLISTS = True
+
     def __init__(self):
         current_cfg = self.load()
 
