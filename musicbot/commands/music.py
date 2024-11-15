@@ -351,6 +351,10 @@ class Music(commands.Cog):
     )
     @commands.check(dj_check)
     async def _save_playlist(self, ctx: AudioContext, name: str):
+        if not config.ENABLE_PLAYLISTS:
+            await ctx.send(config.PLAYLISTS_ARE_DISABLED)
+            return
+
         await ctx.defer()
         urls = [
             song.webpage_url for song in ctx.audiocontroller.playlist.playque

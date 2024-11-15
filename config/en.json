@@ -89,6 +89,7 @@
   "HELP_ADD_TO_PLAYLIST_SHORT": "Add song to playlist",
   "HELP_ADD_TO_PLAYLIST_LONG": "Adds the song or playlist to the saved playlist",
   "PLAYLIST_UPDATED": "Playlist updated.",
+  "PLAYLISTS_ARE_DISABLED": "Playlists are disabled globally in this bot.",
 
   "SETTINGS_EMOJI_CHECK_MSG": "Checking the emoji...",
   "SEARCH_EMBED_TITLE": "Results:",
