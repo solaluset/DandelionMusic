@@ -444,13 +444,13 @@ class Music(commands.Cog):
         await ctx.send(config.PLAYLIST_REMOVED)
 
     @_playlist.command(
-        name="add",
-        aliases=["a"],
+        name="add_song",
+        aliases=["as"],
         description=config.HELP_ADD_TO_PLAYLIST_LONG,
         help=config.HELP_ADD_TO_PLAYLIST_SHORT,
     )
     @commands.check(dj_check)
-    async def _playlist_add(
+    async def _playlist_add_song(
         self,
         ctx: AudioContext,
         playlist: BridgeOption(str, autocomplete=_playlist_autocomplete),
@@ -480,6 +480,44 @@ class Music(commands.Cog):
             playlist.songs_json = json.dumps(
                 json.loads(playlist.songs_json) + urls
             )
+            await session.commit()
+        await ctx.send(config.PLAYLIST_UPDATED)
+
+    @_playlist.command(
+        name="remove_song",
+        aliases=["rs"],
+        description=config.HELP_REMOVE_FROM_PLAYLIST_LONG,
+        help=config.HELP_REMOVE_FROM_PLAYLIST_SHORT,
+    )
+    @commands.check(dj_check)
+    async def _playlist_remove_song(
+        self,
+        ctx: AudioContext,
+        playlist: BridgeOption(str, autocomplete=_playlist_autocomplete),
+        position: int,
+    ):
+        await ctx.defer()
+
+        async with ctx.bot.DbSession() as session:
+            playlist = (
+                await session.execute(
+                    select(SavedPlaylist)
+                    .where(SavedPlaylist.guild_id == str(ctx.guild.id))
+                    .where(SavedPlaylist.name == playlist)
+                )
+            ).scalar_one_or_none()
+            if playlist is None:
+                await ctx.send(config.PLAYLIST_NOT_FOUND)
+                return
+            songs = json.loads(playlist.songs_json)
+            if position <= 0 or position > len(songs):
+                await ctx.send("Invalid position.")
+                return
+            if len(songs) == 1:
+                await ctx.send("Can't remove the only song from playlist.")
+                return
+            del songs[position - 1]
+            playlist.songs_json = json.dumps(songs)
             await session.commit()
         await ctx.send(config.PLAYLIST_UPDATED)
 
