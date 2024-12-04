@@ -90,6 +90,8 @@
   "HELP_ADD_TO_PLAYLIST_LONG": "Adds the song or playlist to the saved playlist",
   "HELP_REMOVE_FROM_PLAYLIST_SHORT": "Remove song from playlist",
   "HELP_REMOVE_FROM_PLAYLIST_LONG": "Remove the song on specified position from playlist",
+  "HELP_MOVE_IN_PLAYLIST_SHORT": "Moves song",
+  "HELP_MOVE_IN_PLAYLIST_LONG": "Moves song in playlist from one position to another",
   "PLAYLIST_UPDATED": "Playlist updated.",
   "PLAYLISTS_ARE_DISABLED": "Playlists are disabled globally in this bot.",
 

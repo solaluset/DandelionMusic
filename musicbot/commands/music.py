@@ -416,6 +416,8 @@ class Music(commands.Cog):
             await ctx.audiocontroller.play_song(
                 ctx.audiocontroller.playlist[0]
             )
+        else:
+            ctx.audiocontroller.preload_queue()
         await ctx.send(config.SONGINFO_PLAYLIST_QUEUED)
 
     @_playlist.command(
@@ -517,6 +519,46 @@ class Music(commands.Cog):
                 await ctx.send("Can't remove the only song from playlist.")
                 return
             del songs[position - 1]
+            playlist.songs_json = json.dumps(songs)
+            await session.commit()
+        await ctx.send(config.PLAYLIST_UPDATED)
+
+    @_playlist.command(
+        name="move_song",
+        aliases=["ms"],
+        description=config.HELP_MOVE_IN_PLAYLIST_LONG,
+        help=config.HELP_MOVE_IN_PLAYLIST_SHORT,
+    )
+    @commands.check(dj_check)
+    async def _playlist_move_song(
+        self,
+        ctx: AudioContext,
+        playlist: BridgeOption(str, autocomplete=_playlist_autocomplete),
+        source_position: int,
+        destination_position: int,
+    ):
+        await ctx.defer()
+
+        async with ctx.bot.DbSession() as session:
+            playlist = (
+                await session.execute(
+                    select(SavedPlaylist)
+                    .where(SavedPlaylist.guild_id == str(ctx.guild.id))
+                    .where(SavedPlaylist.name == playlist)
+                )
+            ).scalar_one_or_none()
+            if playlist is None:
+                await ctx.send(config.PLAYLIST_NOT_FOUND)
+                return
+            songs = json.loads(playlist.songs_json)
+            if min(source_position, destination_position) <= 0 or max(
+                source_position, destination_position
+            ) > len(songs):
+                await ctx.send("Invalid position.")
+                return
+            songs.insert(
+                destination_position - 1, songs.pop(source_position - 1)
+            )
             playlist.songs_json = json.dumps(songs)
             await session.commit()
         await ctx.send(config.PLAYLIST_UPDATED)
