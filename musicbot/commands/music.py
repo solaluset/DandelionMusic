@@ -65,7 +65,7 @@ class Music(commands.Cog):
         name="play",
         description=config.HELP_YT_LONG,
         help=config.HELP_YT_SHORT,
-        aliases=["p", "yt", "pl"],
+        aliases=["p", "yt"],
     )
     async def _play(
         self, ctx: AudioContext, *, track: str = None, file: Attachment = None
@@ -186,7 +186,7 @@ class Music(commands.Cog):
         name="queue",
         description=config.HELP_QUEUE_LONG,
         help=config.HELP_QUEUE_SHORT,
-        aliases=["playlist", "q"],
+        aliases=["q"],
     )
     @active_only
     async def _queue(self, ctx: AudioContext):
@@ -343,14 +343,22 @@ class Music(commands.Cog):
                 )
             ).scalars()
 
-    @bridge.bridge_command(
-        name="save_playlist",
-        aliases=["spl"],
+    @bridge.bridge_group(
+        name="playlist",
+        aliases=["pl"],
+        invoke_without_command=True,
+    )
+    async def _playlist(self, ctx: AudioContext):
+        await ctx.send("Use subcommands to manage playlists.")
+
+    @_playlist.command(
+        name="save",
+        aliases=["s"],
         description=config.HELP_SAVE_PLAYLIST_LONG,
         help=config.HELP_SAVE_PLAYLIST_SHORT,
     )
     @commands.check(dj_check)
-    async def _save_playlist(self, ctx: AudioContext, name: str):
+    async def _playlist_save(self, ctx: AudioContext, name: str):
         if not config.ENABLE_PLAYLISTS:
             await ctx.send(config.PLAYLISTS_ARE_DISABLED)
             return
@@ -377,13 +385,13 @@ class Music(commands.Cog):
                 return
         await ctx.send(config.PLAYLIST_SAVED_MESSAGE)
 
-    @bridge.bridge_command(
-        name="load_playlist",
-        aliases=["lpl"],
+    @_playlist.command(
+        name="load",
+        aliases=["l"],
         description=config.HELP_LOAD_PLAYLIST_LONG,
         help=config.HELP_LOAD_PLAYLIST_SHORT,
     )
-    async def _load_playlist(
+    async def _playlist_load(
         self,
         ctx: AudioContext,
         name: BridgeOption(str, autocomplete=_playlist_autocomplete),
@@ -410,14 +418,14 @@ class Music(commands.Cog):
             )
         await ctx.send(config.SONGINFO_PLAYLIST_QUEUED)
 
-    @bridge.bridge_command(
-        name="remove_playlist",
-        aliases=["rpl"],
+    @_playlist.command(
+        name="remove",
+        aliases=["r"],
         description=config.HELP_REMOVE_PLAYLIST_LONG,
         help=config.HELP_REMOVE_PLAYLIST_SHORT,
     )
     @commands.check(dj_check)
-    async def _remove_playlist(
+    async def _playlist_remove(
         self,
         ctx: AudioContext,
         name: BridgeOption(str, autocomplete=_playlist_autocomplete),
@@ -435,14 +443,14 @@ class Music(commands.Cog):
             return
         await ctx.send(config.PLAYLIST_REMOVED)
 
-    @bridge.bridge_command(
-        name="add_to_playlist",
-        aliases=["apl"],
+    @_playlist.command(
+        name="add",
+        aliases=["a"],
         description=config.HELP_ADD_TO_PLAYLIST_LONG,
         help=config.HELP_ADD_TO_PLAYLIST_SHORT,
     )
     @commands.check(dj_check)
-    async def _add_to_playlist(
+    async def _playlist_add(
         self,
         ctx: AudioContext,
         playlist: BridgeOption(str, autocomplete=_playlist_autocomplete),
