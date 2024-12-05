@@ -446,6 +446,32 @@ class Music(commands.Cog):
         await ctx.send(config.PLAYLIST_REMOVED)
 
     @_playlist.command(
+        name="list",
+        aliases=["li"],
+        description=config.HELP_LIST_PLAYLISTS_LONG,
+        help=config.HELP_LIST_PLAYLISTS_SHORT,
+    )
+    async def _playlist_list(self, ctx: AudioContext):
+        async with ctx.bot.DbSession() as session:
+            playlists = (
+                (
+                    await session.execute(
+                        select(SavedPlaylist.name).where(
+                            SavedPlaylist.guild_id == str(ctx.guild.id)
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
+        if not playlists:
+            await ctx.send("No playlists.")
+            return
+
+        playlist_names = "\n".join(f"- {name}" for name in playlists)
+        await ctx.send(f"**Playlists:**\n{playlist_names}")
+
+    @_playlist.command(
         name="add_song",
         aliases=["as"],
         description=config.HELP_ADD_TO_PLAYLIST_LONG,
