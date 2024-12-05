@@ -17,6 +17,7 @@ from musicbot.settings import (
     GuildSettings,
     run_migrations,
     extract_legacy_settings,
+    migrate_old_playlists,
 )
 from musicbot.utils import CheckError
 
@@ -49,6 +50,8 @@ class MusicBot(bridge.Bot):
         async with self.db_engine.connect() as connection:
             await connection.run_sync(run_migrations)
         await extract_legacy_settings(self)
+        await migrate_old_playlists(self)
+
         return await super().start(*args, **kwargs)
 
     async def close(self):

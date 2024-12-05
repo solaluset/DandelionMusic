@@ -1,4 +1,5 @@
 import sys
+import json
 import atexit
 import asyncio
 import threading
@@ -13,12 +14,12 @@ from aiohttp import ClientResponseError
 from yt_dlp import YoutubeDL, DownloadError
 
 from config import config
+from musicbot.bot import MusicBot
 from musicbot.song import Song
 from musicbot.utils import OutputWrapper
 from musicbot.linkutils import (
     YT_IE,
     ExtractorT,
-    Origins,
     SiteTypes,
     get_ie,
     fetch_spotify,
@@ -175,7 +176,6 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
         for entry in data:
             entry.pop("webpage_url", None)
             song = Song(
-                Origins.Playlist,
                 host,
                 webpage_url=entry.pop("url"),
             )
@@ -183,7 +183,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             results.append(song)
         return results
 
-    song = Song(Origins.Default, host, webpage_url=track)
+    song = Song(host, webpage_url=track)
     song.update(data)
 
     return song
@@ -199,7 +199,7 @@ def _parse_expire(url: str) -> Optional[int]:
         return None
 
 
-async def preload(song: Song) -> bool:
+async def preload(song: Song, bot: MusicBot) -> bool:
     if song.webpage_url is None:
         return True
 
@@ -226,6 +226,16 @@ async def preload(song: Song) -> bool:
 
     if success:
         song.update(preloaded)
+
+        if song.playlist is not None:
+            saved_songs_data = json.loads(song.playlist.songs_json)
+            for song_data in saved_songs_data:
+                if song_data["url"] == song.webpage_url:
+                    song_data["title"] = song.title
+            song.playlist.songs_json = json.dumps(saved_songs_data)
+            async with bot.DbSession() as session:
+                session.add(song.playlist)
+                await session.commit()
 
     _preloading.pop(song).set_result(success)
     return success

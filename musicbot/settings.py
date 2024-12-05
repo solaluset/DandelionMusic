@@ -353,3 +353,17 @@ async def extract_legacy_settings(bot: "MusicBot"):
             session.add(GuildSettings(guild_id=guild_id, **new_settings))
         await session.commit()
     os.rename(LEGACY_SETTINGS, LEGACY_SETTINGS + ".back")
+
+
+async def migrate_old_playlists(bot: "MusicBot"):
+    async with bot.DbSession() as session:
+        playlists = (
+            (await session.execute(select(SavedPlaylist))).scalars().fetchall()
+        )
+        for playlist in playlists:
+            songs = json.loads(playlist.songs_json)
+            for i, song in enumerate(songs):
+                if isinstance(song, str):
+                    songs[i] = {"url": song, "title": None}
+            playlist.songs_json = json.dumps(songs)
+        await session.commit()

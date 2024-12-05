@@ -316,7 +316,7 @@ class AudioController(object):
     async def play_song(self, song: Song):
         """Plays a song object"""
 
-        if not await loader.preload(song):
+        if not await loader.preload(song, self.bot):
             self.next_song(forced=True)
             return
 
@@ -395,7 +395,7 @@ class AudioController(object):
         for song in list(
             islice(self.playlist.playque, 1, config.MAX_SONG_PRELOAD)
         ):
-            if not await loader.preload(song):
+            if not await loader.preload(song, self.bot):
                 try:
                     self.playlist.playque.remove(song)
                     rerun_needed = True

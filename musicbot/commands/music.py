@@ -1,10 +1,11 @@
 import json
 from typing import Iterable, List, Union
 
-from discord import Attachment, AutocompleteContext
+from discord import Attachment, AutocompleteContext, Embed
 from discord.ui import View
 from discord.ext import commands, bridge
 from discord.ext.bridge import BridgeOption
+from discord.ext.pages import Paginator
 from sqlalchemy import select, delete
 from sqlalchemy.exc import IntegrityError
 
@@ -12,12 +13,12 @@ from config import config
 from musicbot import linkutils, utils, loader
 from musicbot.song import Song
 from musicbot.bot import MusicBot, Context
-from musicbot.utils import dj_check
+from musicbot.utils import dj_check, chunks
 from musicbot.audiocontroller import PLAYLIST, AudioController, MusicButton
 from musicbot.loader import SongError, search_youtube
 from musicbot.playlist import PlaylistError, LoopMode
 from musicbot.settings import SavedPlaylist
-from musicbot.linkutils import Origins, SiteTypes
+from musicbot.linkutils import get_site_type, url_regex
 
 
 class AudioContext(Context):
@@ -65,7 +66,7 @@ class Music(commands.Cog):
         name="play",
         description=config.HELP_YT_LONG,
         help=config.HELP_YT_SHORT,
-        aliases=["p", "yt", "pl"],
+        aliases=["p", "yt"],
     )
     async def _play(
         self, ctx: AudioContext, *, track: str = None, file: Attachment = None
@@ -126,7 +127,6 @@ class Music(commands.Cog):
         songs = []
         for data in results:
             song = Song(
-                linkutils.Origins.Default,
                 linkutils.SiteTypes.YT_DLP,
                 webpage_url=data["url"],
             )
@@ -186,7 +186,7 @@ class Music(commands.Cog):
         name="queue",
         description=config.HELP_QUEUE_LONG,
         help=config.HELP_QUEUE_SHORT,
-        aliases=["playlist", "q"],
+        aliases=["q"],
     )
     @active_only
     async def _queue(self, ctx: AudioContext):
@@ -343,23 +343,32 @@ class Music(commands.Cog):
                 )
             ).scalars()
 
-    @bridge.bridge_command(
-        name="save_playlist",
-        aliases=["spl"],
+    @bridge.bridge_group(
+        name="playlist",
+        aliases=["pl"],
+        invoke_without_command=True,
+    )
+    async def _playlist(self, ctx: AudioContext):
+        await ctx.send("Use subcommands to manage playlists.")
+
+    @_playlist.command(
+        name="save",
+        aliases=["s"],
         description=config.HELP_SAVE_PLAYLIST_LONG,
         help=config.HELP_SAVE_PLAYLIST_SHORT,
     )
     @commands.check(dj_check)
-    async def _save_playlist(self, ctx: AudioContext, name: str):
+    async def _playlist_save(self, ctx: AudioContext, name: str):
         if not config.ENABLE_PLAYLISTS:
             await ctx.send(config.PLAYLISTS_ARE_DISABLED)
             return
 
         await ctx.defer()
-        urls = [
-            song.webpage_url for song in ctx.audiocontroller.playlist.playque
+        songs = [
+            {"url": song.webpage_url, "title": song.title}
+            for song in ctx.audiocontroller.playlist.playque
         ]
-        if not urls:
+        if not songs:
             await ctx.send(config.QUEUE_EMPTY)
             return
         async with ctx.bot.DbSession() as session:
@@ -367,7 +376,7 @@ class Music(commands.Cog):
                 SavedPlaylist(
                     guild_id=str(ctx.guild.id),
                     name=name,
-                    songs_json=json.dumps(urls),
+                    songs_json=json.dumps(songs),
                 )
             )
             try:
@@ -377,13 +386,13 @@ class Music(commands.Cog):
                 return
         await ctx.send(config.PLAYLIST_SAVED_MESSAGE)
 
-    @bridge.bridge_command(
-        name="load_playlist",
-        aliases=["lpl"],
+    @_playlist.command(
+        name="load",
+        aliases=["l"],
         description=config.HELP_LOAD_PLAYLIST_LONG,
         help=config.HELP_LOAD_PLAYLIST_SHORT,
     )
-    async def _load_playlist(
+    async def _playlist_load(
         self,
         ctx: AudioContext,
         name: BridgeOption(str, autocomplete=_playlist_autocomplete),
@@ -400,24 +409,31 @@ class Music(commands.Cog):
         if playlist is None:
             await ctx.send(config.PLAYLIST_NOT_FOUND)
             return
-        for url in json.loads(playlist.songs_json):
+        for song_data in json.loads(playlist.songs_json):
             ctx.audiocontroller.playlist.add(
-                Song(Origins.Playlist, SiteTypes.YT_DLP, url)
+                Song(
+                    get_site_type(song_data["url"]),
+                    song_data["url"],
+                    title=song_data["title"],
+                    playlist=playlist,
+                )
             )
         if not ctx.audiocontroller.is_active():
             await ctx.audiocontroller.play_song(
                 ctx.audiocontroller.playlist[0]
             )
+        else:
+            ctx.audiocontroller.preload_queue()
         await ctx.send(config.SONGINFO_PLAYLIST_QUEUED)
 
-    @bridge.bridge_command(
-        name="remove_playlist",
-        aliases=["rpl"],
+    @_playlist.command(
+        name="remove",
+        aliases=["r"],
         description=config.HELP_REMOVE_PLAYLIST_LONG,
         help=config.HELP_REMOVE_PLAYLIST_SHORT,
     )
     @commands.check(dj_check)
-    async def _remove_playlist(
+    async def _playlist_remove(
         self,
         ctx: AudioContext,
         name: BridgeOption(str, autocomplete=_playlist_autocomplete),
@@ -435,14 +451,79 @@ class Music(commands.Cog):
             return
         await ctx.send(config.PLAYLIST_REMOVED)
 
-    @bridge.bridge_command(
-        name="add_to_playlist",
-        aliases=["apl"],
+    @_playlist.command(
+        name="list",
+        aliases=["li"],
+        description=config.HELP_LIST_PLAYLISTS_LONG,
+        help=config.HELP_LIST_PLAYLISTS_SHORT,
+    )
+    async def _playlist_list(self, ctx: AudioContext):
+        async with ctx.bot.DbSession() as session:
+            playlists = (
+                (
+                    await session.execute(
+                        select(SavedPlaylist.name).where(
+                            SavedPlaylist.guild_id == str(ctx.guild.id)
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
+        if not playlists:
+            await ctx.send("No playlists.")
+            return
+
+        playlist_names = "\n".join(f"- {name}" for name in playlists)
+        await ctx.send(f"**Playlists:**\n{playlist_names}")
+
+    @_playlist.command(
+        name="show",
+        aliases=["sw"],
+        description=config.HELP_PLAYLIST_SHOW_LONG,
+        help=config.HELP_PLAYLIST_SHOW_SHORT,
+    )
+    @commands.check(dj_check)
+    async def _playlist_show(
+        self,
+        ctx: AudioContext,
+        playlist: BridgeOption(str, autocomplete=_playlist_autocomplete),
+    ):
+        await ctx.defer()
+
+        async with ctx.bot.DbSession() as session:
+            playlist = (
+                await session.execute(
+                    select(SavedPlaylist)
+                    .where(SavedPlaylist.guild_id == str(ctx.guild.id))
+                    .where(SavedPlaylist.name == playlist)
+                )
+            ).scalar_one_or_none()
+        if playlist is None:
+            await ctx.send(config.PLAYLIST_NOT_FOUND)
+            return
+        pages = []
+        i = 1
+        for part in chunks(json.loads(playlist.songs_json), 25):
+            embed = Embed(title=playlist.name)
+            for song in part:
+                url = song["url"]
+                title = song["title"] or url_regex.fullmatch(url).group("bare")
+                embed.add_field(
+                    name=str(i), value=f"[{title}]({url})", inline=False
+                )
+                i += 1
+            pages.append(embed)
+        await Paginator(pages).send(ctx)
+
+    @_playlist.command(
+        name="add_song",
+        aliases=["as"],
         description=config.HELP_ADD_TO_PLAYLIST_LONG,
         help=config.HELP_ADD_TO_PLAYLIST_SHORT,
     )
     @commands.check(dj_check)
-    async def _add_to_playlist(
+    async def _playlist_add_song(
         self,
         ctx: AudioContext,
         playlist: BridgeOption(str, autocomplete=_playlist_autocomplete),
@@ -472,6 +553,88 @@ class Music(commands.Cog):
             playlist.songs_json = json.dumps(
                 json.loads(playlist.songs_json) + urls
             )
+            await session.commit()
+        await ctx.send(config.PLAYLIST_UPDATED)
+
+    @_playlist.command(
+        name="remove_song",
+        aliases=["rs"],
+        description=config.HELP_REMOVE_FROM_PLAYLIST_LONG,
+        help=config.HELP_REMOVE_FROM_PLAYLIST_SHORT,
+    )
+    @commands.check(dj_check)
+    async def _playlist_remove_song(
+        self,
+        ctx: AudioContext,
+        playlist: BridgeOption(str, autocomplete=_playlist_autocomplete),
+        position: int,
+    ):
+        await ctx.defer()
+
+        async with ctx.bot.DbSession() as session:
+            playlist = (
+                await session.execute(
+                    select(SavedPlaylist)
+                    .where(SavedPlaylist.guild_id == str(ctx.guild.id))
+                    .where(SavedPlaylist.name == playlist)
+                )
+            ).scalar_one_or_none()
+            if playlist is None:
+                await ctx.send(config.PLAYLIST_NOT_FOUND)
+                return
+            songs = json.loads(playlist.songs_json)
+            if position <= 0 or position > len(songs):
+                await ctx.send(
+                    f"Invalid position. Playlist has {len(songs)} songs."
+                )
+                return
+            if len(songs) == 1:
+                await ctx.send("Can't remove the only song from playlist.")
+                return
+            del songs[position - 1]
+            playlist.songs_json = json.dumps(songs)
+            await session.commit()
+        await ctx.send(config.PLAYLIST_UPDATED)
+
+    @_playlist.command(
+        name="move_song",
+        aliases=["ms"],
+        description=config.HELP_MOVE_IN_PLAYLIST_LONG,
+        help=config.HELP_MOVE_IN_PLAYLIST_SHORT,
+    )
+    @commands.check(dj_check)
+    async def _playlist_move_song(
+        self,
+        ctx: AudioContext,
+        playlist: BridgeOption(str, autocomplete=_playlist_autocomplete),
+        source_position: int,
+        destination_position: int,
+    ):
+        await ctx.defer()
+
+        async with ctx.bot.DbSession() as session:
+            playlist = (
+                await session.execute(
+                    select(SavedPlaylist)
+                    .where(SavedPlaylist.guild_id == str(ctx.guild.id))
+                    .where(SavedPlaylist.name == playlist)
+                )
+            ).scalar_one_or_none()
+            if playlist is None:
+                await ctx.send(config.PLAYLIST_NOT_FOUND)
+                return
+            songs = json.loads(playlist.songs_json)
+            if min(source_position, destination_position) <= 0 or max(
+                source_position, destination_position
+            ) > len(songs):
+                await ctx.send(
+                    f"Invalid position. Playlist has {len(songs)} songs."
+                )
+                return
+            songs.insert(
+                destination_position - 1, songs.pop(source_position - 1)
+            )
+            playlist.songs_json = json.dumps(songs)
             await session.commit()
         await ctx.send(config.PLAYLIST_UPDATED)
 

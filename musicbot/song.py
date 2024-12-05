@@ -1,15 +1,19 @@
+from __future__ import annotations
 import datetime
-from typing import Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 import discord
+
 from config import config
-from musicbot.linkutils import Origins, SiteTypes
+from musicbot.linkutils import SiteTypes
+
+if TYPE_CHECKING:
+    from musicbot.settings import SavedPlaylist
 
 
 class Song:
     def __init__(
         self,
-        origin: Origins,
         host: SiteTypes,
         webpage_url: str,
         url: Optional[str] = None,
@@ -17,15 +21,16 @@ class Song:
         uploader: Optional[str] = None,
         duration: Optional[int] = None,
         thumbnail: Optional[str] = None,
+        playlist: Optional[SavedPlaylist] = None,
     ):
         self.host = host
-        self.origin = origin
         self.webpage_url = webpage_url
         self.url = url
         self.title = title
         self.uploader = uploader
         self.duration = duration
         self.thumbnail = thumbnail
+        self.playlist = playlist
 
     def format_output(self, playtype: str) -> discord.Embed:
         embed = discord.Embed(
