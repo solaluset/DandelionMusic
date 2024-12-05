@@ -513,7 +513,9 @@ class Music(commands.Cog):
                 return
             songs = json.loads(playlist.songs_json)
             if position <= 0 or position > len(songs):
-                await ctx.send("Invalid position.")
+                await ctx.send(
+                    f"Invalid position. Playlist has {len(songs)} songs."
+                )
                 return
             if len(songs) == 1:
                 await ctx.send("Can't remove the only song from playlist.")
@@ -554,7 +556,9 @@ class Music(commands.Cog):
             if min(source_position, destination_position) <= 0 or max(
                 source_position, destination_position
             ) > len(songs):
-                await ctx.send("Invalid position.")
+                await ctx.send(
+                    f"Invalid position. Playlist has {len(songs)} songs."
+                )
                 return
             songs.insert(
                 destination_position - 1, songs.pop(source_position - 1)
