@@ -14,6 +14,7 @@ from typing import (
     Iterable,
     Optional,
     Union,
+    List,
 )
 
 from aioconsole import ainput
@@ -241,6 +242,12 @@ def songs_embed(title: str, songs: Iterable[Song]) -> Embed:
         )
 
     return embed
+
+
+def chunks(lst: list, n: int) -> List[list]:
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i : i + n]
 
 
 # StrEnum doesn't exist in Python < 3.11

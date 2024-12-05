@@ -17,6 +17,7 @@ repos:
     rev: 7.1.1
     hooks:
     -   id: flake8
+        args: ["--ignore", "E203,W503"]
 
 -   repo: local
     hooks:

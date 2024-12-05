@@ -96,11 +96,6 @@ class SpotifyPlaylistTypes(Enum):
     ALBUM = "album"
 
 
-class Origins(Enum):
-    Default = "Default"
-    Playlist = "Playlist"
-
-
 async def get_soup(url: str) -> BeautifulSoup:
     async with _session.get(url) as response:
         response.raise_for_status()
@@ -209,3 +204,10 @@ def identify_url(url: str) -> Union[SiteTypes, ExtractorT]:
 
     # If no match
     return SiteTypes.UNKNOWN
+
+
+def get_site_type(url: str) -> SiteTypes:
+    type_ = identify_url(url)
+    if not isinstance(type_, SiteTypes):
+        return SiteTypes.YT_DLP
+    return type_

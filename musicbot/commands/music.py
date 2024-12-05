@@ -1,10 +1,11 @@
 import json
 from typing import Iterable, List, Union
 
-from discord import Attachment, AutocompleteContext
+from discord import Attachment, AutocompleteContext, Embed
 from discord.ui import View
 from discord.ext import commands, bridge
 from discord.ext.bridge import BridgeOption
+from discord.ext.pages import Paginator
 from sqlalchemy import select, delete
 from sqlalchemy.exc import IntegrityError
 
@@ -12,12 +13,12 @@ from config import config
 from musicbot import linkutils, utils, loader
 from musicbot.song import Song
 from musicbot.bot import MusicBot, Context
-from musicbot.utils import dj_check
+from musicbot.utils import dj_check, chunks
 from musicbot.audiocontroller import PLAYLIST, AudioController, MusicButton
 from musicbot.loader import SongError, search_youtube
 from musicbot.playlist import PlaylistError, LoopMode
 from musicbot.settings import SavedPlaylist
-from musicbot.linkutils import Origins, SiteTypes
+from musicbot.linkutils import get_site_type, url_regex
 
 
 class AudioContext(Context):
@@ -126,7 +127,6 @@ class Music(commands.Cog):
         songs = []
         for data in results:
             song = Song(
-                linkutils.Origins.Default,
                 linkutils.SiteTypes.YT_DLP,
                 webpage_url=data["url"],
             )
@@ -364,10 +364,11 @@ class Music(commands.Cog):
             return
 
         await ctx.defer()
-        urls = [
-            song.webpage_url for song in ctx.audiocontroller.playlist.playque
+        songs = [
+            {"url": song.webpage_url, "title": song.title}
+            for song in ctx.audiocontroller.playlist.playque
         ]
-        if not urls:
+        if not songs:
             await ctx.send(config.QUEUE_EMPTY)
             return
         async with ctx.bot.DbSession() as session:
@@ -375,7 +376,7 @@ class Music(commands.Cog):
                 SavedPlaylist(
                     guild_id=str(ctx.guild.id),
                     name=name,
-                    songs_json=json.dumps(urls),
+                    songs_json=json.dumps(songs),
                 )
             )
             try:
@@ -408,9 +409,14 @@ class Music(commands.Cog):
         if playlist is None:
             await ctx.send(config.PLAYLIST_NOT_FOUND)
             return
-        for url in json.loads(playlist.songs_json):
+        for song_data in json.loads(playlist.songs_json):
             ctx.audiocontroller.playlist.add(
-                Song(Origins.Playlist, SiteTypes.YT_DLP, url)
+                Song(
+                    get_site_type(song_data["url"]),
+                    song_data["url"],
+                    title=song_data["title"],
+                    playlist=playlist,
+                )
             )
         if not ctx.audiocontroller.is_active():
             await ctx.audiocontroller.play_song(
@@ -470,6 +476,45 @@ class Music(commands.Cog):
 
         playlist_names = "\n".join(f"- {name}" for name in playlists)
         await ctx.send(f"**Playlists:**\n{playlist_names}")
+
+    @_playlist.command(
+        name="show",
+        aliases=["sw"],
+        description=config.HELP_PLAYLIST_SHOW_LONG,
+        help=config.HELP_PLAYLIST_SHOW_SHORT,
+    )
+    @commands.check(dj_check)
+    async def _playlist_show(
+        self,
+        ctx: AudioContext,
+        playlist: BridgeOption(str, autocomplete=_playlist_autocomplete),
+    ):
+        await ctx.defer()
+
+        async with ctx.bot.DbSession() as session:
+            playlist = (
+                await session.execute(
+                    select(SavedPlaylist)
+                    .where(SavedPlaylist.guild_id == str(ctx.guild.id))
+                    .where(SavedPlaylist.name == playlist)
+                )
+            ).scalar_one_or_none()
+        if playlist is None:
+            await ctx.send(config.PLAYLIST_NOT_FOUND)
+            return
+        pages = []
+        i = 1
+        for part in chunks(json.loads(playlist.songs_json), 25):
+            embed = Embed(title=playlist.name)
+            for song in part:
+                url = song["url"]
+                title = song["title"] or url_regex.fullmatch(url).group("bare")
+                embed.add_field(
+                    name=str(i), value=f"[{title}]({url})", inline=False
+                )
+                i += 1
+            pages.append(embed)
+        await Paginator(pages).send(ctx)
 
     @_playlist.command(
         name="add_song",
