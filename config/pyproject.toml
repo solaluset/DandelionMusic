@@ -4,7 +4,7 @@ requires = [
    "wheel==0.45.1",
    "tomli==2.2.1; python_version<'3.11'",
    "packaging==24.2",
-   "json-with-comments==1.2.9",
+   "json-with-comments==1.2.10",
 ]
 
 [project]
