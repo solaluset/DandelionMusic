@@ -4,6 +4,6 @@ aiohttp==3.11.11
 beautifulsoup4==4.12.3
 spotipy==2.25.0
 SQLAlchemy[asyncio]==2.0.37
-alembic==1.14.0
+alembic==1.14.1
 aioconsole==0.8.1
 ./config
