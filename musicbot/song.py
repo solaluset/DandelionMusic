@@ -68,6 +68,13 @@ class Song:
         if thumbnails:
             # last thumbnail has the best resolution
             data["thumbnail"] = thumbnails[-1]["url"]
+
+        from musicbot.settings import SavedPlaylist
+
+        if "playlist" in data and not isinstance(
+            data["playlist"], SavedPlaylist
+        ):
+            del data["playlist"]
         for k, v in data.items():
             if hasattr(self, k) and v:
                 setattr(self, k, v)
