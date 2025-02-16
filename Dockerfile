@@ -29,6 +29,7 @@ ENV COOKIE_PATH=config/cookies/cookies.txt
 ENV GLOBAL_DISABLE_AUTOJOIN_VC=False
 ENV ANNOUNCE_DISCONNECT=True
 ENV ENABLE_PLAYLISTS=True
+ENV PROXY_STRING=
 
 RUN pip --no-cache-dir install -r requirements.txt \
     && apt-get update \
