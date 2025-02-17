@@ -8,13 +8,13 @@ repos:
     -   id: check-added-large-files
 
 -   repo: https://github.com/psf/black
-    rev: 24.10.0
+    rev: 25.1.0
     hooks:
     -   id: black
         args: ["-l", "79"]
 
 -   repo: https://github.com/pycqa/flake8
-    rev: 7.1.1
+    rev: 7.1.2
     hooks:
     -   id: flake8
         args: ["--ignore", "E203,W503"]
