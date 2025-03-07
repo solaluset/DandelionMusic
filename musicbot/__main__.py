@@ -19,6 +19,7 @@ initial_extensions = [
     "musicbot.commands.music",
     "musicbot.commands.general",
     "musicbot.commands.developer",
+    "musicbot.commands.roleplay",
 ]
 
 
