@@ -18,14 +18,15 @@ class RolePlay(commands.Cog):
     def __init__(self, bot: MusicBot):
         self.bot = bot
 
-    @discord.commands.user_command(
-        name="hug",
-        description="Обійняти користувача",
-        integration_types={
+    _hug_args = {
+        "name": "hug",
+        "description": "Обійняти користувача",
+        "integration_types": {
             discord.IntegrationType.guild_install,
             discord.IntegrationType.user_install,
         },
-    )
+    }
+
     async def _hug(self, ctx, user: discord.User):
         embed = discord.Embed(
             description=f"{ctx.author.mention} обіймає {user.mention}",
@@ -35,14 +36,18 @@ class RolePlay(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @discord.commands.user_command(
-        name="kiss",
-        description="Поцілувати користувача",
-        integration_types={
+    _hug_user = discord.commands.user_command(**_hug_args)(_hug)
+    _hug_slash = discord.commands.slash_command(**_hug_args)(_hug)
+
+    _kiss_args = {
+        "name": "kiss",
+        "description": "Поцілувати користувача",
+        "integration_types": {
             discord.IntegrationType.guild_install,
             discord.IntegrationType.user_install,
         },
-    )
+    }
+
     async def _kiss(self, ctx, user: discord.User):
         embed = discord.Embed(
             description=f"{ctx.author.mention} цілує {user.mention}",
@@ -51,6 +56,9 @@ class RolePlay(commands.Cog):
         embed.set_image(url=await self.get_gif("kiss"))
 
         await ctx.send(embed=embed)
+
+    _kiss_user = discord.commands.user_command(**_kiss_args)(_kiss)
+    _kiss_slash = discord.commands.slash_command(**_kiss_args)(_kiss)
 
     async def get_gif(self, action: str) -> str:
         async with self.bot.client_session.get(ENDPOINT + action) as req:
