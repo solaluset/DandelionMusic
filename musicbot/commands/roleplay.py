@@ -28,7 +28,7 @@ class RolePlay(commands.Cog):
     )
     async def _hug(self, ctx, user: discord.User):
         embed = discord.Embed(
-            title=f"{ctx.author.mention} обіймає {user.mention}",
+            description=f"{ctx.author.mention} обіймає {user.mention}",
             color=config.EMBED_COLOR,
         )
         embed.set_image(url=await self.get_gif("hug"))
@@ -45,7 +45,7 @@ class RolePlay(commands.Cog):
     )
     async def _kiss(self, ctx, user: discord.User):
         embed = discord.Embed(
-            title=f"{ctx.author.mention} цілує {user.mention}",
+            description=f"{ctx.author.mention} цілує {user.mention}",
             color=config.EMBED_COLOR,
         )
         embed.set_image(url=await self.get_gif("kiss"))
