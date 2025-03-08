@@ -79,6 +79,11 @@ class Config:
 
     ENABLE_PLAYLISTS = True
 
+    # Proxy, use proper scheme in Config.
+        # https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#network-options
+        # e.g. "socks5://user:pass@127.0.0.1:1080" or "http://127.0.0.1:8118" (privoxy on local machine)
+    PROXY_STRING = ""
+
     def __init__(self):
         current_cfg = self.load()
 

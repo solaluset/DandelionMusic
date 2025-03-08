@@ -133,6 +133,7 @@ CONFIG_OPTIONS = {
     "default_volume": BridgeOption(int, min_value=0, max_value=100),
     "vc_timeout": BridgeOption(bool),
     "announce_songs": BridgeOption(bool),
+    "proxy_string": BridgeOption(str, required=False),
 }
 
 
