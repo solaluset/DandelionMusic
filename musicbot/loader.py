@@ -70,6 +70,7 @@ _downloader = YoutubeDL(
         "default_search": "auto",
         "cookiefile": config.COOKIE_PATH,
         "quiet": True,
+        "proxy": config.PROXY_STRING,
     }
 )
 _preloading = {}
