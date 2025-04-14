@@ -1,4 +1,3 @@
-import os
 import sys
 from traceback import print_exc
 
@@ -9,10 +8,6 @@ from config import config
 from musicbot import loader
 from musicbot.bot import MusicBot
 from musicbot.utils import check_dependencies, read_shutdown
-
-
-# to load yt-dlp plugin
-sys.path.append(os.path.dirname(__file__))
 
 
 initial_extensions = [
