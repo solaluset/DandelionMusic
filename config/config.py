@@ -9,6 +9,10 @@ import jsonc
 from packaging.requirements import Requirement
 
 sys.path.insert(0, os.path.dirname(__file__))
+# to load yt-dlp plugin
+sys.path.append(
+    os.path.join(os.path.dirname(os.path.dirname(__file__)), "musicbot")
+)
 from utils import (  # noqa: E402
     CONFIG_DIRS,
     Formatter,
