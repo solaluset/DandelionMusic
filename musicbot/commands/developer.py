@@ -7,10 +7,11 @@ from traceback import print_exc
 from contextlib import redirect_stdout
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, bridge
 from discord.ext.pages import Paginator
 from aioconsole import aexec
 
+from config import config
 from musicbot.bot import Context, MusicBot
 
 
@@ -97,6 +98,52 @@ class Developer(commands.Cog):
                 suppress = False
             if not suppress:
                 await ctx.send("No output.")
+
+    @bridge.bridge_group(
+        name="guild_whitelist",
+        aliases=("gw",),
+        usage="[action [guild id]]",
+        invoke_without_command=True,
+    )
+    @commands.is_owner()
+    async def _guild_whitelist(
+        self, ctx: Context, *, inexistent_subcommand=None
+    ):
+        if inexistent_subcommand is not None:
+            await ctx.send("`Error: Unknown subcommand`")
+        else:
+            await self._show_guild_whitelist_callback(ctx)
+
+    async def _show_guild_whitelist_callback(self, ctx: Context):
+        if not config.GUILD_WHITELIST:
+            await ctx.send("Whitelist is disabled.")
+            return
+        lines = []
+        for id_ in config.GUILD_WHITELIST:
+            guild = ctx.bot.get_guild(id_)
+            if guild:
+                lines.append(f"{id_} {guild.name}")
+            else:
+                lines.append(str(id_))
+        await ctx.send("```\n" + "\n".join(lines) + "```")
+
+    _show_guild_whitelist = _guild_whitelist.command(name="show")(
+        commands.is_owner()(_show_guild_whitelist_callback)
+    )
+
+    @_guild_whitelist.command(name="add")
+    @commands.is_owner()
+    async def _guild_whitelist_add(self, ctx: Context, *, id: str):
+        config.GUILD_WHITELIST.append(int(id))
+        config.save()
+        await ctx.send("Whitelist updated.")
+
+    @_guild_whitelist.command(name="remove")
+    @commands.is_owner()
+    async def _guild_whitelist_remove(self, ctx: Context, *, id: str):
+        config.GUILD_WHITELIST.remove(int(id))
+        config.save()
+        await ctx.send("Whitelist updated.")
 
 
 def setup(bot: MusicBot):
