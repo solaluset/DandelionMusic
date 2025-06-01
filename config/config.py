@@ -116,7 +116,6 @@ class Config:
                         break
 
         self.EMBED_COLOR = int(self.EMBED_COLOR, 16)
-        self.SUPPORTED_EXTENSIONS = tuple(self.SUPPORTED_EXTENSIONS)
         for dir_ in CONFIG_DIRS[::-1]:
             path = os.path.join(dir_, self.COOKIE_PATH)
             if os.path.isfile(path):
@@ -173,6 +172,9 @@ class Config:
         self.to_save = missing
 
         current_cfg.update(loaded_joined)
+        current_cfg["SUPPORTED_EXTENSIONS"] = tuple(
+            current_cfg["SUPPORTED_EXTENSIONS"]
+        )
 
         for key, default in current_cfg.items():
             current_cfg[key] = get_env_var(key, default)
