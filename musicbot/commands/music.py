@@ -71,15 +71,18 @@ class Music(commands.Cog):
     async def _play(
         self, ctx: AudioContext, *, track: str = None, file: Attachment = None
     ):
-        if track is None and ctx.message:
-            if ctx.message.attachments:
-                track = ctx.message.jump_url
-            elif (
-                ctx.message.reference
-                and ctx.message.reference.resolved
-                and ctx.message.reference.resolved.attachments
-            ):
-                track = ctx.message.reference.resolved.jump_url
+        if track is None:
+            if ctx.message:
+                if ctx.message.attachments:
+                    track = ctx.message.jump_url
+                elif (
+                    ctx.message.reference
+                    and ctx.message.reference.resolved
+                    and ctx.message.reference.resolved.attachments
+                ):
+                    track = ctx.message.reference.resolved.jump_url
+            elif file:
+                track = file.url
         if track is None:
             await ctx.send(config.PLAY_ARGS_MISSING)
             return
