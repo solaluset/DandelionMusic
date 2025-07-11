@@ -9,6 +9,7 @@ from contextlib import redirect_stdout
 import discord
 from discord.ext import commands, bridge
 from discord.ext.pages import Paginator
+from discord.ext.bridge import BridgeOption
 from aioconsole import aexec
 
 from config import config
@@ -138,12 +139,36 @@ class Developer(commands.Cog):
         config.save()
         await ctx.send("Whitelist updated.")
 
+    @staticmethod
+    def _guild_whitelist_remove_autocomplete(
+        ctx: discord.AutocompleteContext,
+    ) -> List[str]:
+        value = ctx.value.lower()
+        all_guilds = [f"{g.name} {g.id}" for g in ctx.bot.guilds]
+        return [s for s in all_guilds if value in s.lower()]
+
     @_guild_whitelist.command(name="remove")
     @commands.is_owner()
-    async def _guild_whitelist_remove(self, ctx: Context, *, id: str):
-        config.GUILD_WHITELIST.remove(int(id))
+    async def _guild_whitelist_remove(
+        self,
+        ctx: Context,
+        *,
+        id: BridgeOption(
+            str, autocomplete=_guild_whitelist_remove_autocomplete
+        ),
+    ):
+        id = int(id.split()[-1])
+        config.GUILD_WHITELIST.remove(id)
         config.save()
-        await ctx.send("Whitelist updated.")
+
+        guild = ctx.bot.get_guild(id)
+        if guild is not None:
+            message = "Whitelist updated, leaving the guild."
+        else:
+            message = "Whitelist updated."
+        await ctx.send(message)
+        if guild is not None:
+            await guild.leave()
 
 
 def setup(bot: MusicBot):
