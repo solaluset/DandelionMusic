@@ -3,7 +3,7 @@ yt-dlp[default]==2025.8.11
 aiohttp==3.12.15
 beautifulsoup4==4.13.4
 spotipy==2.25.1
-SQLAlchemy[asyncio]==2.0.41
+SQLAlchemy[asyncio]==2.0.43
 alembic==1.16.4
 aioconsole==0.8.1
 ./config
