@@ -58,16 +58,7 @@ spotify_regex = re.compile(
     r"(?P<type>track|playlist|album)/(?P<code>\w+)"
 )
 
-headers = {
-    "User-Agent": " ".join(
-        (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-            "AppleWebKit/537.36 (KHTML, like Gecko)",
-            "Chrome/113.0.5672.126",
-            "Safari/537.36",
-        )
-    )
-}
+headers = {}
 
 _session = None
 
