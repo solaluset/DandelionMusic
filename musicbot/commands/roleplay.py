@@ -31,6 +31,13 @@ class RolePlay(commands.Cog):
         CommandInfo(
             "blush", "Зашарітися", "blush", "{} зашарівся / зашарілася", False
         ),
+        CommandInfo(
+            "evil-laugh",
+            "Зловісно сміятися",
+            "evillaugh",
+            "{} зловісно сміється",
+            False,
+        ),
     ]
     COMMANDS = {info.name: info for info in COMMANDS}
 
