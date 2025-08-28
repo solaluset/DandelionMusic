@@ -26,11 +26,48 @@ class RolePlay(commands.Cog):
         needs_other_user: bool = True
 
     COMMANDS = [
-        CommandInfo("hug", "Обійняти користувача", "hug", "{} обіймає {}"),
-        CommandInfo("kiss", "Поцілувати користувача", "kiss", "{} цілує {}"),
+        CommandInfo(
+            "air-kiss",
+            "Надіслати повітряний поцілунок",
+            "airkiss",
+            "{} надсилає повітряний поцілунок {}",
+        ),
+        CommandInfo(
+            "angry-stare",
+            "Злісно дивитися",
+            "angrystare",
+            "{} злісно дивиться на {}",
+        ),
+        CommandInfo("bite", "Вкусити", "bite", "{} кусає {}"),
+        CommandInfo("bleh", "Показати язик", "bleh", "{} показує язик {}"),
         CommandInfo(
             "blush", "Зашарітися", "blush", "{} зашарівся / зашарілася", False
         ),
+        CommandInfo("bro-fist", "Брататися", "brofist", "{} братається з {}"),
+        CommandInfo(
+            "celebrate", "Святкувати", "celebrate", "{} святкує", False
+        ),
+        CommandInfo(
+            "cheers", "Будьмо!", "cheers", "{} влаштовує гулянку", False
+        ),
+        CommandInfo("clap", "Аплодувати", "clap", "{} аплодує", False),
+        CommandInfo(
+            "confused",
+            "Бути розгубленим",
+            "confused",
+            "{} почувається розгублено",
+            False,
+        ),
+        CommandInfo(
+            "cool", "Бути крутим", "cool", "{} почувається круто", False
+        ),
+        CommandInfo("cry", "Плакати", "cry", "{} плаче", False),
+        CommandInfo(
+            "cuddle", "Міцно обійняти", "cuddle", "{} міцно обіймає {}"
+        ),
+        CommandInfo("dance", "Танцювати", "dance", "{} танцює", False),
+        CommandInfo("hug", "Обійняти користувача", "hug", "{} обіймає {}"),
+        CommandInfo("kiss", "Поцілувати користувача", "kiss", "{} цілує {}"),
         CommandInfo(
             "evil-laugh",
             "Зловісно сміятися",
