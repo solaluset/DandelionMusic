@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 import discord
 from discord.ext import commands
 
@@ -15,75 +17,65 @@ class RolePlay(commands.Cog):
         bot: The instance of the bot that is executing the commands.
     """
 
+    @dataclass
+    class CommandInfo:
+        name: str
+        description: str
+        gif: str
+        template: str
+        needs_other_user: bool = True
+
+    COMMANDS = [
+        CommandInfo("hug", "Обійняти користувача", "hug", "{} обіймає {}"),
+        CommandInfo("kiss", "Поцілувати користувача", "kiss", "{} цілує {}"),
+        CommandInfo(
+            "blush", "Зашарітися", "blush", "{} зашарівся / зашарілася", False
+        ),
+    ]
+    COMMANDS = {info.name: info for info in COMMANDS}
+
     def __init__(self, bot: MusicBot):
         self.bot = bot
+        bot.add_cog(self)
 
-    _hug_args = {
-        "name": "hug",
-        "description": "Обійняти користувача",
-        "integration_types": {
-            discord.IntegrationType.guild_install,
-            discord.IntegrationType.user_install,
-        },
-    }
+        for info in self.COMMANDS.values():
+            args = {
+                "name": info.name,
+                "description": info.description,
+                "integration_types": {
+                    discord.IntegrationType.guild_install,
+                    discord.IntegrationType.user_install,
+                },
+            }
+            if info.needs_other_user:
+                bot.slash_command(**args)(self._callback_with_user_arg)
+                bot.user_command(**args)(self._callback_with_user_arg)
+            else:
+                bot.slash_command(**args)(self._callback_without_args)
 
-    async def _hug(self, ctx, user: discord.User):
-        embed = discord.Embed(
-            description=f"{ctx.author.mention} обіймає {user.mention}",
-            color=config.EMBED_COLOR,
-        )
-        embed.set_image(url=await self.get_gif("hug"))
-
-        await ctx.send(embed=embed)
-
-    _hug_user = discord.commands.user_command(**_hug_args)(_hug)
-    _hug_slash = discord.commands.slash_command(**_hug_args)(_hug)
-
-    _kiss_args = {
-        "name": "kiss",
-        "description": "Поцілувати користувача",
-        "integration_types": {
-            discord.IntegrationType.guild_install,
-            discord.IntegrationType.user_install,
-        },
-    }
-
-    async def _kiss(self, ctx, user: discord.User):
-        embed = discord.Embed(
-            description=f"{ctx.author.mention} цілує {user.mention}",
-            color=config.EMBED_COLOR,
-        )
-        embed.set_image(url=await self.get_gif("kiss"))
-
-        await ctx.send(embed=embed)
-
-    _kiss_user = discord.commands.user_command(**_kiss_args)(_kiss)
-    _kiss_slash = discord.commands.slash_command(**_kiss_args)(_kiss)
-
-    _blush_args = {
-        "name": "blush",
-        "description": "Зашарітися",
-        "integration_types": {
-            discord.IntegrationType.guild_install,
-            discord.IntegrationType.user_install,
-        },
-    }
-
-    async def _blush(self, ctx):
-        embed = discord.Embed(
-            description=f"{ctx.author.mention} зашарівся / зашарілася",
-            color=config.EMBED_COLOR,
-        )
-        embed.set_image(url=await self.get_gif("blush"))
-
-        await ctx.send(embed=embed)
-
-    _blush_slash = discord.commands.slash_command(**_blush_args)(_blush)
-
-    async def get_gif(self, action: str) -> str:
+    async def _get_gif(self, action: str) -> str:
         async with self.bot.client_session.get(ENDPOINT + action) as req:
             return (await req.json())["url"]
 
+    async def _send_embed(self, ctx, other_user: discord.User | None):
+        info = self.COMMANDS[ctx.command.name]
+        format_args = [ctx.author.mention]
+        if other_user:
+            format_args.append(other_user.mention)
+        embed = discord.Embed(
+            description=info.template.format(*format_args),
+            color=config.EMBED_COLOR,
+        )
+        embed.set_image(url=await self._get_gif(info.gif))
+
+        await ctx.send(embed=embed)
+
+    async def _callback_without_args(self, ctx):
+        await self._send_embed(ctx, None)
+
+    async def _callback_with_user_arg(self, ctx, user: discord.User):
+        await self._send_embed(ctx, user)
+
 
 def setup(bot: MusicBot):
-    bot.add_cog(RolePlay(bot))
+    RolePlay(bot)
