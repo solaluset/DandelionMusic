@@ -60,6 +60,26 @@ class RolePlay(commands.Cog):
     _kiss_user = discord.commands.user_command(**_kiss_args)(_kiss)
     _kiss_slash = discord.commands.slash_command(**_kiss_args)(_kiss)
 
+    _blush_args = {
+        "name": "blush",
+        "description": "Зашарітися",
+        "integration_types": {
+            discord.IntegrationType.guild_install,
+            discord.IntegrationType.user_install,
+        },
+    }
+
+    async def _blush(self, ctx):
+        embed = discord.Embed(
+            description=f"{ctx.author.mention} зашарівся / зашарілася",
+            color=config.EMBED_COLOR,
+        )
+        embed.set_image(url=await self.get_gif("blush"))
+
+        await ctx.send(embed=embed)
+
+    _blush_slash = discord.commands.slash_command(**_blush_args)(_blush)
+
     async def get_gif(self, action: str) -> str:
         async with self.bot.client_session.get(ENDPOINT + action) as req:
             return (await req.json())["url"]
