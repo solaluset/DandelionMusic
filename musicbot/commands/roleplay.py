@@ -1,3 +1,4 @@
+from io import BytesIO
 from dataclasses import dataclass
 
 import discord
@@ -198,6 +199,7 @@ class RolePlay(commands.Cog):
 
     def __init__(self, bot: MusicBot):
         self.bot = bot
+        self.gif_cache = {}
         bot.add_cog(self)
 
         for info in self.COMMANDS.values():
@@ -216,11 +218,18 @@ class RolePlay(commands.Cog):
             else:
                 bot.slash_command(**args)(self._callback_without_args)
 
-    async def _get_gif(self, action: str) -> str:
+    async def _get_gif(self, action: str) -> bytes:
         async with self.bot.client_session.get(ENDPOINT + action) as req:
-            return (await req.json())["url"]
+            url = (await req.json())["url"]
+
+        if url not in self.gif_cache:
+            async with self.bot.client_session.get(url) as req:
+                self.gif_cache[url] = await req.read()
+        return self.gif_cache[url]
 
     async def _send_embed(self, ctx, other_user: discord.User | None):
+        await ctx.defer()
+
         info = self.COMMANDS[ctx.command.name]
         format_args = [ctx.author.mention]
         if other_user:
@@ -229,9 +238,14 @@ class RolePlay(commands.Cog):
             description=info.template.format(*format_args),
             color=config.EMBED_COLOR,
         )
-        embed.set_image(url=await self._get_gif(info.gif))
+        embed.set_image(url="attachment://action.gif")
 
-        await ctx.send(embed=embed)
+        await ctx.send(
+            embed=embed,
+            file=discord.File(
+                BytesIO(await self._get_gif(info.gif)), "action.gif"
+            ),
+        )
 
     async def _callback_without_args(self, ctx):
         await self._send_embed(ctx, None)
