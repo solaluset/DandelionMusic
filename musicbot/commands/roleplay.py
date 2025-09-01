@@ -134,7 +134,7 @@ class RolePlay(commands.Cog):
         CommandInfo("run", "Бігти", "run", "{} біжить", False),
         CommandInfo("sad", "Сумувати", "sad", "{} сумує", False),
         CommandInfo("scared", "Злякатися", "scared", "{} боїться", False),
-        CommandInfo("shout", "Кричати", "shout", "{} кричить", False),
+        CommandInfo("shout", "Кричати на когось", "shout", "{} кричить на {}"),
         CommandInfo(
             "shrug", "Знизати плечима", "shrug", "{} знизує плечима", False
         ),
