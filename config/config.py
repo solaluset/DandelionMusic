@@ -74,8 +74,12 @@ class Config:
 
     GLOBAL_DISABLE_AUTOJOIN_VC = False
 
+    # say hello after connecting
+    ANNOUNCE_CONNECT = True
     # whether to tell users the bot is disconnecting
     ANNOUNCE_DISCONNECT = True
+    # whether to play waiting sound
+    ANNOUNCE_WAITING = True
 
     ENABLE_PLAYLISTS = True
 
