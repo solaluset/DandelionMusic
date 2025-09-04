@@ -1,5 +1,6 @@
 import sys
 import asyncio
+from functools import wraps
 from itertools import islice
 from inspect import isawaitable
 from traceback import print_exc
@@ -11,7 +12,7 @@ from config import config
 from musicbot import loader, utils
 from musicbot.song import Song
 from musicbot.playlist import Playlist, LoopMode, LoopState, PauseState
-from musicbot.utils import CheckError, asset, play_check
+from musicbot.utils import CheckError, StrEnum, asset, play_check
 
 # avoiding circular import
 if TYPE_CHECKING:
@@ -22,6 +23,12 @@ VC_CONNECT_TIMEOUT = 10
 
 PLAYLIST = object()
 _not_provided = object()
+
+
+class VoiceAsset(StrEnum):
+    HELLO = "hello.mp3"
+    GOODBYE = "goodbye.mp3"
+    WAIT = "wait.mp3"
 
 
 class MusicButton(discord.ui.Button):
@@ -75,6 +82,10 @@ class AudioController(object):
 
         self.message_lock = asyncio.Lock()
 
+        self.current_voice_asset: Optional[VoiceAsset] = None
+        self.voice_asset_future: Optional[asyncio.Future] = None
+        self._waiting = False
+
     @property
     def current_song(self) -> Optional[Song]:
         if self.is_active():
@@ -110,10 +121,10 @@ class AudioController(object):
         bot_vc = self.guild.voice_client
         if bot_vc:
             await bot_vc.move_to(channel)
-            # to avoid ClientException: Not connected to voice
-            await asyncio.sleep(1)
         else:
             await channel.connect(reconnect=True, timeout=VC_CONNECT_TIMEOUT)
+        # to avoid ClientException: Not connected to voice
+        await asyncio.sleep(1)
 
     def make_view(self):
         if not self.is_active():
@@ -235,6 +246,8 @@ class AudioController(object):
                 print_exc(file=sys.stderr)
 
     def is_active(self) -> bool:
+        if self.voice_asset_future is not None:
+            return False
         client = self.guild.voice_client
         return client is not None and (
             client.is_playing() or client.is_paused()
@@ -247,6 +260,8 @@ class AudioController(object):
         return history_string
 
     def pause(self):
+        if self.voice_asset_future is not None:
+            return PauseState.NOTHING_TO_PAUSE
         client = self.guild.voice_client
         if client:
             if client.is_playing():
@@ -279,6 +294,18 @@ class AudioController(object):
     def shuffle(self):
         self.playlist.shuffle()
         self.preload_queue()
+
+    @staticmethod
+    def needs_waiting(func):
+        @wraps(func)
+        async def wrapped(self, *args, **kwargs):
+            self.announce_waiting()
+            try:
+                return await func(self, *args, **kwargs)
+            finally:
+                self.stop_waiting()
+
+        return wrapped
 
     def next_song(self, error=None, *, forced=False):
         """Invoked after a song is finished
@@ -313,6 +340,7 @@ class AudioController(object):
         coro = self.play_song(next_song)
         self.add_task(coro)
 
+    @needs_waiting
     async def play_song(self, song: Song):
         """Plays a song object"""
 
@@ -329,6 +357,12 @@ class AudioController(object):
             self.next_song(forced=True)
             return
 
+        self.stop_waiting()
+        if (
+            self.voice_asset_future
+            and self.current_voice_asset == VoiceAsset.HELLO
+        ):
+            await self.voice_asset_future
         try:
             self.guild.voice_client.play(
                 discord.PCMVolumeTransformer(
@@ -357,6 +391,7 @@ class AudioController(object):
 
         self.preload_queue()
 
+    @needs_waiting
     async def process_song(
         self, track: str
     ) -> Union[Optional[Song], Literal[PLAYLIST]]:
@@ -446,6 +481,47 @@ class AudioController(object):
         ):
             await self.udisconnect()
 
+    def play_asset(self, voice_asset: VoiceAsset) -> asyncio.Future:
+        self.current_voice_asset = voice_asset
+        self.voice_asset_future = self.guild.voice_client.play(
+            discord.FFmpegPCMAudio(asset(voice_asset)),
+            wait_finish=True,
+        )
+        self.voice_asset_future.add_done_callback(
+            self._clear_voice_asset_future
+        )
+        return self.voice_asset_future
+
+    def _clear_voice_asset_future(self, _):
+        self.voice_asset_future = None
+        self.current_voice_asset = None
+
+    def announce_waiting(self):
+        if not config.ANNOUNCE_WAITING or self.is_active() or self._waiting:
+            return
+
+        self._waiting = True
+
+        def continue_waiting(_):
+            if self._waiting:
+                self._waiting = False
+                self.announce_waiting()
+
+        if self.voice_asset_future is not None:
+            self.voice_asset_future.add_done_callback(continue_waiting)
+            return
+
+        future = self.play_asset(VoiceAsset.WAIT)
+        future.add_done_callback(continue_waiting)
+
+    def stop_waiting(self):
+        if not self._waiting:
+            return False
+        self._waiting = False
+        if self.guild.voice_client:
+            self.guild.voice_client.stop()
+        return True
+
     async def uconnect(self, ctx, move=False):
         author_vc = ctx.author.voice
         bot_vc = self.guild.voice_client
@@ -455,6 +531,8 @@ class AudioController(object):
 
         if bot_vc is None or bot_vc.channel != author_vc.channel and move:
             await self.register_voice_channel(author_vc.channel)
+            if config.ANNOUNCE_CONNECT:
+                self.play_asset(VoiceAsset.HELLO)
         else:
             raise CheckError(config.ALREADY_CONNECTED_MESSAGE)
         return True
@@ -466,10 +544,7 @@ class AudioController(object):
             return False
         if config.ANNOUNCE_DISCONNECT:
             try:
-                await self.guild.voice_client.play(
-                    discord.FFmpegPCMAudio(asset("disconnect.mp3")),
-                    wait_finish=True,
-                )
+                await self.play_asset(VoiceAsset.GOODBYE)
             except Exception:
                 print_exc(file=sys.stderr)
             else:
