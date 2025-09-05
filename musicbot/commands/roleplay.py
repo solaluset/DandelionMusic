@@ -1,3 +1,5 @@
+import os
+import random
 from io import BytesIO
 from dataclasses import dataclass
 
@@ -6,9 +8,11 @@ from discord.ext import commands
 
 from config import config
 from musicbot.bot import MusicBot
+from musicbot.utils import ASSETS_PATH
 
 
 ENDPOINT = "https://api.otakugifs.xyz/gif?reaction="
+GIFS_PATH = os.path.join(ASSETS_PATH, "gifs")
 
 
 class RolePlay(commands.Cog):
@@ -17,6 +21,14 @@ class RolePlay(commands.Cog):
     Attributes:
         bot: The instance of the bot that is executing the commands.
     """
+
+    LOCAL_REACTIONS = {
+        directory: [
+            os.path.join(GIFS_PATH, directory, file)
+            for file in os.listdir(os.path.join(GIFS_PATH, directory))
+        ]
+        for directory in os.listdir(GIFS_PATH)
+    }
 
     @dataclass
     class CommandInfo:
@@ -192,6 +204,7 @@ class RolePlay(commands.Cog):
         CommandInfo("yawn", "Позіхати", "yawn", "{} позіхає", False),
         CommandInfo("yay", "Радіти", "yay", "{} радіє", False),
         CommandInfo("yes", "Погоджуватися", "yes", "{} погоджується", False),
+        CommandInfo("purr", "Муркотіти", "purr", "{} муркоче", False),
     ]
     COMMANDS = {info.name: info for info in COMMANDS}
     # a stupid discord limit - no more than 5 user commands
@@ -219,6 +232,15 @@ class RolePlay(commands.Cog):
                 bot.slash_command(**args)(self._callback_without_args)
 
     async def _get_gif(self, action: str) -> bytes:
+        local_gifs = self.LOCAL_REACTIONS.get(action)
+        if local_gifs is not None:
+            gif = random.choice(local_gifs)
+            if gif not in self.gif_cache:
+                self.gif_cache[gif] = await self.bot.loop.run_in_executor(
+                    None, self._read_file, gif
+                )
+            return self.gif_cache[gif]
+
         async with self.bot.client_session.get(ENDPOINT + action) as req:
             url = (await req.json())["url"]
 
@@ -226,6 +248,10 @@ class RolePlay(commands.Cog):
             async with self.bot.client_session.get(url) as req:
                 self.gif_cache[url] = await req.read()
         return self.gif_cache[url]
+
+    def _read_file(self, file: str) -> bytes:
+        with open(file, "rb") as f:
+            return f.read()
 
     async def _send_embed(self, ctx, other_user: discord.User | None):
         await ctx.defer()
