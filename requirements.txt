@@ -1,6 +1,6 @@
 py-cord[voice] @ https://github.com/solaluset/pycord/releases/download/v2.6.2/py_cord-2.6.2-py3-none-any.whl
 yt-dlp[default]==2025.9.26
-aiohttp==3.12.15
+aiohttp==3.13.0
 beautifulsoup4==4.14.2
 spotipy==2.25.1
 SQLAlchemy[asyncio]==2.0.44
