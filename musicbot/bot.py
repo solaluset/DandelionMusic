@@ -246,6 +246,12 @@ class Context(bridge.BridgeContext):
     bot: MusicBot
     guild: discord.Guild
 
+    async def defer(self, **kwargs):
+        try:
+            await super().defer(**kwargs)
+        except discord.InteractionResponded:
+            pass
+
     async def send(self, *args, **kwargs):
         kwargs.pop("reference", None)  # not supported
         audiocontroller = self.bot.audio_controllers[self.guild]

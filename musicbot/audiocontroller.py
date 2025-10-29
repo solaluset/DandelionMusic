@@ -530,6 +530,7 @@ class AudioController(object):
             raise CheckError(config.USER_NOT_IN_VC_MESSAGE)
 
         if bot_vc is None or bot_vc.channel != author_vc.channel and move:
+            await ctx.defer()
             await self.register_voice_channel(author_vc.channel)
             if config.ANNOUNCE_CONNECT:
                 self.play_asset(VoiceAsset.HELLO)
