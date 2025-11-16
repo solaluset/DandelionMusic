@@ -107,11 +107,11 @@ def extract_info(url: str, ie: Optional[ExtractorT] = None) -> Optional[dict]:
             return None
 
 
-async def search_youtube(title: str, count: int = 1) -> Optional[dict]:
+async def search_youtube(title: str, count: int = 1) -> Optional[List[dict]]:
     return await _run_sync(_search_youtube, title, count)
 
 
-def _search_youtube(title: str, count: int = 1) -> Optional[dict]:
+def _search_youtube(title: str, count: int = 1) -> Optional[List[dict]]:
     """Searches youtube for the video title
     Returns the first results video link"""
 
@@ -133,7 +133,8 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
     if host == SiteTypes.NOT_URL:
         data = _search_youtube(track)
         if not data:
-            return None
+            # None or empty list
+            return data
         data = data[0]
         host = SiteTypes.YT_DLP
 
