@@ -14,7 +14,12 @@ from musicbot import linkutils, utils, loader
 from musicbot.song import Song
 from musicbot.bot import MusicBot, Context
 from musicbot.utils import dj_check, chunks
-from musicbot.audiocontroller import PLAYLIST, AudioController, MusicButton
+from musicbot.audiocontroller import (
+    PLAYLIST,
+    EMPTY_PLAYLIST,
+    AudioController,
+    MusicButton,
+)
 from musicbot.loader import SongError, search_youtube
 from musicbot.playlist import PlaylistError, LoopMode
 from musicbot.settings import SavedPlaylist
@@ -107,6 +112,8 @@ class Music(commands.Cog):
 
         if song is PLAYLIST:
             await ctx.send(config.SONGINFO_PLAYLIST_QUEUED)
+        elif song is EMPTY_PLAYLIST:
+            await ctx.send(config.SONGINFO_PLAYLIST_EMPTY)
         else:
             if len(ctx.audiocontroller.playlist) != 1:
                 await ctx.send(

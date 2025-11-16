@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 VC_CONNECT_TIMEOUT = 10
 
 PLAYLIST = object()
+EMPTY_PLAYLIST = object()
 _not_provided = object()
 
 
@@ -394,13 +395,16 @@ class AudioController(object):
     @needs_waiting
     async def process_song(
         self, track: str
-    ) -> Union[Optional[Song], Literal[PLAYLIST]]:
+    ) -> Union[Optional[Song], Literal[PLAYLIST], Literal[EMPTY_PLAYLIST]]:
         """Adds the track to the playlist instance
         Starts playing if it is the first song"""
 
         loaded_song = await loader.load_song(track)
-        if not loaded_song:
+        if loaded_song is None:
             return None
+        elif not loaded_song:
+            # empty list
+            return EMPTY_PLAYLIST
         elif isinstance(loaded_song, Song):
             self.playlist.add(loaded_song)
         else:
