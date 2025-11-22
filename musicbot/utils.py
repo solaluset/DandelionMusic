@@ -54,7 +54,7 @@ FFMPEG_ZIP_URL = (
     "https://github.com/solaluset/FFmpeg"
     "/releases/latest/download/ffmpeg.zip"
 )
-NEWEST_FFMPEG_TIMESTAMP = 1720195398
+NEWEST_FFMPEG_TIMESTAMP = 1763840186
 
 
 def extract_ffmpeg_timestamp(version: str) -> int:
@@ -67,7 +67,7 @@ def extract_ffmpeg_timestamp(version: str) -> int:
 
 
 def check_dependencies():
-    if pycord_version != "2.7.0-SL":
+    if pycord_version != "2.7.1-SL":
         raise ImportError(
             "you have wrong version of Pycord."
             " Please install the version specified in requirements.txt"
