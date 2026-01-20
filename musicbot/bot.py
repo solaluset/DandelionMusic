@@ -4,6 +4,7 @@ import asyncio
 from traceback import print_exception
 from typing import Dict, Union, List
 
+import aiohttp
 import discord
 from discord.ext import bridge, tasks
 from discord.ext.bridge import BridgeOption
@@ -52,6 +53,8 @@ class MusicBot(bridge.Bot):
         await extract_legacy_settings(self)
         await migrate_old_playlists(self)
 
+        self.client_session = aiohttp.ClientSession()
+
         return await super().start(*args, **kwargs)
 
     async def close(self):
@@ -64,6 +67,7 @@ class MusicBot(bridge.Bot):
                 for audiocontroller in self.audio_controllers.values()
             )
         )
+        await self.client_session.close()
         return await super().close()
 
     async def on_ready(self):
@@ -169,7 +173,10 @@ class MusicBot(bridge.Bot):
         )
 
     async def process_application_commands(self, inter):
-        if not inter.guild:
+        if (
+            not inter.guild
+            and inter.context != discord.InteractionContextType.private_channel
+        ):
             await inter.response.send_message(config.NO_GUILD_MESSAGE)
             return
 
@@ -254,13 +261,13 @@ class Context(bridge.BridgeContext):
 
     async def send(self, *args, **kwargs):
         kwargs.pop("reference", None)  # not supported
-        audiocontroller = self.bot.audio_controllers[self.guild]
-        channel = audiocontroller.command_channel
+        audiocontroller = self.bot.audio_controllers.get(self.guild)
         if (
-            "view" in kwargs
+            audiocontroller is None
+            or "view" in kwargs
             or kwargs.get("ephemeral", False)
             or (
-                channel
+                (channel := audiocontroller.command_channel)
                 # unwrap channel from context
                 and getattr(channel, "channel", channel) != self.channel
             )
