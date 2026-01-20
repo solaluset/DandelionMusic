@@ -9,7 +9,6 @@ from musicbot import loader
 from musicbot.bot import MusicBot
 from musicbot.utils import check_dependencies, read_shutdown
 
-
 initial_extensions = [
     "musicbot.commands.music",
     "musicbot.commands.general",

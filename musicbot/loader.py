@@ -28,7 +28,6 @@ from musicbot.linkutils import (
     stop as stop_session,
 )
 
-
 sys.stdout = OutputWrapper(sys.stdout)
 sys.stderr = OutputWrapper(sys.stderr)
 

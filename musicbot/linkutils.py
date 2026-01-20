@@ -18,7 +18,6 @@ from yt_dlp.extractor.lazy_extractors import LazyLoadExtractor
 from config import config
 from musicbot import loader
 
-
 spotify_api = None
 if config.SPOTIFY_ID or config.SPOTIFY_SECRET:
     try:

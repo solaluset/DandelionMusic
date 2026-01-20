@@ -6,7 +6,6 @@ from urllib.request import urlopen
 from packaging.requirements import Requirement
 from packaging.version import Version, InvalidVersion
 
-
 cfg_dir = os.path.dirname(__file__)
 pyproject_file = os.path.join(cfg_dir, "pyproject.toml")
 

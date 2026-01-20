@@ -5,7 +5,6 @@ import jsonc
 import string
 from typing import TypeVar, Callable, Iterable, Optional, List
 
-
 T = TypeVar("T")
 CONFIG_DIRS = (
     os.path.dirname(__file__),

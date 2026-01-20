@@ -8,7 +8,6 @@ from config import config
 from musicbot.song import Song
 from musicbot.utils import StrEnum, songs_embed
 
-
 LoopMode = StrEnum("LoopMode", config.get_dict("LoopMode"))
 LoopState = StrEnum("LoopState", config.get_dict("LoopState"))
 PauseState = StrEnum("PauseState", config.get_dict("PauseState"))

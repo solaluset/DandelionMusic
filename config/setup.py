@@ -11,7 +11,6 @@ from setuptools import setup
 
 from config import Config
 
-
 DB_REQUIREMENTS_FILE = "db.txt"
 DB_REQUIREMENTS_BACKUP = DB_REQUIREMENTS_FILE + ".back"
 
