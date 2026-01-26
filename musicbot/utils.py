@@ -209,7 +209,7 @@ async def play_check(ctx: Context):
             raise CheckError(config.WRONG_CHANNEL_MESSAGE)
 
     if sett.dj_only:
-        return await dj_check(ctx)
+        await dj_check(ctx)
 
     if not ctx.guild.voice_client:
         return await ctx.bot.audio_controllers[ctx.guild].uconnect(ctx)
