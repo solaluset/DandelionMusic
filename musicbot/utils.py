@@ -203,16 +203,18 @@ async def play_check(ctx: Context):
     sett = ctx.bot.settings[ctx.guild]
 
     cm_channel = sett.command_channel
-    vc_rule = sett.user_must_be_in_vc
 
     if cm_channel is not None:
         if int(cm_channel) != ctx.channel.id:
             raise CheckError(config.WRONG_CHANNEL_MESSAGE)
 
+    if sett.dj_only:
+        return await dj_check(ctx)
+
     if not ctx.guild.voice_client:
         return await ctx.bot.audio_controllers[ctx.guild].uconnect(ctx)
 
-    if vc_rule:
+    if sett.user_must_be_in_vc:
         return await voice_check(ctx)
 
     return True
