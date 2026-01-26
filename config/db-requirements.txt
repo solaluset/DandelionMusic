@@ -1,4 +1,3 @@
-# update aiosqlite ONLY after new version of SQLAlchemy gets released
-aiosqlite==0.21.0
+aiosqlite==0.22.1
 asyncpg==0.31.0
 aiomysql==0.3.2
