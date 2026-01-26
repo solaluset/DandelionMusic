@@ -1,9 +1,9 @@
 [build-system]
 requires = [
-   "setuptools==80.9.0",
-   "wheel==0.45.1",
+   "setuptools==80.10.2",
+   "wheel==0.46.3",
    "tomli==2.4.0; python_version<'3.11'",
-   "packaging==25.0",
+   "packaging==26.0",
    "json-with-comments==1.2.10",
 ]
 
