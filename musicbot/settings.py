@@ -40,6 +40,7 @@ DEFAULT_CONFIG = {
     "default_volume": 100,
     "vc_timeout": config.VC_TIMEOUT_DEFAULT,
     "announce_songs": sqlalchemy.false(),
+    "dj_only": sqlalchemy.false(),
 }
 # use String for ids to be sure we won't hit overflow
 ID_LENGTH = 25  # more than enough to be sure :)
@@ -121,6 +122,7 @@ CONFIG_CONVERTERS = {
     "default_volume": convert_volume,
     "vc_timeout": convert_bool,
     "announce_songs": convert_bool,
+    "dj_only": convert_bool,
 }
 CONFIG_OPTIONS = {
     "command_channel": BridgeOption(
@@ -133,6 +135,7 @@ CONFIG_OPTIONS = {
     "default_volume": BridgeOption(int, min_value=0, max_value=100),
     "vc_timeout": BridgeOption(bool),
     "announce_songs": BridgeOption(bool),
+    "dj_only": BridgeOption(bool),
 }
 
 
@@ -149,6 +152,9 @@ class GuildSettings(Base):
     vc_timeout: Mapped[bool]
     announce_songs: Mapped[bool] = mapped_column(
         server_default=DEFAULT_CONFIG["announce_songs"]
+    )
+    dj_only: Mapped[bool] = mapped_column(
+        server_default=DEFAULT_CONFIG["dj_only"]
     )
 
     @classmethod

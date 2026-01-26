@@ -110,6 +110,9 @@ class Config:
                 os.path.join(os.path.dirname(__file__), "db-requirements.txt")
             ) as f:
                 for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
                     req = Requirement(line)
                     if req.name == db_req.name:
                         self.DATABASE_LIBRARY = str(req)
