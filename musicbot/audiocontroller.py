@@ -367,6 +367,7 @@ class AudioController(object):
         ):
             await self.voice_asset_future
         try:
+            print(song.data)
             with MonkeyPopen.args_catch_lock:
                 MonkeyPopen.args_catch_future = Future()
                 loader.downloader.download("-", song.data)

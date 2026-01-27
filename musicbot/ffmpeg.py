@@ -1,5 +1,6 @@
 import inspect
 import threading
+import subprocess
 from typing import Optional
 from concurrent.futures import Future
 
@@ -8,7 +9,9 @@ import yt_dlp
 downloader_class = yt_dlp.get_external_downloader("ffmpeg")
 _downloader_module = inspect.getmodule(downloader_class)
 _original_popen = _downloader_module.Popen
-_dummy_process = _original_popen(["ffmpeg", "-version"])
+_dummy_process = _original_popen(
+    ["ffmpeg", "-version"], stdout=subprocess.PIPE
+)
 
 
 class MonkeyPopen:
