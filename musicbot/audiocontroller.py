@@ -360,6 +360,14 @@ class AudioController(object):
             self.next_song(forced=True)
             return
 
+        with MonkeyPopen.args_catch_lock:
+            MonkeyPopen.args_catch_future = Future()
+            loader.downloader.download("-", song.data)
+            ffmpeg_cmd = MonkeyPopen.args_catch_future.result()
+            MonkeyPopen.args_catch_future = None
+        audio = FFmpegPCMAudio(ffmpeg_cmd)
+        # FFmpeg needs some time when seeking, ensure it's ready
+        await asyncio.get_running_loop().run_in_executor(None, audio.read)
         self.stop_waiting()
         if (
             self.voice_asset_future
@@ -367,14 +375,9 @@ class AudioController(object):
         ):
             await self.voice_asset_future
         try:
-            with MonkeyPopen.args_catch_lock:
-                MonkeyPopen.args_catch_future = Future()
-                loader.downloader.download("-", song.data)
-                ffmpeg_cmd = MonkeyPopen.args_catch_future.result()
-                MonkeyPopen.args_catch_future = None
             self.guild.voice_client.play(
                 discord.PCMVolumeTransformer(
-                    FFmpegPCMAudio(ffmpeg_cmd),
+                    audio,
                     float(self.volume) / 100.0,
                 ),
                 after=self.next_song,
