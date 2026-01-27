@@ -4,6 +4,7 @@ from functools import wraps
 from itertools import islice
 from inspect import isawaitable
 from traceback import print_exc
+from concurrent.futures import Future
 from typing import TYPE_CHECKING, Coroutine, Literal, Optional, Union
 
 import discord
@@ -11,6 +12,7 @@ from config import config
 
 from musicbot import loader, utils
 from musicbot.song import Song
+from musicbot.ffmpeg import MonkeyPopen
 from musicbot.playlist import Playlist, LoopMode, LoopState, PauseState
 from musicbot.utils import CheckError, StrEnum, asset, play_check
 
@@ -365,19 +367,24 @@ class AudioController(object):
         ):
             await self.voice_asset_future
         try:
-            self.guild.voice_client.play(
-                discord.PCMVolumeTransformer(
-                    discord.FFmpegPCMAudio(
-                        song.data["url"],
-                        before_options="-reconnect 1 -reconnect_streamed 1"
-                        " -reconnect_delay_max 5",
-                        options="-loglevel error",
-                        stderr=sys.stderr,
-                    ),
-                    float(self.volume) / 100.0,
-                ),
-                after=self.next_song,
-            )
+            with MonkeyPopen.args_catch_lock:
+                MonkeyPopen.args_catch_future = Future()
+                loader.downloader.download("-", song.data)
+                print(MonkeyPopen.args_catch_future.result())
+                MonkeyPopen.args_catch_future = None
+            # self.guild.voice_client.play(
+            #     discord.PCMVolumeTransformer(
+            #         discord.FFmpegPCMAudio(
+            #             song.data["url"],
+            #             before_options="-reconnect 1 -reconnect_streamed 1"
+            #             " -reconnect_delay_max 5",
+            #             options="-loglevel error",
+            #             stderr=sys.stderr,
+            #         ),
+            #         float(self.volume) / 100.0,
+            #     ),
+            #     after=self.next_song,
+            # )
         except discord.ClientException:
             await self.udisconnect()
             return

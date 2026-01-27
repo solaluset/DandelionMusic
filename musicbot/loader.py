@@ -17,6 +17,7 @@ from config import config
 from musicbot.bot import MusicBot
 from musicbot.song import Song
 from musicbot.utils import OutputWrapper
+from musicbot.ffmpeg import downloader_class
 from musicbot.linkutils import (
     YT_IE,
     ExtractorT,
@@ -58,7 +59,7 @@ _loop.run_until_complete(init_session())
 atexit.register(lambda: _loop.run_until_complete(stop_session()))
 atexit.register(lambda: _loop.run_until_complete(close_bot_session()))
 _executor = ProcessPoolExecutor(1, _context)
-_downloader = YoutubeDL(
+_extractor = YoutubeDL(
     {
         "format": "bestaudio/best",
         "extract_flat": True,
@@ -72,6 +73,7 @@ _downloader = YoutubeDL(
         "extractor_args": {"youtube": {"player-client": "default,tv"}},
     }
 )
+downloader = downloader_class(_extractor, _extractor.params)
 _preloading = {}
 _site_locks = {}
 
@@ -101,7 +103,7 @@ def extract_info(url: str, ie: Optional[ExtractorT] = None) -> Optional[dict]:
         lock = _site_locks[module] = threading.Lock()
     with lock:
         try:
-            return _downloader.extract_info(url, False, ie.ie_key())
+            return _extractor.extract_info(url, False, ie.ie_key())
         except DownloadError:
             return None
 
