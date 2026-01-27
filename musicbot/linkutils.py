@@ -43,6 +43,7 @@ if config.SPOTIFY_ID or config.SPOTIFY_SECRET:
 ExtractorT = Union[InfoExtractor, LazyLoadExtractor]
 EXTRACTORS = gen_extractor_classes()
 YT_IE = next(ie for ie in EXTRACTORS if ie.IE_NAME == "youtube")
+GENERIC_IE = next(ie for ie in EXTRACTORS if ie.IE_NAME == "generic")
 # Modified version of
 # https://gist.github.com/gruber/249502#gistcomment-1328838
 url_regex = re.compile(
@@ -174,7 +175,7 @@ def get_urls(content: str) -> List[str]:
 
 def get_ie(url: str) -> Optional[ExtractorT]:
     for ie in EXTRACTORS:
-        if ie.suitable(url) and ie.IE_NAME != "generic":
+        if ie.suitable(url) and ie is not GENERIC_IE:
             return ie
     return None
 

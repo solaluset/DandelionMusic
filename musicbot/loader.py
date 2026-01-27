@@ -20,6 +20,7 @@ from musicbot.utils import OutputWrapper
 from musicbot.ffmpeg import downloader_class
 from musicbot.linkutils import (
     YT_IE,
+    GENERIC_IE,
     ExtractorT,
     SiteTypes,
     get_ie,
@@ -151,11 +152,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             data = [{"url": url} for url in data]
 
     elif host == SiteTypes.CUSTOM:
-        data = {
-            "url": track,
-            "webpage_url": track,
-            "title": urlparse(track).path.rpartition("/")[2],
-        }
+        data = extract_info(track, GENERIC_IE)
 
     else:  # host is info extractor
         data = extract_info(track, host)
