@@ -42,9 +42,14 @@ class FFmpegPCMAudio(discord.FFmpegPCMAudio):
         new_args[1:1] = (
             "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5".split()
         )
+        try:
+            c_index = new_args.index("-c")
+            del new_args[c_index : c_index + 2]
+        except ValueError:
+            pass
         f_index = new_args.index("-f") + 1
         new_args[f_index : f_index + 1] = (
-            args[args.index("-f") + 1 : -1] + "-loglevel quiet".split()
+            args[args.index("-f") + 1 : -1] + "-loglevel error".split()
         )
         print(new_args)
         return super()._spawn_process(new_args, **subprocess_kwargs)
