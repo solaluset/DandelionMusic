@@ -1,10 +1,12 @@
+import sys
 import inspect
 import threading
 import subprocess
-from typing import Optional
+from typing import Optional, List
 from concurrent.futures import Future
 
 import yt_dlp
+import discord
 
 downloader_class = yt_dlp.get_external_downloader("ffmpeg")
 _downloader_module = inspect.getmodule(downloader_class)
@@ -26,3 +28,23 @@ class MonkeyPopen:
 
 
 _downloader_module.Popen = MonkeyPopen()
+
+
+class FFmpegPCMAudio(discord.FFmpegPCMAudio):
+    def __init__(self, original_cmd: List[str]):
+        super().__init__(None, stderr=sys.stderr)
+        self.original_cmd = original_cmd
+
+    def _spawn_process(
+        self, args: List[str], **subprocess_kwargs
+    ) -> subprocess.Popen:
+        new_args = self.original_cmd.copy()
+        new_args[1:1] = (
+            "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5".split()
+        )
+        f_index = new_args.index("-f") + 1
+        new_args[f_index : f_index + 1] = (
+            args[args.index("-f") + 1 : -1] + "-loglevel quiet".split()
+        )
+        print(new_args)
+        return super()._spawn_process(new_args, **subprocess_kwargs)

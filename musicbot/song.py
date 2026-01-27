@@ -63,9 +63,7 @@ class Song:
     def update(self, data: Union[dict, "Song"]):
         if isinstance(data, Song):
             data = data.__dict__
-            print("Data from Song:", data)
         else:
-            print("Data dict:", data)
             self.data = data
 
         thumbnails = data.get("thumbnails")

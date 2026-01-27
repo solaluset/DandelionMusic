@@ -12,7 +12,7 @@ from config import config
 
 from musicbot import loader, utils
 from musicbot.song import Song
-from musicbot.ffmpeg import MonkeyPopen
+from musicbot.ffmpeg import MonkeyPopen, FFmpegPCMAudio
 from musicbot.playlist import Playlist, LoopMode, LoopState, PauseState
 from musicbot.utils import CheckError, StrEnum, asset, play_check
 
@@ -371,21 +371,15 @@ class AudioController(object):
             with MonkeyPopen.args_catch_lock:
                 MonkeyPopen.args_catch_future = Future()
                 loader.downloader.download("-", song.data)
-                print(MonkeyPopen.args_catch_future.result())
+                ffmpeg_cmd = MonkeyPopen.args_catch_future.result()
                 MonkeyPopen.args_catch_future = None
-            # self.guild.voice_client.play(
-            #     discord.PCMVolumeTransformer(
-            #         discord.FFmpegPCMAudio(
-            #             song.data["url"],
-            #             before_options="-reconnect 1 -reconnect_streamed 1"
-            #             " -reconnect_delay_max 5",
-            #             options="-loglevel error",
-            #             stderr=sys.stderr,
-            #         ),
-            #         float(self.volume) / 100.0,
-            #     ),
-            #     after=self.next_song,
-            # )
+            self.guild.voice_client.play(
+                discord.PCMVolumeTransformer(
+                    FFmpegPCMAudio(ffmpeg_cmd),
+                    float(self.volume) / 100.0,
+                ),
+                after=self.next_song,
+            )
         except discord.ClientException:
             await self.udisconnect()
             return
