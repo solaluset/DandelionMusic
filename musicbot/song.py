@@ -16,7 +16,7 @@ class Song:
         self,
         host: SiteTypes,
         webpage_url: str,
-        url: Optional[str] = None,
+        data: Optional[dict] = None,
         title: Optional[str] = None,
         uploader: Optional[str] = None,
         duration: Optional[int] = None,
@@ -25,7 +25,7 @@ class Song:
     ):
         self.host = host
         self.webpage_url = webpage_url
-        self.url = url
+        self.data = data
         self.title = title
         self.uploader = uploader
         self.duration = duration

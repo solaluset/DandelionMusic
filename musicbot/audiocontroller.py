@@ -349,7 +349,7 @@ class AudioController(object):
             self.next_song(forced=True)
             return
 
-        if song.url is None:
+        if song.data is None:
             print(
                 "Something is wrong."
                 " Refusing to play a song without direct url.",
@@ -368,7 +368,7 @@ class AudioController(object):
             self.guild.voice_client.play(
                 discord.PCMVolumeTransformer(
                     discord.FFmpegPCMAudio(
-                        song.url,
+                        song.data["url"],
                         before_options="-reconnect 1 -reconnect_streamed 1"
                         " -reconnect_delay_max 5",
                         options="-loglevel error",
