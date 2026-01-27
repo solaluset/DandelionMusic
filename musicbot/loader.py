@@ -72,6 +72,7 @@ _extractor = YoutubeDL(
         "cookiefile": config.COOKIE_PATH,
         "quiet": True,
         "extractor_args": {"youtube": {"player-client": "default,tv"}},
+        "force_keyframes_at_cuts": True,
     }
 )
 downloader = downloader_class(_extractor, _extractor.params)
