@@ -32,8 +32,8 @@ _downloader_module.Popen = MonkeyPopen()
 
 class FFmpegPCMAudio(discord.FFmpegPCMAudio):
     def __init__(self, original_cmd: List[str]):
-        super().__init__(None, stderr=sys.stderr)
         self.original_cmd = original_cmd
+        super().__init__(None, stderr=sys.stderr)
 
     def _spawn_process(
         self, args: List[str], **subprocess_kwargs
