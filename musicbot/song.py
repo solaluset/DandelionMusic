@@ -64,6 +64,10 @@ class Song:
         if isinstance(data, Song):
             data = data.__dict__
         else:
+            if data.get("start_time"):
+                data["section_start"] = data["start_time"]
+            if data.get("end_time"):
+                data["section_end"] = data["end_time"]
             self.data = data
 
         thumbnails = data.get("thumbnails")
