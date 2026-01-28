@@ -4,7 +4,7 @@ import atexit
 import asyncio
 import threading
 from inspect import getmodule
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 from datetime import datetime, timezone
 from concurrent.futures import ProcessPoolExecutor
 from multiprocessing import get_context as mp_context
@@ -190,11 +190,11 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
 
 
 def _parse_expire(url: str) -> Optional[int]:
-    expire = (
-        ("&" + urlparse(url).query).partition("&expire=")[2].partition("&")[0]
-    )
+    expire = parse_qs(urlparse(url).query).get("expire")
+    if not expire:
+        return None
     try:
-        return int(expire)
+        return int(expire[0])
     except ValueError:
         return None
 
