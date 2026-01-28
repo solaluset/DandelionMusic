@@ -4,7 +4,7 @@ import atexit
 import asyncio
 import threading
 from inspect import getmodule
-from urllib.request import urlparse
+from urllib.parse import urlparse
 from datetime import datetime, timezone
 from concurrent.futures import ProcessPoolExecutor
 from multiprocessing import get_context as mp_context

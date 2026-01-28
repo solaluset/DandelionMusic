@@ -3,7 +3,7 @@ import sys
 import asyncio
 from enum import Enum, auto
 from traceback import print_exc
-from urllib.request import urlparse
+from urllib.parse import urlparse
 from multiprocessing import current_process
 from typing import Optional, Union, List
 
