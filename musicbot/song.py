@@ -1,11 +1,13 @@
 from __future__ import annotations
 import datetime
+from urllib.parse import urlparse, parse_qs
 from typing import TYPE_CHECKING, Optional, Union
 
 import discord
 
 from config import config
 from musicbot.linkutils import SiteTypes
+from musicbot.timeparse import timeparse
 
 if TYPE_CHECKING:
     from musicbot.settings import SavedPlaylist
@@ -16,7 +18,7 @@ class Song:
         self,
         host: SiteTypes,
         webpage_url: str,
-        url: Optional[str] = None,
+        data: Optional[dict] = None,
         title: Optional[str] = None,
         uploader: Optional[str] = None,
         duration: Optional[int] = None,
@@ -25,12 +27,22 @@ class Song:
     ):
         self.host = host
         self.webpage_url = webpage_url
-        self.url = url
+        self.data = data
         self.title = title
         self.uploader = uploader
         self.duration = duration
         self.thumbnail = thumbnail
         self.playlist = playlist
+
+        start = end = None
+        params = parse_qs(urlparse(webpage_url).query)
+        if params.get("start"):
+            start = timeparse(params["start"][0])
+        if params.get("end"):
+            end = timeparse(params["end"][0])
+
+        self._start = start
+        self._end = end
 
     def format_output(self, playtype: str) -> discord.Embed:
         embed = discord.Embed(
@@ -48,11 +60,19 @@ class Song:
             inline=False,
         )
 
+        duration = self.duration
+        if self.data and (
+            self.data.get("section_start") or self.data.get("section_end")
+        ):
+            end = self.data.get("section_end", duration)
+            if end:
+                duration = end - self.data.get("section_start", 0)
+
         embed.add_field(
             name=config.SONGINFO_DURATION,
             value=(
-                str(datetime.timedelta(seconds=self.duration))
-                if self.duration is not None
+                str(datetime.timedelta(seconds=duration))
+                if duration is not None
                 else config.SONGINFO_UNKNOWN
             ),
             inline=False,
@@ -62,19 +82,23 @@ class Song:
 
     def update(self, data: Union[dict, "Song"]):
         if isinstance(data, Song):
-            data = data.__dict__
+            for k, v in data.__dict__.items():
+                if v:
+                    setattr(self, k, v)
+        else:
+            start_time = data.get("start_time", self._start)
+            if start_time:
+                data["section_start"] = start_time
+            end_time = data.get("end_time", self._end)
+            if end_time:
+                data["section_end"] = end_time
 
-        thumbnails = data.get("thumbnails")
-        if thumbnails:
-            # last thumbnail has the best resolution
-            data["thumbnail"] = thumbnails[-1]["url"]
+            self.data = data
 
-        from musicbot.settings import SavedPlaylist
-
-        if "playlist" in data and not isinstance(
-            data["playlist"], SavedPlaylist
-        ):
-            del data["playlist"]
-        for k, v in data.items():
-            if hasattr(self, k) and v:
-                setattr(self, k, v)
+            self.title = data.get("title") or self.title
+            self.uploader = data.get("uploader") or self.uploader
+            self.duration = data.get("duration") or self.duration
+            thumbnails = data.get("thumbnails")
+            if thumbnails:
+                # last thumbnail has the best resolution
+                self.thumbnail = thumbnails[-1]["url"]

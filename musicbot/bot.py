@@ -8,7 +8,7 @@ import aiohttp
 import discord
 from discord.ext import bridge, tasks
 from discord.ext.bridge import BridgeOption
-from discord.ext.commands import DefaultHelpCommand, NotOwner
+from discord.ext.commands import DefaultHelpCommand, NotOwner, UserInputError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -102,7 +102,7 @@ class MusicBot(bridge.Bot):
 
     async def on_command_error(self, ctx, error):
         await ctx.send(error)
-        if not isinstance(error, (CheckError, NotOwner)):
+        if not isinstance(error, (CheckError, NotOwner, UserInputError)):
             print_exception(error)
 
     async def on_application_command_error(self, ctx, error):
@@ -135,12 +135,15 @@ class MusicBot(bridge.Bot):
 
     @tasks.loop(seconds=1)
     async def update_views(self):
-        await asyncio.gather(
-            *(
-                audiocontroller.update_view()
-                for audiocontroller in self.audio_controllers.values()
+        try:
+            await asyncio.gather(
+                *(
+                    audiocontroller.update_view()
+                    for audiocontroller in self.audio_controllers.values()
+                )
             )
-        )
+        except Exception as e:
+            print_exception(e)
 
     def add_application_command(self, command):
         if not config.ENABLE_SLASH_COMMANDS:

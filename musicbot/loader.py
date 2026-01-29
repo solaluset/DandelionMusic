@@ -4,9 +4,9 @@ import atexit
 import asyncio
 import threading
 from inspect import getmodule
-from urllib.request import urlparse
+from urllib.parse import urlparse, parse_qs
 from datetime import datetime, timezone
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, Future
 from multiprocessing import get_context as mp_context
 from typing import List, Optional, Union
 
@@ -17,8 +17,10 @@ from config import config
 from musicbot.bot import MusicBot
 from musicbot.song import Song
 from musicbot.utils import OutputWrapper
+from musicbot.ffmpeg import MonkeyPopen, downloader_class
 from musicbot.linkutils import (
     YT_IE,
+    GENERIC_IE,
     ExtractorT,
     SiteTypes,
     get_ie,
@@ -58,7 +60,7 @@ _loop.run_until_complete(init_session())
 atexit.register(lambda: _loop.run_until_complete(stop_session()))
 atexit.register(lambda: _loop.run_until_complete(close_bot_session()))
 _executor = ProcessPoolExecutor(1, _context)
-_downloader = YoutubeDL(
+_extractor = YoutubeDL(
     {
         "format": "bestaudio/best",
         "extract_flat": True,
@@ -72,6 +74,7 @@ _downloader = YoutubeDL(
         "extractor_args": {"youtube": {"player-client": "default,tv"}},
     }
 )
+_downloader = downloader_class(_extractor, _extractor.params)
 _preloading = {}
 _site_locks = {}
 
@@ -89,7 +92,7 @@ def init():
     _executor.submit(_noop).result()
 
 
-def extract_info(url: str, ie: Optional[ExtractorT] = None) -> Optional[dict]:
+def _extract_info(url: str, ie: Optional[ExtractorT] = None) -> Optional[dict]:
     if ie is None:
         ie = get_ie(url)
     # cache by module (effectively means by site)
@@ -101,7 +104,7 @@ def extract_info(url: str, ie: Optional[ExtractorT] = None) -> Optional[dict]:
         lock = _site_locks[module] = threading.Lock()
     with lock:
         try:
-            return _downloader.extract_info(url, False, ie.ie_key())
+            return _extractor.extract_info(url, False, ie.ie_key())
         except DownloadError:
             return None
 
@@ -114,7 +117,7 @@ def _search_youtube(title: str, count: int = 1) -> Optional[List[dict]]:
     """Searches youtube for the video title
     Returns the first results video link"""
 
-    r = extract_info(f"ytsearch{count}:{title}")
+    r = _extract_info(f"ytsearch{count}:{title}")
 
     if not r:
         return None
@@ -135,6 +138,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             # None or empty list
             return data
         data = data[0]
+        track = data["url"]
         host = SiteTypes.YT_DLP
 
     elif host == SiteTypes.UNKNOWN:
@@ -149,14 +153,10 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             data = [{"url": url} for url in data]
 
     elif host == SiteTypes.CUSTOM:
-        data = {
-            "url": track,
-            "webpage_url": track,
-            "title": urlparse(track).path.rpartition("/")[2],
-        }
+        data = _extract_info(track, GENERIC_IE)
 
     else:  # host is info extractor
-        data = extract_info(track, host)
+        data = _extract_info(track, host)
         host = SiteTypes.YT_DLP
 
     if not data:
@@ -168,7 +168,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             data = data["entries"]
         elif YT_IE.suitable(data["url"]):
             # the URL wasn't extracted, do it now
-            data = extract_info(data["url"], YT_IE)
+            data = _extract_info(data["url"], YT_IE)
             if not data:
                 raise SongError(config.SONGINFO_ERROR)
 
@@ -191,11 +191,11 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
 
 
 def _parse_expire(url: str) -> Optional[int]:
-    expire = (
-        ("&" + urlparse(url).query).partition("&expire=")[2].partition("&")[0]
-    )
+    expire = parse_qs(urlparse(url).query).get("expire")
+    if not expire:
+        return None
     try:
-        return int(expire)
+        return int(expire[0])
     except ValueError:
         return None
 
@@ -204,8 +204,8 @@ async def preload(song: Song, bot: MusicBot) -> bool:
     if song.webpage_url is None:
         return True
 
-    if song.url is not None:
-        expire = _parse_expire(song.url)
+    if song.data is not None:
+        expire = _parse_expire(song.data["url"])
         if expire is None or expire == _parse_expire(song.webpage_url):
             return True
         if datetime.now(timezone.utc) < datetime.fromtimestamp(
@@ -240,6 +240,20 @@ async def preload(song: Song, bot: MusicBot) -> bool:
 
     _preloading.pop(song).set_result(success)
     return success
+
+
+def _get_ffmpeg_args(song: Song) -> List[str]:
+    with MonkeyPopen.args_catch_lock:
+        try:
+            MonkeyPopen.args_catch_future = Future()
+            _downloader.download("-", song.data)
+            return MonkeyPopen.args_catch_future.result()
+        finally:
+            MonkeyPopen.args_catch_future = None
+
+
+async def get_ffmpeg_args(song: Song) -> List[str]:
+    return await _run_sync(_get_ffmpeg_args, song)
 
 
 async def _run_sync(f, *args):

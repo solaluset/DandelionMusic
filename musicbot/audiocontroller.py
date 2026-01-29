@@ -11,6 +11,7 @@ from config import config
 
 from musicbot import loader, utils
 from musicbot.song import Song
+from musicbot.ffmpeg import FFmpegPCMAudio
 from musicbot.playlist import Playlist, LoopMode, LoopState, PauseState
 from musicbot.utils import CheckError, StrEnum, asset, play_check
 
@@ -341,39 +342,42 @@ class AudioController(object):
         coro = self.play_song(next_song)
         self.add_task(coro)
 
-    @needs_waiting
     async def play_song(self, song: Song):
         """Plays a song object"""
 
-        if not await loader.preload(song, self.bot):
-            self.next_song(forced=True)
-            return
+        if song.data is None:
+            self.announce_waiting()
 
-        if song.url is None:
-            print(
-                "Something is wrong."
-                " Refusing to play a song without direct url.",
-                file=sys.stderr,
-            )
-            self.next_song(forced=True)
-            return
+        try:
+            if not await loader.preload(song, self.bot):
+                self.next_song(forced=True)
+                return
 
-        self.stop_waiting()
+            if song.data is None:
+                print(
+                    "Something is wrong."
+                    " Refusing to play a song without direct url.",
+                    file=sys.stderr,
+                )
+                self.next_song(forced=True)
+                return
+
+            audio = FFmpegPCMAudio(await loader.get_ffmpeg_args(song))
+            # FFmpeg needs some time when seeking, ensure it's ready
+            await asyncio.get_running_loop().run_in_executor(None, audio.read)
+        finally:
+            self.stop_waiting()
+
         if (
             self.voice_asset_future
             and self.current_voice_asset == VoiceAsset.HELLO
         ):
             await self.voice_asset_future
+
         try:
             self.guild.voice_client.play(
                 discord.PCMVolumeTransformer(
-                    discord.FFmpegPCMAudio(
-                        song.url,
-                        before_options="-reconnect 1 -reconnect_streamed 1"
-                        " -reconnect_delay_max 5",
-                        options="-loglevel error",
-                        stderr=sys.stderr,
-                    ),
+                    audio,
                     float(self.volume) / 100.0,
                 ),
                 after=self.next_song,
