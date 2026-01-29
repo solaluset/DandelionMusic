@@ -545,9 +545,9 @@ class Music(commands.Cog):
             await ctx.send(config.SONGINFO_ERROR)
             return
         if isinstance(song, Song):
-            urls = [song.webpage_url]
+            entries = [{"url": song.webpage_url, "title": song.title}]
         else:
-            urls = [s.webpage_url for s in song]
+            entries = [{"url": s.webpage_url, "title": s.title} for s in song]
 
         async with ctx.bot.DbSession() as session:
             playlist = (
@@ -561,7 +561,7 @@ class Music(commands.Cog):
                 await ctx.send(config.PLAYLIST_NOT_FOUND)
                 return
             playlist.songs_json = json.dumps(
-                json.loads(playlist.songs_json) + urls
+                json.loads(playlist.songs_json) + entries
             )
             await session.commit()
         await ctx.send(config.PLAYLIST_UPDATED)
