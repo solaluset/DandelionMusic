@@ -342,32 +342,38 @@ class AudioController(object):
         coro = self.play_song(next_song)
         self.add_task(coro)
 
-    @needs_waiting
     async def play_song(self, song: Song):
         """Plays a song object"""
 
-        if not await loader.preload(song, self.bot):
-            self.next_song(forced=True)
-            return
-
         if song.data is None:
-            print(
-                "Something is wrong."
-                " Refusing to play a song without direct url.",
-                file=sys.stderr,
-            )
-            self.next_song(forced=True)
-            return
+            self.announce_waiting()
 
-        audio = FFmpegPCMAudio(await loader.get_ffmpeg_args(song))
-        # FFmpeg needs some time when seeking, ensure it's ready
-        await asyncio.get_running_loop().run_in_executor(None, audio.read)
-        self.stop_waiting()
+        try:
+            if not await loader.preload(song, self.bot):
+                self.next_song(forced=True)
+                return
+
+            if song.data is None:
+                print(
+                    "Something is wrong."
+                    " Refusing to play a song without direct url.",
+                    file=sys.stderr,
+                )
+                self.next_song(forced=True)
+                return
+
+            audio = FFmpegPCMAudio(await loader.get_ffmpeg_args(song))
+            # FFmpeg needs some time when seeking, ensure it's ready
+            await asyncio.get_running_loop().run_in_executor(None, audio.read)
+        finally:
+            self.stop_waiting()
+
         if (
             self.voice_asset_future
             and self.current_voice_asset == VoiceAsset.HELLO
         ):
             await self.voice_asset_future
+
         try:
             self.guild.voice_client.play(
                 discord.PCMVolumeTransformer(
