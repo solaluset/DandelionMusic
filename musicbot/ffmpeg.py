@@ -51,5 +51,4 @@ class FFmpegPCMAudio(discord.FFmpegPCMAudio):
         new_args[f_index : f_index + 1] = (
             args[args.index("-f") + 1 : -1] + "-loglevel error".split()
         )
-        print(new_args)
         return super()._spawn_process(new_args, **subprocess_kwargs)
