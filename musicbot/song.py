@@ -26,7 +26,7 @@ class Song:
         playlist: Optional[SavedPlaylist] = None,
     ):
         self.host = host
-        self._webpage_url = webpage_url
+        self.webpage_url = webpage_url
         self.data = data
         self.title = title
         self.uploader = uploader
@@ -43,17 +43,6 @@ class Song:
 
         self._start = start
         self._end = end
-
-    @property
-    def webpage_url(self):
-        url = self._webpage_url
-        if not self.data:
-            return url
-        if not self._start and self.data.get("section_start"):
-            url += f"&start={self.data['section_start']}"
-        if not self._end and self.data.get("section_end"):
-            url += f"&end={self.data['section_end']}"
-        return url
 
     def format_output(self, playtype: str) -> discord.Embed:
         embed = discord.Embed(
@@ -116,9 +105,5 @@ class Song:
         ):
             del data["playlist"]
         for k, v in data.items():
-            if (
-                hasattr(self, k)
-                and not isinstance(getattr(self.__class__, k, None), property)
-                and v
-            ):
+            if hasattr(self, k) and v:
                 setattr(self, k, v)
