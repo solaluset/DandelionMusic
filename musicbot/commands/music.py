@@ -33,11 +33,7 @@ class AudioContext(Context):
 class SongButton(MusicButton):
     def __init__(self, cog: "Music", num: int, song: str):
         async def play(ctx):
-            view = self.view
-            view.stop()
-            view.disable_all_items()
             async with ctx.channel.typing():
-                await view.message.edit(view=view)
                 await cog._play_song(ctx, song)
 
         super().__init__(play, cog.cog_check, emoji=f"{num}⃣")
