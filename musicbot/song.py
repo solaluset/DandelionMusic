@@ -116,5 +116,9 @@ class Song:
         ):
             del data["playlist"]
         for k, v in data.items():
-            if hasattr(self, k) and v:
+            if (
+                hasattr(self, k)
+                and not isinstance(getattr(self.__class__, k, None), property)
+                and v
+            ):
                 setattr(self, k, v)
