@@ -138,6 +138,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             # None or empty list
             return data
         data = data[0]
+        track = data["webpage_url"]
         host = SiteTypes.YT_DLP
 
     elif host == SiteTypes.UNKNOWN:
