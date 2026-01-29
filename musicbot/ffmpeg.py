@@ -47,8 +47,8 @@ class FFmpegPCMAudio(discord.FFmpegPCMAudio):
             del new_args[c_index : c_index + 2]
         except ValueError:
             pass
-        f_index = new_args.index("-f") + 1
-        new_args[f_index : f_index + 1] = (
+        f_index = new_args.index("-f")
+        new_args[f_index + 1 : f_index + 2] = (
             args[args.index("-f") + 1 : -1] + "-loglevel error".split()
         )
         return super()._spawn_process(new_args, **subprocess_kwargs)
