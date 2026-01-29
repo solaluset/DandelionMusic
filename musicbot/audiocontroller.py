@@ -361,7 +361,7 @@ class AudioController(object):
 
         audio = FFmpegPCMAudio(await loader.get_ffmpeg_args(song))
         # FFmpeg needs some time when seeking, ensure it's ready
-        await asyncio.get_running_loop().run_in_executor(None, audio.read)
+        await asyncio.get_running_loop().run_in_executor(None, audio.prepare)
         self.stop_waiting()
         if (
             self.voice_asset_future

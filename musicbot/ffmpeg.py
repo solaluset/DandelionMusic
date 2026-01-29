@@ -33,6 +33,7 @@ _downloader_module.Popen = MonkeyPopen()
 class FFmpegPCMAudio(discord.FFmpegPCMAudio):
     def __init__(self, original_cmd: List[str]):
         self.original_cmd = original_cmd
+        self._first_packet = None
         super().__init__(None, stderr=sys.stderr)
 
     def _spawn_process(
@@ -52,3 +53,13 @@ class FFmpegPCMAudio(discord.FFmpegPCMAudio):
             args[args.index("-f") + 1 : -1] + "-loglevel error".split()
         )
         return super()._spawn_process(new_args, **subprocess_kwargs)
+
+    def prepare(self):
+        self._first_packet = self.read()
+
+    def read(self):
+        p = self._first_packet
+        if p:
+            self._first_packet = None
+            return p
+        return super().read()
