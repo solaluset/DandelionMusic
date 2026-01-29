@@ -82,7 +82,9 @@ class Song:
 
     def update(self, data: Union[dict, "Song"]):
         if isinstance(data, Song):
-            data = data.__dict__
+            for k, v in data.__dict__.items():
+                if v:
+                    setattr(self, k, v)
         else:
             start_time = data.get("start_time", self._start)
             if start_time:
@@ -93,17 +95,10 @@ class Song:
 
             self.data = data
 
-        thumbnails = data.get("thumbnails")
-        if thumbnails:
-            # last thumbnail has the best resolution
-            data["thumbnail"] = thumbnails[-1]["url"]
-
-        from musicbot.settings import SavedPlaylist
-
-        if "playlist" in data and not isinstance(
-            data["playlist"], SavedPlaylist
-        ):
-            del data["playlist"]
-        for k, v in data.items():
-            if hasattr(self, k) and v:
-                setattr(self, k, v)
+            self.title = data.get("title") or self.title
+            self.uploader = data.get("uploader") or self.uploader
+            self.duration = data.get("duration") or self.duration
+            thumbnails = data.get("thumbnails")
+            if thumbnails:
+                # last thumbnail has the best resolution
+                self.thumbnail = thumbnails[-1]["url"]
