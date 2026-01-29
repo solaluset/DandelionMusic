@@ -92,7 +92,7 @@ def init():
     _executor.submit(_noop).result()
 
 
-def extract_info(url: str, ie: Optional[ExtractorT] = None) -> Optional[dict]:
+def _extract_info(url: str, ie: Optional[ExtractorT] = None) -> Optional[dict]:
     if ie is None:
         ie = get_ie(url)
     # cache by module (effectively means by site)
@@ -117,7 +117,7 @@ def _search_youtube(title: str, count: int = 1) -> Optional[List[dict]]:
     """Searches youtube for the video title
     Returns the first results video link"""
 
-    r = extract_info(f"ytsearch{count}:{title}")
+    r = _extract_info(f"ytsearch{count}:{title}")
 
     if not r:
         return None
@@ -152,10 +152,10 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             data = [{"url": url} for url in data]
 
     elif host == SiteTypes.CUSTOM:
-        data = extract_info(track, GENERIC_IE)
+        data = _extract_info(track, GENERIC_IE)
 
     else:  # host is info extractor
-        data = extract_info(track, host)
+        data = _extract_info(track, host)
         host = SiteTypes.YT_DLP
 
     if not data:
@@ -167,7 +167,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             data = data["entries"]
         elif YT_IE.suitable(data["url"]):
             # the URL wasn't extracted, do it now
-            data = extract_info(data["url"], YT_IE)
+            data = _extract_info(data["url"], YT_IE)
             if not data:
                 raise SongError(config.SONGINFO_ERROR)
 
