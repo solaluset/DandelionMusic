@@ -1,11 +1,13 @@
 from __future__ import annotations
 import datetime
+from urllib.parse import urlparse, parse_qs
 from typing import TYPE_CHECKING, Optional, Union
 
 import discord
 
 from config import config
 from musicbot.linkutils import SiteTypes
+from musicbot.timeparse import timeparse
 
 if TYPE_CHECKING:
     from musicbot.settings import SavedPlaylist
@@ -24,13 +26,34 @@ class Song:
         playlist: Optional[SavedPlaylist] = None,
     ):
         self.host = host
-        self.webpage_url = webpage_url
+        self._webpage_url = webpage_url
         self.data = data
         self.title = title
         self.uploader = uploader
         self.duration = duration
         self.thumbnail = thumbnail
         self.playlist = playlist
+
+        start = end = None
+        params = parse_qs(urlparse(webpage_url).query)
+        if params.get("start"):
+            start = timeparse(params["start"][0])
+        if params.get("end"):
+            end = timeparse(params["end"][0])
+
+        self._start = start
+        self._end = end
+
+    @property
+    def webpage_url(self):
+        url = self._webpage_url
+        if not self.data:
+            return url
+        if not self._start and self.data.get("section_start"):
+            url += f"&start={self.data['section_start']}"
+        if not self._end and self.data.get("section_end"):
+            url += f"&end={self.data['section_end']}"
+        return url
 
     def format_output(self, playtype: str) -> discord.Embed:
         embed = discord.Embed(
@@ -48,11 +71,19 @@ class Song:
             inline=False,
         )
 
+        duration = self.duration
+        if self.data and (
+            self.data.get("section_start") or self.data.get("section_end")
+        ):
+            end = self.data.get("section_end", duration)
+            if end:
+                duration = end - self.data.get("section_start", 0)
+
         embed.add_field(
             name=config.SONGINFO_DURATION,
             value=(
-                str(datetime.timedelta(seconds=self.duration))
-                if self.duration is not None
+                str(datetime.timedelta(seconds=duration))
+                if duration is not None
                 else config.SONGINFO_UNKNOWN
             ),
             inline=False,
@@ -64,10 +95,13 @@ class Song:
         if isinstance(data, Song):
             data = data.__dict__
         else:
-            if data.get("start_time"):
-                data["section_start"] = data["start_time"]
-            if data.get("end_time"):
-                data["section_end"] = data["end_time"]
+            start_time = data.get("start_time", self._start)
+            if start_time:
+                data["section_start"] = start_time
+            end_time = data.get("end_time", self._end)
+            if end_time:
+                data["section_end"] = end_time
+
             self.data = data
 
         thumbnails = data.get("thumbnails")
