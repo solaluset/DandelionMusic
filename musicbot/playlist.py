@@ -45,6 +45,8 @@ class Playlist:
         return self.playque[key]
 
     def add_name(self, trackname: str):
+        if self.trackname_history and self.trackname_history[-1] == trackname:
+            return
         self.trackname_history.append(trackname)
         if len(self.trackname_history) > config.MAX_TRACKNAME_HISTORY_LENGTH:
             self.trackname_history.popleft()

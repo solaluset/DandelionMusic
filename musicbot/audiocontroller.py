@@ -313,13 +313,13 @@ class AudioController(object):
         """Invoked after a song is finished
         Plays the next song if there is one"""
 
+        if self.playlist:
+            self.playlist.add_name(self.playlist[0])
+
         if self.is_active():
             self._next_song = self.playlist.next(forced)
             self.guild.voice_client.stop()
             return
-
-        if self.current_song:
-            self.playlist.add_name(self.current_song.title)
 
         if self._next_song:
             next_song = self._next_song
