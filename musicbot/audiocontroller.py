@@ -4,7 +4,6 @@ from functools import wraps
 from itertools import islice
 from inspect import isawaitable
 from traceback import print_exc
-from concurrent.futures import Future
 from typing import TYPE_CHECKING, Coroutine, Literal, Optional, Union
 
 import discord
@@ -12,7 +11,7 @@ from config import config
 
 from musicbot import loader, utils
 from musicbot.song import Song
-from musicbot.ffmpeg import MonkeyPopen, FFmpegPCMAudio
+from musicbot.ffmpeg import FFmpegPCMAudio
 from musicbot.playlist import Playlist, LoopMode, LoopState, PauseState
 from musicbot.utils import CheckError, StrEnum, asset, play_check
 
@@ -360,12 +359,7 @@ class AudioController(object):
             self.next_song(forced=True)
             return
 
-        with MonkeyPopen.args_catch_lock:
-            MonkeyPopen.args_catch_future = Future()
-            loader.downloader.download("-", song.data)
-            ffmpeg_cmd = MonkeyPopen.args_catch_future.result()
-            MonkeyPopen.args_catch_future = None
-        audio = FFmpegPCMAudio(ffmpeg_cmd)
+        audio = FFmpegPCMAudio(await loader.get_ffmpeg_args(song))
         # FFmpeg needs some time when seeking, ensure it's ready
         await asyncio.get_running_loop().run_in_executor(None, audio.read)
         self.stop_waiting()

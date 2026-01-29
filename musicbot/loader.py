@@ -6,7 +6,7 @@ import threading
 from inspect import getmodule
 from urllib.parse import urlparse, parse_qs
 from datetime import datetime, timezone
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, Future
 from multiprocessing import get_context as mp_context
 from typing import List, Optional, Union
 
@@ -17,7 +17,7 @@ from config import config
 from musicbot.bot import MusicBot
 from musicbot.song import Song
 from musicbot.utils import OutputWrapper
-from musicbot.ffmpeg import downloader_class
+from musicbot.ffmpeg import MonkeyPopen, downloader_class
 from musicbot.linkutils import (
     YT_IE,
     GENERIC_IE,
@@ -74,7 +74,7 @@ _extractor = YoutubeDL(
         "extractor_args": {"youtube": {"player-client": "default,tv"}},
     }
 )
-downloader = downloader_class(_extractor, _extractor.params)
+_downloader = downloader_class(_extractor, _extractor.params)
 _preloading = {}
 _site_locks = {}
 
@@ -239,6 +239,20 @@ async def preload(song: Song, bot: MusicBot) -> bool:
 
     _preloading.pop(song).set_result(success)
     return success
+
+
+def _get_ffmpeg_args(song: Song) -> List[str]:
+    with MonkeyPopen.args_catch_lock:
+        try:
+            MonkeyPopen.args_catch_future = Future()
+            _downloader.download("-", song.data)
+            return MonkeyPopen.args_catch_future.result()
+        finally:
+            MonkeyPopen.args_catch_future = None
+
+
+async def get_ffmpeg_args(song: Song) -> List[str]:
+    return await _run_sync(_get_ffmpeg_args, song)
 
 
 async def _run_sync(f, *args):
