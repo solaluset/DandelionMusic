@@ -1,5 +1,11 @@
-name: checks
-on: [push, pull_request]
+name: Check code sanity
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
 jobs:
   run-checks:
     runs-on: ubuntu-latest
