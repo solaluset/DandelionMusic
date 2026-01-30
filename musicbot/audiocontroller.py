@@ -314,7 +314,7 @@ class AudioController(object):
         Plays the next song if there is one"""
 
         if self.playlist:
-            self.playlist.add_name(self.playlist[0])
+            self.playlist.add_name(self.playlist[0].title)
 
         if self.is_active():
             self._next_song = self.playlist.next(forced)
