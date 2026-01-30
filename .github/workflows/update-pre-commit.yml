@@ -1,4 +1,4 @@
-name: Pre-commit auto-update
+name: Update pre-commit and dependencies
 
 on:
   schedule:
@@ -22,7 +22,7 @@ jobs:
       - name: Run pre-commit autoupdate
         run: pre-commit autoupdate
 
-      - name: Update pyproject requirements
+      - name: Update dependencies
         run: python config/update-deps.py
 
       - name: Create Pull Request
@@ -31,8 +31,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: update/pre-commit-autoupdate
           title: Auto-update pre-commit hooks
-          commit-message: Auto-update pre-commit hooks
+          commit-message: Update pre-commit and dependencies
           body: >
-            Update versions of tools in pre-commit
-            configs to latest version
+            Update tools in pre-commit configs
+            and dependencies to latest version
           labels: dependencies
