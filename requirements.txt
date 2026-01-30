@@ -1,9 +1,9 @@
 py-cord[voice] @ https://github.com/solaluset/pycord/releases/download/v2.7.1/py_cord-2.7.1-py3-none-any.whl
-yt-dlp[default]==2025.11.12
+yt-dlp[default]==2026.1.29
 aiohttp==3.13.3
 beautifulsoup4==4.14.3
 spotipy==2.25.2
 SQLAlchemy[asyncio]==2.0.46
-alembic==1.16.5
+alembic==1.18.3
 aioconsole==0.8.2
 ./config
