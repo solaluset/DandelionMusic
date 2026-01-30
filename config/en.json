@@ -119,7 +119,7 @@
     "OFF": "off",
   },
   "PlaylistError": {
-    "NEGATIVE_INDEX": "Positions less than 2 are not supported.",
+    "NEGATIVE_INDEX": "Positions less than 1 are not supported.",
     "ZERO_INDEX": "Cannot move the first song since it's already playing.",
     "MISSING_INDEX": "Queue doesn't have that position.",
   },

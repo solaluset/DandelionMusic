@@ -127,12 +127,6 @@ class Playlist:
         del self.playque[index]
         return song
 
-    def move(self, oldindex: int, newindex: int):
-        song = self._check_and_get(oldindex)
-        self._check_and_get(newindex)
-        del self.playque[oldindex]
-        self.playque.insert(newindex, song)
-
     def empty(self):
         self.playque.clear()
         self.playhistory.clear()

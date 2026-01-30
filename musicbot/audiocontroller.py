@@ -4,6 +4,7 @@ from functools import wraps
 from itertools import islice
 from inspect import isawaitable
 from traceback import print_exc
+from contextlib import contextmanager
 from typing import TYPE_CHECKING, Coroutine, Literal, Optional, Union
 
 import discord
@@ -308,6 +309,15 @@ class AudioController(object):
                 self.stop_waiting()
 
         return wrapped
+
+    @contextmanager
+    def suppress_looping(self):
+        original_mode = self.playlist.loop
+        self.playlist.loop = LoopMode.OFF
+        try:
+            yield
+        finally:
+            self.playlist.loop = original_mode
 
     def next_song(self, error=None, *, forced=False):
         """Invoked after a song is finished

@@ -1,5 +1,5 @@
 import json
-from typing import Iterable, List, Union
+from typing import Iterable, List, Union, Optional
 
 from discord import Attachment, AutocompleteContext, Embed
 from discord.ui import View
@@ -21,7 +21,7 @@ from musicbot.audiocontroller import (
     MusicButton,
 )
 from musicbot.loader import SongError, search_youtube
-from musicbot.playlist import PlaylistError, LoopMode
+from musicbot.playlist import PlaylistError, PlaylistErrorText, LoopMode
 from musicbot.settings import SavedPlaylist
 from musicbot.linkutils import get_site_type, url_regex
 
@@ -223,18 +223,59 @@ class Music(commands.Cog):
     async def _move(
         self,
         ctx: AudioContext,
-        src_pos: BridgeOption(int, min_value=2),
-        dest_pos: BridgeOption(int, min_value=2) = None,
+        dest_pos: Optional[int] = None,
+        src_pos: Optional[int] = None,
     ):
+        playlist_len = len(ctx.audiocontroller.playlist)
+
         if dest_pos is None:
-            dest_pos = len(ctx.audiocontroller.playlist)
+            dest_pos = 1
+        elif dest_pos < 0:
+            dest_pos += playlist_len
+        else:
+            dest_pos -= 1
+        if dest_pos < 0:
+            return await ctx.send(PlaylistErrorText.MISSING_INDEX)
+        elif dest_pos >= playlist_len:
+            dest_pos = playlist_len - 1
+
+        if src_pos is None:
+            src_pos = playlist_len - 1
+        elif src_pos < 0:
+            src_pos += playlist_len
+        else:
+            src_pos -= 1
+        if src_pos < 0:
+            return await ctx.send(PlaylistErrorText.MISSING_INDEX)
+
+        if dest_pos == src_pos:
+            return await ctx.send(
+                "Source and destination positions are the same."
+            )
 
         try:
-            ctx.audiocontroller.playlist.move(src_pos - 1, dest_pos - 1)
+            song = ctx.audiocontroller.playlist[src_pos]
+        except IndexError:
+            return await ctx.send(PlaylistErrorText.MISSING_INDEX)
+
+        if src_pos == 0:
+            with ctx.audiocontroller.suppress_looping():
+                ctx.audiocontroller.next_song(forced=True)
+        else:
+            del ctx.audiocontroller.playlist.playque[src_pos]
+
+        ctx.audiocontroller.playlist.playque.insert(dest_pos, song)
+        if dest_pos == 0:
+            ctx.audiocontroller.playlist.playque.insert(dest_pos, song)
+            with ctx.audiocontroller.suppress_looping():
+                ctx.audiocontroller.next_song(forced=True)
+        else:
             ctx.audiocontroller.preload_queue()
-            await ctx.send("Moved ↔️")
-        except PlaylistError as e:
-            await ctx.send(e)
+
+        await ctx.send(
+            f"Moved from {src_pos + 1} to {dest_pos + 1}:"
+            f" {song.title or song.webpage_url}"
+        )
 
     @bridge.bridge_command(
         name="remove",
