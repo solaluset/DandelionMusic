@@ -11,14 +11,9 @@ from setuptools import setup
 
 from config import Config
 
-DB_REQUIREMENTS_FILE = "db.txt"
-DB_REQUIREMENTS_BACKUP = DB_REQUIREMENTS_FILE + ".back"
-
 
 def main():
-    with open(DB_REQUIREMENTS_FILE, "w") as f, open(
-        "pyproject.toml", "rb"
-    ) as t:
+    with open("db.txt", "w") as f, open("pyproject.toml", "rb") as t:
         print(Config().DATABASE_LIBRARY, file=f)
         # reuse requirements already specified in toml
         print(
@@ -27,11 +22,7 @@ def main():
 
     setup()
 
-    os.remove(DB_REQUIREMENTS_FILE)
+    os.remove("db.txt")
 
 
-os.rename(DB_REQUIREMENTS_FILE, DB_REQUIREMENTS_BACKUP)
-try:
-    main()
-finally:
-    os.rename(DB_REQUIREMENTS_BACKUP, DB_REQUIREMENTS_FILE)
+main()
