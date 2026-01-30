@@ -246,17 +246,25 @@ class Music(commands.Cog):
     async def _remove(
         self,
         ctx: AudioContext,
-        queue_number: BridgeOption(int, min_value=2) = None,
+        queue_number: BridgeOption(int, min_value=1) = None,
     ):
         if queue_number is None:
             queue_number = len(ctx.audiocontroller.playlist)
-        try:
-            song = ctx.audiocontroller.playlist.remove(queue_number - 1)
+        index = queue_number - 1
+
+        if index == 0:
+            song = ctx.audiocontroller.playlist[0]
+            ctx.audiocontroller.next_song(forced=True)
+        else:
+            try:
+                song = ctx.audiocontroller.playlist.remove(index)
+            except PlaylistError as e:
+                await ctx.send(e)
+                return
             ctx.audiocontroller.preload_queue()
-            title = song.title or song.webpage_url
-            await ctx.send(f"Removed #{queue_number}: {title}")
-        except PlaylistError as e:
-            await ctx.send(e)
+
+        title = song.title or song.webpage_url
+        await ctx.send(f"Removed #{queue_number}: {title}")
 
     @bridge.bridge_command(
         name="skip",
