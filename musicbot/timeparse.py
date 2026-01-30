@@ -30,7 +30,7 @@ kinds of time expressions.
 # SOFTWARE.
 
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Literal
 
 # fmt: off
@@ -102,13 +102,19 @@ class TimeComplex:
 
     def get_seconds(self):
         now = datetime.now()
-        total_months = now.month - 1 + self.months
+        total_months = now.month + self.months
+        then = datetime(
+            year=now.year + total_months // 12,
+            month=total_months % 12 + 1,
+            day=1,
+        ) - timedelta(days=1)
         return (
             int(
                 (
                     now.replace(
-                        year=now.year + total_months // 12,
-                        month=total_months % 12 + 1,
+                        year=then.year,
+                        month=then.month,
+                        day=min(now.day, then.day),
                     )
                     - now
                 ).total_seconds()
