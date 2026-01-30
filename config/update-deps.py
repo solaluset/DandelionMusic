@@ -1,23 +1,31 @@
 # bump dependencies in pyproject.toml that dependabot doesn't for some reason
-import os
 import json
 import tomllib
+from pathlib import Path
+from typing import Callable
 from urllib.request import urlopen
 from packaging.requirements import Requirement
-from packaging.version import Version, InvalidVersion
+from packaging.version import Version
 
-cfg_dir = os.path.dirname(__file__)
-pyproject_file = os.path.join(cfg_dir, "pyproject.toml")
+ROOT_DIR = Path(__file__).parent.parent
+FILES = [
+    ROOT_DIR / "requirements.txt",
+    ROOT_DIR / "config" / "pyproject.toml",
+    ROOT_DIR / "config" / "db-requirements.txt",
+    ROOT_DIR / "config" / "build-requirements.txt",
+]
 
 
-def get_current_version(requirement):
-    try:
-        return Version(str(requirement.specifier).partition("==")[2])
-    except InvalidVersion:
+def get_current_version(requirement) -> Version | None:
+    if len(requirement.specifier) != 1:
         return None
+    specifier = next(iter(requirement.specifier))
+    if specifier.operator != "==":
+        return None
+    return Version(specifier.version)
 
 
-def fetch_latest_version(requirement):
+def fetch_latest_version(requirement) -> Version:
     return Version(
         json.load(urlopen(f"https://pypi.org/pypi/{requirement.name}/json"))[
             "info"
@@ -25,19 +33,40 @@ def fetch_latest_version(requirement):
     )
 
 
-with open(pyproject_file, "rb") as f:
-    pyproject_content = f.read().decode()
-    f.seek(0)
-    requirements = tomllib.load(f)["build-system"]["requires"]
+def update_file(name: str, parser: Callable[[str], list[str]]) -> None:
+    with open(name, "r") as file:
+        content = file.read()
+    requirements = parser(content)
+    for req_str in requirements:
+        req = Requirement(req_str)
+        version = get_current_version(req)
+        if version is not None:
+            new_version = fetch_latest_version(req)
+            if new_version > version:
+                new_req_str = req_str.replace(str(version), str(new_version))
+                content = content.replace(req_str, new_req_str)
+    with open(name, "w") as file:
+        file.write(content)
 
-for req in requirements:
-    req_obj = Requirement(req)
-    version = get_current_version(req_obj)
-    if version is not None:
-        new_version = fetch_latest_version(req_obj)
-        if new_version > version:
-            new_req = req.replace(str(version), str(new_version))
-            pyproject_content = pyproject_content.replace(req, new_req)
 
-with open(pyproject_file, "w") as f:
-    f.write(pyproject_content)
+def toml_parser(content: str) -> list[str]:
+    return tomllib.loads(content)["build-system"]["requires"]
+
+
+def txt_parser(content: str) -> list[str]:
+    return [
+        line
+        for line in map(str.strip, content.splitlines())
+        if line and not line.startswith(("#", "./", "-r "))
+    ]
+
+
+if __name__ == "__main__":
+    for file in FILES:
+        if file.suffix == ".toml":
+            parser = toml_parser
+        elif file.suffix == ".txt":
+            parser = txt_parser
+        else:
+            raise ValueError(f"unknown file format: {file.suffix!r}")
+        update_file(file, parser)
