@@ -19,7 +19,6 @@ from musicbot.song import Song
 from musicbot.utils import OutputWrapper
 from musicbot.ffmpeg import MonkeyPopen, downloader_class
 from musicbot.linkutils import (
-    YT_IE,
     GENERIC_IE,
     ExtractorT,
     SiteTypes,
@@ -166,9 +165,9 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
         if "entries" in data:
             # assuming a playlist
             data = data["entries"]
-        elif YT_IE.suitable(data["url"]):
+        elif data.get("_type") == "url":
             # the URL wasn't extracted, do it now
-            data = _extract_info(data["url"], YT_IE)
+            data = _extract_info(data["url"])
             if not data:
                 raise SongError(config.SONGINFO_ERROR)
 
