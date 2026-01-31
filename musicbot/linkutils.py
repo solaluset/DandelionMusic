@@ -42,7 +42,6 @@ if config.SPOTIFY_ID or config.SPOTIFY_SECRET:
 
 ExtractorT = Union[InfoExtractor, LazyLoadExtractor]
 EXTRACTORS = gen_extractor_classes()
-YT_IE = next(ie for ie in EXTRACTORS if ie.IE_NAME == "youtube")
 GENERIC_IE = next(ie for ie in EXTRACTORS if ie.IE_NAME == "generic")
 # Modified version of
 # https://gist.github.com/gruber/249502#gistcomment-1328838
