@@ -287,7 +287,7 @@ class Music(commands.Cog):
     async def _remove(
         self,
         ctx: AudioContext,
-        queue_number: int = None,
+        queue_number: Optional[int] = None,
     ):
         playlist_len = len(ctx.audiocontroller.playlist)
 
