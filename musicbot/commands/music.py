@@ -21,7 +21,7 @@ from musicbot.audiocontroller import (
     MusicButton,
 )
 from musicbot.loader import SongError, search_youtube
-from musicbot.playlist import PlaylistError, PlaylistErrorText, LoopMode
+from musicbot.playlist import PlaylistErrorText, LoopMode
 from musicbot.settings import SavedPlaylist
 from musicbot.linkutils import get_site_type, url_regex
 
@@ -287,25 +287,33 @@ class Music(commands.Cog):
     async def _remove(
         self,
         ctx: AudioContext,
-        queue_number: BridgeOption(int, min_value=1) = None,
+        queue_number: int = None,
     ):
-        if queue_number is None:
-            queue_number = len(ctx.audiocontroller.playlist)
-        index = queue_number - 1
+        playlist_len = len(ctx.audiocontroller.playlist)
 
-        if index == 0:
-            song = ctx.audiocontroller.playlist[0]
-            ctx.audiocontroller.next_song(forced=True)
+        if queue_number is None:
+            queue_number = playlist_len - 1
+        elif queue_number < 0:
+            queue_number += playlist_len
         else:
-            try:
-                song = ctx.audiocontroller.playlist.remove(index)
-            except PlaylistError as e:
-                await ctx.send(e)
-                return
+            queue_number -= 1
+        if queue_number < 0:
+            return await ctx.send(PlaylistErrorText.MISSING_INDEX)
+
+        try:
+            song = ctx.audiocontroller.playlist[queue_number]
+        except IndexError:
+            return await ctx.send(PlaylistErrorText.MISSING_INDEX)
+
+        if queue_number == 0:
+            with ctx.audiocontroller.suppress_looping():
+                ctx.audiocontroller.next_song(forced=True)
+        else:
+            del ctx.audiocontroller.playlist.playque[queue_number]
             ctx.audiocontroller.preload_queue()
 
         title = song.title or song.webpage_url
-        await ctx.send(f"Removed #{queue_number}: {title}")
+        await ctx.send(f"Removed #{queue_number + 1}: {title}")
 
     @bridge.bridge_command(
         name="skip",
