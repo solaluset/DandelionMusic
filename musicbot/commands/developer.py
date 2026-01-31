@@ -163,7 +163,7 @@ class Developer(commands.Cog):
             str, autocomplete=_guild_whitelist_remove_autocomplete
         ),
     ):
-        id = int(id.split()[-1])
+        id = int(id.split()[0])
         config.GUILD_WHITELIST.remove(id)
         config.save()
 
