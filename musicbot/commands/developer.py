@@ -144,8 +144,14 @@ class Developer(commands.Cog):
         ctx: discord.AutocompleteContext,
     ) -> List[str]:
         value = ctx.value.lower()
-        all_guilds = [f"{g.name} {g.id}" for g in ctx.bot.guilds]
-        return [s for s in all_guilds if value in s.lower()]
+        lines = []
+        for id_ in config.GUILD_WHITELIST:
+            guild = ctx.bot.get_guild(id_)
+            if guild:
+                lines.append(f"{id_} {guild.name}")
+            else:
+                lines.append(str(id_))
+        return [s for s in lines if value in s.lower()]
 
     @_guild_whitelist.command(name="remove")
     @commands.is_owner()
