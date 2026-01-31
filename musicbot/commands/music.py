@@ -21,7 +21,7 @@ from musicbot.audiocontroller import (
     MusicButton,
 )
 from musicbot.loader import SongError, search_youtube
-from musicbot.playlist import PlaylistErrorText, LoopMode
+from musicbot.playlist import LoopMode
 from musicbot.settings import SavedPlaylist
 from musicbot.linkutils import get_site_type, url_regex
 
@@ -235,7 +235,7 @@ class Music(commands.Cog):
         else:
             dest_pos -= 1
         if dest_pos < 0:
-            return await ctx.send(PlaylistErrorText.MISSING_INDEX)
+            return await ctx.send(config.PLAYLIST_MISSING_INDEX)
         elif dest_pos >= playlist_len:
             dest_pos = playlist_len - 1
 
@@ -246,7 +246,7 @@ class Music(commands.Cog):
         else:
             src_pos -= 1
         if src_pos < 0:
-            return await ctx.send(PlaylistErrorText.MISSING_INDEX)
+            return await ctx.send(config.PLAYLIST_MISSING_INDEX)
 
         if dest_pos == src_pos:
             return await ctx.send(
@@ -256,7 +256,7 @@ class Music(commands.Cog):
         try:
             song = ctx.audiocontroller.playlist[src_pos]
         except IndexError:
-            return await ctx.send(PlaylistErrorText.MISSING_INDEX)
+            return await ctx.send(config.PLAYLIST_MISSING_INDEX)
 
         if src_pos == 0:
             with ctx.audiocontroller.suppress_looping():
@@ -298,12 +298,12 @@ class Music(commands.Cog):
         else:
             queue_number -= 1
         if queue_number < 0:
-            return await ctx.send(PlaylistErrorText.MISSING_INDEX)
+            return await ctx.send(config.PLAYLIST_MISSING_INDEX)
 
         try:
             song = ctx.audiocontroller.playlist[queue_number]
         except IndexError:
-            return await ctx.send(PlaylistErrorText.MISSING_INDEX)
+            return await ctx.send(config.PLAYLIST_MISSING_INDEX)
 
         if queue_number == 0:
             with ctx.audiocontroller.suppress_looping():

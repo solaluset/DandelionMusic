@@ -102,6 +102,7 @@
 
   "SETTINGS_EMOJI_CHECK_MSG": "Checking the emoji...",
   "SEARCH_EMBED_TITLE": "Results:",
+  "PLAYLIST_MISSING_INDEX": "Queue doesn't have that position.",
 
   "PauseState": {
     "NOTHING_TO_PAUSE": "Nothing to pause or resume.",
@@ -117,11 +118,6 @@
     "ALL": "all",
     "SINGLE": "single",
     "OFF": "off",
-  },
-  "PlaylistError": {
-    "NEGATIVE_INDEX": "Positions less than 1 are not supported.",
-    "ZERO_INDEX": "Cannot move the first song since it's already playing.",
-    "MISSING_INDEX": "Queue doesn't have that position.",
   },
   "ConversionError": {
     "BUTTON_DISABLED": "Button plugin is disabled",
