@@ -273,7 +273,7 @@ class Music(commands.Cog):
             ctx.audiocontroller.preload_queue()
 
         await ctx.send(
-            f"Moved from {src_pos + 1} to {dest_pos + 1}:"
+            f"Moved #{src_pos + 1} to #{dest_pos + 1}:"
             f" {song.title or song.webpage_url}"
         )
 
