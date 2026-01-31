@@ -11,13 +11,6 @@ from musicbot.utils import StrEnum, songs_embed
 LoopMode = StrEnum("LoopMode", config.get_dict("LoopMode"))
 LoopState = StrEnum("LoopState", config.get_dict("LoopState"))
 PauseState = StrEnum("PauseState", config.get_dict("PauseState"))
-PlaylistErrorText = StrEnum(
-    "PlaylistErrorText", config.get_dict("PlaylistError")
-)
-
-
-class PlaylistError(Exception):
-    pass
 
 
 class Playlist:
@@ -111,29 +104,6 @@ class Playlist:
             first = self.playque.popleft()
             self.playque.clear()
             self.playque.appendleft(first)
-
-    def _check_and_get(self, index: int) -> Song:
-        """Checks if song at `index` can be moved
-        Returns the song or raises PlaylistError with description"""
-        if index < 0:
-            raise PlaylistError(PlaylistErrorText.NEGATIVE_INDEX)
-        if index == 0:
-            raise PlaylistError(PlaylistErrorText.ZERO_INDEX)
-        try:
-            return self.playque[index]
-        except IndexError as e:
-            raise PlaylistError(PlaylistErrorText.MISSING_INDEX) from e
-
-    def remove(self, index: int) -> Song:
-        song = self._check_and_get(index)
-        del self.playque[index]
-        return song
-
-    def move(self, oldindex: int, newindex: int):
-        song = self._check_and_get(oldindex)
-        self._check_and_get(newindex)
-        del self.playque[oldindex]
-        self.playque.insert(newindex, song)
 
     def empty(self):
         self.playque.clear()

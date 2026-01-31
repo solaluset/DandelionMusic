@@ -175,10 +175,9 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
     if isinstance(data, list):
         results = []
         for entry in data:
-            entry.pop("webpage_url", None)
             song = Song(
                 host,
-                webpage_url=entry.pop("url"),
+                webpage_url=entry["url"],
             )
             song.update(entry)
             results.append(song)
