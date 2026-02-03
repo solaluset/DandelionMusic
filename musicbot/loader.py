@@ -254,21 +254,7 @@ async def get_ffmpeg_args(song: Song) -> List[str]:
     return await _run_sync(_get_ffmpeg_args, song)
 
 
-class WrappedException(Exception):
-    pass
-
-
-def _wrapper(func, *args):
-    try:
-        return func(*args)
-    except Exception as e:
-        return WrappedException(e)
-
-
 async def _run_sync(f, *args):
-    result = await asyncio.get_running_loop().run_in_executor(
-        _executor, _wrapper, f, *args
+    return await asyncio.get_running_loop().run_in_executor(
+        _executor, f, *args
     )
-    if isinstance(result, WrappedException):
-        raise result.args[0]
-    return result
