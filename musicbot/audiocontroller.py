@@ -363,7 +363,7 @@ class AudioController(object):
                 self.next_song(forced=True)
                 return
 
-            if song.data is None:
+            if song.data is None or "ext" not in song.data:
                 print(
                     "Something is wrong."
                     " Refusing to play a song without direct url.",

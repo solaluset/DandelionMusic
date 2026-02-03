@@ -202,7 +202,7 @@ async def preload(song: Song, bot: MusicBot) -> bool:
     if song.webpage_url is None:
         return True
 
-    if song.data is not None:
+    if song.data is not None and song.data.get("_type") != "url":
         expire = _parse_expire(song.data["url"])
         if expire is None or expire == _parse_expire(song.webpage_url):
             return True
