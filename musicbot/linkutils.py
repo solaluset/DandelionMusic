@@ -25,7 +25,8 @@ if config.SPOTIFY_ID or config.SPOTIFY_SECRET:
             auth_manager=SpotifyClientCredentials(
                 client_id=config.SPOTIFY_ID,
                 client_secret=config.SPOTIFY_SECRET,
-            )
+            ),
+            proxies={"all": config.PROXY_URL},
         )
     except Exception:
         if (
@@ -64,7 +65,7 @@ _session = None
 
 async def init():
     global _session
-    _session = ClientSession(headers=headers)
+    _session = ClientSession(headers=headers, proxy=config.PROXY_URL)
 
 
 async def stop():

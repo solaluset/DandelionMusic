@@ -54,6 +54,9 @@ class Config:
     # CHANGE ONLY IF YOU KNOW WHAT YOU'RE DOING
     DATABASE_URL = os.getenv("HEROKU_DB") or "sqlite:///settings.db"
 
+    # proxy used to connect to Discord and other sites (optional)
+    PROXY_URL: Optional[str] = ""
+
     ENABLE_BUTTON_PLUGIN = True
 
     # replace after '0x' with desired hex code ex. '#ff0188' >> "0xff0188"
@@ -118,6 +121,8 @@ class Config:
                         self.DATABASE_LIBRARY = str(req)
                         break
 
+        if not self.PROXY_URL:
+            self.PROXY_URL = None
         self.EMBED_COLOR = int(self.EMBED_COLOR, 16)
         for dir_ in CONFIG_DIRS[::-1]:
             path = os.path.join(dir_, self.COOKIE_PATH)
