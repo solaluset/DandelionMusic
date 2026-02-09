@@ -34,11 +34,13 @@ class MonkeyPopen:
 _downloader_module.Popen = MonkeyPopen()
 
 
-def _get_ffmpeg_args(downloader, song: Song) -> OriginalArgs:
+def _get_ffmpeg_args(song: Song) -> OriginalArgs:
+    from musicbot.loader import _downloader
+
     with MonkeyPopen.args_catch_lock:
         try:
             MonkeyPopen.args_catch_future = Future()
-            downloader.download("-", song.data)
+            _downloader.download("-", song.data)
             return MonkeyPopen.args_catch_future.result()
         finally:
             MonkeyPopen.args_catch_future = None

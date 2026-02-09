@@ -2,7 +2,6 @@ import sys
 import json
 import atexit
 import asyncio
-import functools
 import threading
 from inspect import getmodule
 from urllib.parse import urlparse, parse_qs
@@ -76,7 +75,6 @@ _extractor = YoutubeDL(
     }
 )
 _downloader = downloader_class(_extractor, _extractor.params)
-_get_ffmpeg_args = functools.partial(_get_ffmpeg_args, _downloader)
 _preloading = {}
 _site_locks = {}
 
