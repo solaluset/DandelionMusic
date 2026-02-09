@@ -2,6 +2,7 @@ import sys
 import json
 import atexit
 import asyncio
+import functools
 import threading
 from inspect import getmodule
 from urllib.parse import urlparse, parse_qs
@@ -75,6 +76,7 @@ _extractor = YoutubeDL(
     }
 )
 _downloader = downloader_class(_extractor, _extractor.params)
+_get_ffmpeg_args = functools.partial(_get_ffmpeg_args, _downloader)
 _preloading = {}
 _site_locks = {}
 
@@ -242,7 +244,7 @@ async def preload(song: Song, bot: MusicBot) -> bool:
 
 
 async def get_ffmpeg_args(song: Song) -> OriginalArgs:
-    return await _run_sync(_get_ffmpeg_args, _downloader, song)
+    return await _run_sync(_get_ffmpeg_args, song)
 
 
 async def _run_sync(f, *args):
