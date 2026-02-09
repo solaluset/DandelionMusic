@@ -26,6 +26,7 @@ from musicbot.utils import CheckError
 class MusicBot(bridge.Bot):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("help_command", UniversalHelpCommand())
+        kwargs.setdefault("proxy", config.PROXY_URL)
         super().__init__(*args, **kwargs)
 
         # A dictionary that remembers
@@ -53,7 +54,7 @@ class MusicBot(bridge.Bot):
         await extract_legacy_settings(self)
         await migrate_old_playlists(self)
 
-        self.client_session = aiohttp.ClientSession()
+        self.client_session = aiohttp.ClientSession(proxy=config.PROXY_URL)
 
         return await super().start(*args, **kwargs)
 
