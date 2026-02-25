@@ -1,6 +1,5 @@
 from __future__ import annotations
 import os
-import re
 import sys
 import _thread
 import asyncio
@@ -36,36 +35,6 @@ if TYPE_CHECKING:
     from musicbot.bot import Context, MusicBot
 
 
-OLD_FFMPEG_CONF = """
-ffmpeg version 5.1.git Copyright (c) 2000-2022 the FFmpeg developers
-built with gcc 12.1.0 (Rev2, Built by MSYS2 project)
-configuration: --disable-programs --enable-ffmpeg --disable-doc\
- --enable-w32threads --enable-openssl --extra-ldflags=-static\
- --pkg-config='pkg-config --static --with-path=/usr/local/lib/pkgconfig'
-libavutil      57. 33.101 / 57. 33.101
-libavcodec     59. 42.102 / 59. 42.102
-libavformat    59. 30.100 / 59. 30.100
-libavdevice    59.  8.101 / 59.  8.101
-libavfilter     8. 46.103 /  8. 46.103
-libswscale      6.  8.103 /  6.  8.103
-libswresample   4.  8.100 /  4.  8.100
-""".strip()
-FFMPEG_ZIP_URL = (
-    "https://github.com/solaluset/FFmpeg"
-    "/releases/latest/download/ffmpeg.zip"
-)
-NEWEST_FFMPEG_TIMESTAMP = 1763840186
-
-
-def extract_ffmpeg_timestamp(version: str) -> int:
-    version = version.split()
-    if len(version) > 2:
-        mo = re.search(r"-(K4|SL)_(?P<timestamp>\d+)", version[2])
-        if mo:
-            return int(mo.group("timestamp"))
-    return None
-
-
 def check_dependencies():
     if pycord_version != "2.7.2-SL":
         raise ImportError(
@@ -74,67 +43,15 @@ def check_dependencies():
         )
 
     flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
-    ffmpeg_output = None
     try:
-        ffmpeg_output = check_output(
-            ("ffmpeg", "-version"), text=True, creationflags=flags
-        ).strip()
+        check_output(("ffmpeg", "-version"), text=True, creationflags=flags)
     except (FileNotFoundError, CalledProcessError) as e:
-        if sys.platform == "win32":
-            print("Downloading FFmpeg...")
-            download_ffmpeg()
-        else:
-            raise RuntimeError("ffmpeg was not found") from e
-    if sys.platform == "win32" and ffmpeg_output:
-        ffmpeg_timestamp = extract_ffmpeg_timestamp(ffmpeg_output)
-        if ffmpeg_output == OLD_FFMPEG_CONF or (
-            ffmpeg_timestamp and ffmpeg_timestamp < NEWEST_FFMPEG_TIMESTAMP
-        ):
-            print("Updating FFmpeg...")
-            download_ffmpeg()
+        raise RuntimeError("ffmpeg was not found") from e
 
     try:
         opus.Encoder.get_opus_version()
     except opus.OpusNotLoaded as e:
         raise RuntimeError("opus was not found") from e
-
-
-def download_ffmpeg():
-    from io import BytesIO
-    from ssl import SSLContext
-    from zipfile import ZipFile
-    from urllib.request import urlopen
-
-    stream = urlopen(
-        FFMPEG_ZIP_URL,
-        context=SSLContext(),
-    )
-    total_size = int(stream.getheader("content-length") or 0)
-    file = BytesIO()
-    if total_size:
-        BLOCK_SIZE = 1024 * 1024
-
-        data = stream.read(BLOCK_SIZE)
-        received_size = BLOCK_SIZE
-        percentage = 0
-        print("0%", end="")
-        while data:
-            file.write(data)
-            data = stream.read(BLOCK_SIZE)
-            received_size += len(data)
-            new_percentage = int(received_size / total_size * 100)
-            if new_percentage != percentage:
-                print("\r", new_percentage, "%", sep="", end="")
-                percentage = new_percentage
-    else:
-        file.write(stream.read())
-    zipf = ZipFile(file)
-    filename = [
-        name for name in zipf.namelist() if name.endswith("ffmpeg.exe")
-    ][0]
-    with open("ffmpeg.exe", "wb") as f:
-        f.write(zipf.read(filename))
-    print("\nSuccess!")
 
 
 ASSETS_PATH = os.path.join(
