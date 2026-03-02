@@ -4,7 +4,7 @@ bgutil-ytdlp-pot-provider==1.2.2
 aiohttp==3.13.3
 beautifulsoup4==4.14.3
 spotipy==2.25.2
-SQLAlchemy[asyncio]==2.0.46
+SQLAlchemy[asyncio]==2.0.47
 alembic==1.18.4
 aioconsole==0.8.2
 ./config
