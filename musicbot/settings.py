@@ -2,7 +2,7 @@ import json
 import os
 import re
 from inspect import isawaitable
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 import discord
 from discord import (
@@ -13,7 +13,6 @@ from discord import (
     HTTPException,
     utils,
 )
-from discord.ext.bridge import BridgeOption
 import sqlalchemy
 from sqlalchemy import String, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -125,17 +124,15 @@ CONFIG_CONVERTERS = {
     "dj_only": convert_bool,
 }
 CONFIG_OPTIONS = {
-    "command_channel": BridgeOption(
-        Union[TextChannel, VoiceChannel], required=False
-    ),
-    "start_voice_channel": BridgeOption(VoiceChannel, required=False),
-    "dj_role": BridgeOption(Role, required=False),
-    "user_must_be_in_vc": BridgeOption(bool),
-    "button_emote": BridgeOption(str, required=False),
-    "default_volume": BridgeOption(int, min_value=0, max_value=100),
-    "vc_timeout": BridgeOption(bool),
-    "announce_songs": BridgeOption(bool),
-    "dj_only": BridgeOption(bool),
+    "command_channel": TextChannel | VoiceChannel | None,
+    "start_voice_channel": VoiceChannel | None,
+    "dj_role": Role | None,
+    "user_must_be_in_vc": bool,
+    "button_emote": str | None,
+    "default_volume": int,
+    "vc_timeout": bool,
+    "announce_songs": bool,
+    "dj_only": bool,
 }
 
 

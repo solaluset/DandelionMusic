@@ -1,7 +1,7 @@
 import asyncio
 
 import discord
-from discord.ext import commands, bridge
+from discord.ext import commands
 
 from config import config
 from musicbot.bot import Context, MusicBot
@@ -21,7 +21,7 @@ class General(commands.Cog):
         self.bot = bot
 
     # logic is split to uconnect() for wide usage
-    @bridge.bridge_command(
+    @commands.command(
         name="connect",
         description=config.HELP_CONNECT_LONG,
         help=config.HELP_CONNECT_SHORT,
@@ -35,7 +35,7 @@ class General(commands.Cog):
             await audiocontroller.uconnect(ctx, move=True)
         await ctx.send("Connected.")
 
-    @bridge.bridge_command(
+    @commands.command(
         name="disconnect",
         description=config.HELP_DISCONNECT_LONG,
         help=config.HELP_DISCONNECT_SHORT,
@@ -50,7 +50,7 @@ class General(commands.Cog):
         else:
             await ctx.send(config.NOT_CONNECTED_MESSAGE)
 
-    @bridge.bridge_command(
+    @commands.command(
         name="reset",
         description=config.HELP_RESET_LONG,
         help=config.HELP_RESET_SHORT,
@@ -73,7 +73,7 @@ class General(commands.Cog):
             )
         )
 
-    @bridge.bridge_command(
+    @commands.command(
         name="ping",
         description=config.HELP_PING_LONG,
         help=config.HELP_PING_SHORT,
@@ -81,7 +81,7 @@ class General(commands.Cog):
     async def _ping(self, ctx):
         await ctx.send(f"Pong ({int(ctx.bot.latency * 1000)} ms)")
 
-    @bridge.bridge_group(
+    @commands.group(
         name="setting",
         description=config.HELP_SETTINGS_LONG,
         help=config.HELP_SETTINGS_SHORT,
@@ -101,6 +101,7 @@ class General(commands.Cog):
 
     _show_settings = _settings.command(name="show")(_show_settings_callback)
 
+    # TODO: fix this
     for name, type_ in CONFIG_OPTIONS.items():
 
         @_settings.command(name=name)
@@ -114,7 +115,7 @@ class General(commands.Cog):
                 return
             await ctx.send("Setting updated!")
 
-    @bridge.bridge_command(
+    @commands.command(
         name="addbot",
         description=config.HELP_ADDBOT_LONG,
         help=config.HELP_ADDBOT_SHORT,
@@ -131,5 +132,5 @@ class General(commands.Cog):
         await ctx.send(embed=embed)
 
 
-def setup(bot: MusicBot):
-    bot.add_cog(General(bot))
+async def setup(bot: MusicBot):
+    await bot.add_cog(General(bot))

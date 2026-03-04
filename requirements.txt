@@ -1,4 +1,4 @@
-py-cord[voice] @ https://github.com/solaluset/pycord/releases/download/v2.7.2/py_cord-2.7.2-py3-none-any.whl
+discord.py[voice,speed]==2.7.1
 yt-dlp[default,curl-cffi]==2026.2.21
 bgutil-ytdlp-pot-provider==1.2.2
 aiohttp==3.13.3

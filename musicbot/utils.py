@@ -18,9 +18,10 @@ from typing import (
 
 from aioconsole import ainput
 from discord import (
-    __version__ as pycord_version,
+    __version__ as dpy_version,
     opus,
     utils,
+    ui,
     Emoji,
     Embed,
 )
@@ -36,7 +37,7 @@ if TYPE_CHECKING:
 
 
 def check_dependencies():
-    if pycord_version != "2.7.2-SL":
+    if dpy_version != "2.7.1":
         raise ImportError(
             "you have wrong version of Pycord."
             " Please install the version specified in requirements.txt"
@@ -135,6 +136,13 @@ async def play_check(ctx: Context):
         return await voice_check(ctx)
 
     return True
+
+
+class View(ui.View):
+    def __init__(self, *items, timeout):
+        super().__init__(timeout=timeout)
+        for item in items:
+            self.add_item(item)
 
 
 def get_emoji(bot: MusicBot, string: str) -> Optional[Union[str, Emoji]]:

@@ -94,5 +94,5 @@ class Button(commands.Cog):
                 await audiocontroller.process_song(url)
 
 
-def setup(bot: MusicBot):
-    bot.add_cog(Button(bot))
+async def setup(bot: MusicBot):
+    await bot.add_cog(Button(bot))

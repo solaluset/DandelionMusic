@@ -14,7 +14,7 @@ from musicbot import loader, utils
 from musicbot.song import Song
 from musicbot.ffmpeg import FFmpegPCMAudio
 from musicbot.playlist import Playlist, LoopMode, LoopState, PauseState
-from musicbot.utils import CheckError, StrEnum, asset, play_check
+from musicbot.utils import CheckError, StrEnum, View, asset, play_check
 
 # avoiding circular import
 if TYPE_CHECKING:
@@ -41,6 +41,7 @@ class MusicButton(discord.ui.Button):
         self._check = check
 
     async def callback(self, inter):
+        inter._cs_command = inter.client.get_command("play")
         ctx = await inter.client.get_application_context(inter)
         try:
             await self._check(ctx)
@@ -136,7 +137,7 @@ class AudioController(object):
 
         is_empty = len(self.playlist) == 0
 
-        self.last_view = discord.ui.View(
+        self.last_view = View(
             MusicButton(
                 lambda _: self.prev_song(),
                 custom_id="prev",
@@ -501,10 +502,12 @@ class AudioController(object):
 
     def play_asset(self, voice_asset: VoiceAsset) -> asyncio.Future:
         self.current_voice_asset = voice_asset
-        self.voice_asset_future = self.guild.voice_client.play(
+        future = asyncio.Future()
+        self.guild.voice_client.play(
             discord.FFmpegPCMAudio(asset(voice_asset)),
-            wait_finish=True,
+            after=lambda _: future.set_result(None),
         )
+        self.voice_asset_future = future
         self.voice_asset_future.add_done_callback(
             self._clear_voice_asset_future
         )

@@ -7,9 +7,7 @@ from traceback import print_exc
 from contextlib import redirect_stdout
 
 import discord
-from discord.ext import commands, bridge
-from discord.ext.pages import Paginator
-from discord.ext.bridge import BridgeOption
+from discord.ext import commands
 from aioconsole import aexec
 
 from config import config
@@ -91,7 +89,8 @@ class Developer(commands.Cog):
             if len(pages) == 1:
                 await ctx.send(pages[0])
             else:
-                await Paginator(pages).send(ctx)
+                # TODO: paginator
+                await ctx.send(pages[-1])
         else:
             try:
                 suppress = ctx.channel.last_message.author == ctx.me
@@ -100,7 +99,7 @@ class Developer(commands.Cog):
             if not suppress:
                 await ctx.send("No output.")
 
-    @bridge.bridge_group(
+    @commands.group(
         name="guild_whitelist",
         aliases=("gw",),
         usage="[action [guild id]]",
@@ -139,19 +138,19 @@ class Developer(commands.Cog):
         config.save()
         await ctx.send("Whitelist updated.")
 
-    @staticmethod
-    def _guild_whitelist_remove_autocomplete(
-        ctx: discord.AutocompleteContext,
-    ) -> List[str]:
-        value = ctx.value.lower()
-        lines = []
-        for id_ in config.GUILD_WHITELIST:
-            guild = ctx.bot.get_guild(id_)
-            if guild:
-                lines.append(f"{id_} {guild.name}")
-            else:
-                lines.append(str(id_))
-        return [s for s in lines if value in s.lower()]
+    # @staticmethod
+    # def _guild_whitelist_remove_autocomplete(
+    #     ctx: discord.AutocompleteContext,
+    # ) -> List[str]:
+    #     value = ctx.value.lower()
+    #     lines = []
+    #     for id_ in config.GUILD_WHITELIST:
+    #         guild = ctx.bot.get_guild(id_)
+    #         if guild:
+    #             lines.append(f"{id_} {guild.name}")
+    #         else:
+    #             lines.append(str(id_))
+    #     return [s for s in lines if value in s.lower()]
 
     @_guild_whitelist.command(name="remove")
     @commands.is_owner()
@@ -159,9 +158,7 @@ class Developer(commands.Cog):
         self,
         ctx: Context,
         *,
-        id: BridgeOption(
-            str, autocomplete=_guild_whitelist_remove_autocomplete
-        ),
+        id: str,
     ):
         id = int(id.split()[0])
         config.GUILD_WHITELIST.remove(id)
@@ -177,5 +174,5 @@ class Developer(commands.Cog):
             await guild.leave()
 
 
-def setup(bot: MusicBot):
-    bot.add_cog(Developer(bot))
+async def setup(bot: MusicBot):
+    await bot.add_cog(Developer(bot))
