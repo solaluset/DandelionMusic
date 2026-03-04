@@ -168,9 +168,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
             data = data["entries"]
         elif data.get("_type") == "url":
             # the URL wasn't extracted, do it now
-            data = _extract_info(data["url"])
-            if not data:
-                raise SongError(config.SONGINFO_ERROR)
+            return _load_song(data["url"])
 
     if isinstance(data, list):
         results = []
