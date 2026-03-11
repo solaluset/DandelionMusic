@@ -21,7 +21,7 @@ class General(commands.Cog):
         self.bot = bot
 
     # logic is split to uconnect() for wide usage
-    @commands.command(
+    @commands.hybrid_command(
         name="connect",
         description=config.HELP_CONNECT_LONG,
         help=config.HELP_CONNECT_SHORT,
@@ -35,7 +35,7 @@ class General(commands.Cog):
             await audiocontroller.uconnect(ctx, move=True)
         await ctx.send("Connected.")
 
-    @commands.command(
+    @commands.hybrid_command(
         name="disconnect",
         description=config.HELP_DISCONNECT_LONG,
         help=config.HELP_DISCONNECT_SHORT,
@@ -50,7 +50,7 @@ class General(commands.Cog):
         else:
             await ctx.send(config.NOT_CONNECTED_MESSAGE)
 
-    @commands.command(
+    @commands.hybrid_command(
         name="reset",
         description=config.HELP_RESET_LONG,
         help=config.HELP_RESET_SHORT,
@@ -73,7 +73,7 @@ class General(commands.Cog):
             )
         )
 
-    @commands.command(
+    @commands.hybrid_command(
         name="ping",
         description=config.HELP_PING_LONG,
         help=config.HELP_PING_SHORT,
@@ -81,7 +81,7 @@ class General(commands.Cog):
     async def _ping(self, ctx):
         await ctx.send(f"Pong ({int(ctx.bot.latency * 1000)} ms)")
 
-    @commands.group(
+    @commands.hybrid_group(
         name="setting",
         description=config.HELP_SETTINGS_LONG,
         help=config.HELP_SETTINGS_SHORT,
@@ -115,7 +115,7 @@ class General(commands.Cog):
                 return
             await ctx.send("Setting updated!")
 
-    @commands.command(
+    @commands.hybrid_command(
         name="addbot",
         description=config.HELP_ADDBOT_LONG,
         help=config.HELP_ADDBOT_SHORT,

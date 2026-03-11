@@ -98,6 +98,10 @@ class MusicBot(commands.Bot):
         if not self.absolutely_ready.done():
             self.absolutely_ready.set_result(True)
 
+    async def setup_hook(self):
+        await super().setup_hook()
+        await self.tree.sync()
+
     async def on_guild_join(self, guild):
         print(guild.name)
         if config.GUILD_WHITELIST and guild.id not in config.GUILD_WHITELIST:

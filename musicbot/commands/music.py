@@ -59,7 +59,7 @@ class Music(commands.Cog):
     async def cog_before_invoke(self, ctx: AudioContext):
         ctx.audiocontroller.command_channel = ctx
 
-    @commands.command(
+    @commands.hybrid_command(
         name="play",
         description=config.HELP_YT_LONG,
         help=config.HELP_YT_SHORT,
@@ -117,7 +117,7 @@ class Music(commands.Cog):
                     embed=song.format_output(config.SONGINFO_NOW_PLAYING)
                 )
 
-    @commands.command(
+    @commands.hybrid_command(
         name="search",
         description=config.HELP_SEARCH_LONG,
         help=config.HELP_SEARCH_SHORT,
@@ -146,7 +146,7 @@ class Music(commands.Cog):
             ),
         )
 
-    @commands.command(
+    @commands.hybrid_command(
         name="loop",
         description=config.HELP_LOOP_LONG,
         help=config.HELP_LOOP_SHORT,
@@ -161,7 +161,7 @@ class Music(commands.Cog):
         result = ctx.audiocontroller.loop(mode)
         await ctx.send(result.value)
 
-    @commands.command(
+    @commands.hybrid_command(
         name="shuffle",
         description=config.HELP_SHUFFLE_LONG,
         help=config.HELP_SHUFFLE_SHORT,
@@ -172,7 +172,7 @@ class Music(commands.Cog):
         ctx.audiocontroller.shuffle()
         await ctx.send("Shuffled queue :twisted_rightwards_arrows:")
 
-    @commands.command(
+    @commands.hybrid_command(
         name="pause",
         description=config.HELP_PAUSE_LONG,
         help=config.HELP_PAUSE_SHORT,
@@ -182,7 +182,7 @@ class Music(commands.Cog):
         result = ctx.audiocontroller.pause()
         await ctx.send(result.value)
 
-    @commands.command(
+    @commands.hybrid_command(
         name="queue",
         description=config.HELP_QUEUE_LONG,
         help=config.HELP_QUEUE_SHORT,
@@ -193,7 +193,7 @@ class Music(commands.Cog):
         playlist = ctx.audiocontroller.playlist
         await ctx.send(embed=playlist.queue_embed())
 
-    @commands.command(
+    @commands.hybrid_command(
         name="stop",
         description=config.HELP_STOP_LONG,
         help=config.HELP_STOP_SHORT,
@@ -203,7 +203,7 @@ class Music(commands.Cog):
         ctx.audiocontroller.stop_player()
         await ctx.send("Stopped all sessions :octagonal_sign:")
 
-    @commands.command(
+    @commands.hybrid_command(
         name="move",
         description=config.HELP_MOVE_LONG,
         help=config.HELP_MOVE_SHORT,
@@ -267,7 +267,7 @@ class Music(commands.Cog):
             f" {song.title or song.webpage_url}"
         )
 
-    @commands.command(
+    @commands.hybrid_command(
         name="remove",
         description=config.HELP_REMOVE_LONG,
         help=config.HELP_REMOVE_SHORT,
@@ -305,7 +305,7 @@ class Music(commands.Cog):
         title = song.title or song.webpage_url
         await ctx.send(f"Removed #{queue_number + 1}: {title}")
 
-    @commands.command(
+    @commands.hybrid_command(
         name="skip",
         description=config.HELP_SKIP_LONG,
         help=config.HELP_SKIP_SHORT,
@@ -316,7 +316,7 @@ class Music(commands.Cog):
         ctx.audiocontroller.next_song(forced=True)
         await ctx.send("Skipped current song :fast_forward:")
 
-    @commands.command(
+    @commands.hybrid_command(
         name="clear",
         description=config.HELP_CLEAR_LONG,
         help=config.HELP_CLEAR_SHORT,
@@ -326,7 +326,7 @@ class Music(commands.Cog):
         ctx.audiocontroller.playlist.clear()
         await ctx.send("Cleared queue :no_entry_sign:")
 
-    @commands.command(
+    @commands.hybrid_command(
         name="prev",
         description=config.HELP_PREV_LONG,
         help=config.HELP_PREV_SHORT,
@@ -338,7 +338,7 @@ class Music(commands.Cog):
         else:
             await ctx.send("No previous track.")
 
-    @commands.command(
+    @commands.hybrid_command(
         name="songinfo",
         description=config.HELP_SONGINFO_LONG,
         help=config.HELP_SONGINFO_SHORT,
@@ -349,7 +349,7 @@ class Music(commands.Cog):
         song = ctx.audiocontroller.current_song
         await ctx.send(embed=song.format_output(config.SONGINFO_SONGINFO))
 
-    @commands.command(
+    @commands.hybrid_command(
         name="history",
         description=config.HELP_HISTORY_LONG,
         help=config.HELP_HISTORY_SHORT,
@@ -357,7 +357,7 @@ class Music(commands.Cog):
     async def _history(self, ctx: AudioContext):
         await ctx.send(ctx.audiocontroller.track_history())
 
-    @commands.command(
+    @commands.hybrid_command(
         name="volume",
         aliases=["vol"],
         description=config.HELP_VOL_LONG,
