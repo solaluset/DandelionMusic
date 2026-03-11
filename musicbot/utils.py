@@ -39,8 +39,8 @@ if TYPE_CHECKING:
 def check_dependencies():
     if dpy_version != "2.7.1":
         raise ImportError(
-            "you have wrong version of Pycord."
-            " Please install the version specified in requirements.txt"
+            "you have wrong version of discord.py,"
+            " please install the version specified in requirements.txt"
         )
 
     flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
