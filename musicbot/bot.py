@@ -7,6 +7,7 @@ from typing import Dict, Union
 import aiohttp
 import discord
 from discord.ext import commands, tasks
+from discord.app_commands import Choice
 from discord.ext.commands import DefaultHelpCommand, NotOwner, UserInputError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -42,8 +43,8 @@ class MusicBot(commands.Bot):
         self._extensions = extensions
         self.client_session = None
         # replace default to register slash command
-        # self._default_help = self.remove_command("help")
-        # self.add_bridge_command(self._help)
+        self._default_help = self.remove_command("help")
+        self.add_command(_help)
 
     async def start(self, *args, **kwargs):
         print(config.STARTUP_MESSAGE)
@@ -237,27 +238,27 @@ class MusicBot(commands.Bot):
                     file=sys.stderr,
                 )
 
-    # @staticmethod
-    # def _help_autocomplete(ctx: discord.AutocompleteContext) -> List[str]:
-    #     return [
-    #         c.qualified_name
-    #         for c in ctx.bot.walk_commands()
-    #         if c.qualified_name.startswith(ctx.value) and not c.hidden
-    #     ]
 
-    # @bridge.bridge_command(name="help", description=config.HELP_HELP_SHORT)
-    # async def _help(
-    #     ctx,
-    #     *,
-    #     command: BridgeOption(str, autocomplete=_help_autocomplete) = None,
-    # ):
-    #     help_command = ctx.bot._default_help
-    #     if ctx.is_app:
-    #         # trick the command to run as slash
-    #         ctx.content = "/help"
-    #         ctx = await ctx.bot.get_context(ctx, ExtContext)
-    #     await help_command.prepare(ctx)
-    #     await help_command.callback(ctx, command=command)
+@commands.hybrid_command(name="help", description=config.HELP_HELP_SHORT)
+async def _help(
+    ctx,
+    *,
+    command: str | None = None,
+):
+    help_command = ctx.bot._default_help
+    await help_command.prepare(ctx)
+    await help_command.callback(ctx, command=command)
+
+
+@_help.autocomplete("command")
+async def _help_autocomplete(
+    interaction: discord.Interaction, current: str
+) -> list[Choice[str]]:
+    return [
+        Choice(name=c.qualified_name, value=c.qualified_name)
+        for c in interaction.client.walk_commands()
+        if c.qualified_name.startswith(current) and not c.hidden
+    ][:25]
 
 
 class Context(commands.Context):
