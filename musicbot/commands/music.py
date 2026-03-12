@@ -400,7 +400,7 @@ class Music(commands.Cog):
     #             )
     #         ).scalars()
 
-    @commands.group(
+    @commands.hybrid_group(
         name="playlist",
         aliases=["pl"],
         invoke_without_command=True,

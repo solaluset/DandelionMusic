@@ -99,7 +99,7 @@ class Developer(commands.Cog):
             if not suppress:
                 await ctx.send("No output.")
 
-    @commands.group(
+    @commands.hybrid_group(
         name="guild_whitelist",
         aliases=("gw",),
         usage="[action [guild id]]",
