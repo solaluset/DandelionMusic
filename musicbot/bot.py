@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 import sys
 import asyncio
@@ -21,6 +23,48 @@ from musicbot.settings import (
     migrate_old_playlists,
 )
 from musicbot.utils import CheckError
+
+
+class Context(commands.Context):
+    bot: MusicBot
+    guild: discord.Guild
+
+    async def defer(self, **kwargs):
+        try:
+            await super().defer(**kwargs)
+        except discord.InteractionResponded:
+            pass
+
+    async def send(self, *args, **kwargs):
+        kwargs["reference"] = self.message
+        audiocontroller = self.bot.audio_controllers.get(self.guild)
+        if (
+            audiocontroller is None
+            or "view" in kwargs
+            or kwargs.get("ephemeral", False)
+            or (
+                (channel := audiocontroller.command_channel)
+                # unwrap channel from context
+                and getattr(channel, "channel", channel) != self.channel
+            )
+        ):
+            # sending ephemeral message or using different channel
+            # don't bother with views
+            return await super().send(*args, **kwargs)
+        async with audiocontroller.message_lock:
+            await audiocontroller.update_view(None)
+            view = audiocontroller.make_view()
+            if view:
+                kwargs["view"] = view
+            msg = audiocontroller.last_message = await super().send(
+                *args, **kwargs
+            )
+        return msg
+
+
+class UniversalHelpCommand(DefaultHelpCommand):
+    def get_destination(self):
+        return self.context
 
 
 class MusicBot(commands.Bot):
@@ -181,8 +225,10 @@ class MusicBot(commands.Bot):
         # did not match
         return " "
 
-    async def get_application_context(self, interaction):
-        return await ApplicationContext.from_interaction(interaction)
+    async def get_context(
+        self, origin: discord.Message | discord.Interaction, /, *, cls=Context
+    ):
+        return await super().get_context(origin, cls=cls)
 
     async def process_application_commands(self, inter):
         if (
@@ -200,7 +246,7 @@ class MusicBot(commands.Bot):
         if message.author.bot:
             return
 
-        ctx = await self.get_context(message, cls=ExtContext)
+        ctx = await self.get_context(message)
 
         if ctx.valid and not message.guild:
             await message.channel.send(config.NO_GUILD_MESSAGE)
@@ -259,56 +305,3 @@ async def _help_autocomplete(
         for c in interaction.client.walk_commands()
         if c.qualified_name.startswith(current) and not c.hidden
     ][:25]
-
-
-class Context(commands.Context):
-    bot: MusicBot
-    guild: discord.Guild
-
-    async def defer(self, **kwargs):
-        try:
-            await super().defer(**kwargs)
-        except discord.InteractionResponded:
-            pass
-
-    async def send(self, *args, **kwargs):
-        kwargs.pop("reference", None)  # not supported
-        audiocontroller = self.bot.audio_controllers.get(self.guild)
-        if (
-            audiocontroller is None
-            or "view" in kwargs
-            or kwargs.get("ephemeral", False)
-            or (
-                (channel := audiocontroller.command_channel)
-                # unwrap channel from context
-                and getattr(channel, "channel", channel) != self.channel
-            )
-        ):
-            # sending ephemeral message or using different channel
-            # don't bother with views
-            return await super().send(*args, **kwargs)
-        async with audiocontroller.message_lock:
-            await audiocontroller.update_view(None)
-            view = audiocontroller.make_view()
-            if view:
-                kwargs["view"] = view
-            # use `respond` for compatibility
-            res = await super().send(*args, **kwargs)
-            if isinstance(res, discord.Interaction):
-                audiocontroller.last_message = await res.original_response()
-            else:
-                audiocontroller.last_message = res
-        return res
-
-
-class ExtContext(Context):
-    pass
-
-
-class ApplicationContext(Context):
-    pass
-
-
-class UniversalHelpCommand(DefaultHelpCommand):
-    def get_destination(self):
-        return self.context

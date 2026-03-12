@@ -42,7 +42,7 @@ class MusicButton(discord.ui.Button):
 
     async def callback(self, inter):
         inter._cs_command = inter.client.get_command("play")
-        ctx = await inter.client.get_application_context(inter)
+        ctx = await inter.client.get_context(inter)
         try:
             await self._check(ctx)
         except CheckError as e:
