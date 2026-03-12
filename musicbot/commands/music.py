@@ -1,7 +1,8 @@
 import json
 from typing import Iterable, Union, Optional
 
-from discord import Attachment, Embed
+from discord import Attachment, Embed, Interaction
+from discord.app_commands import Choice
 from discord.ext import commands
 from sqlalchemy import select, delete
 from sqlalchemy.exc import IntegrityError
@@ -386,19 +387,22 @@ class Music(commands.Cog):
             await ctx.send("Volume set to {}% :loud_sound:".format(str(value)))
         ctx.audiocontroller.volume = value
 
-    # async def _playlist_autocomplete(
-    #     self, ctx: AutocompleteContext
-    # ) -> List[str]:
-    #     async with ctx.bot.DbSession() as session:
-    #         return (
-    #             await session.execute(
-    #                 select(SavedPlaylist.name)
-    #                 .where(
-    #                     SavedPlaylist.guild_id == str(ctx.interaction.guild.id)
-    #                 )
-    #                 .where(SavedPlaylist.name.startswith(ctx.value))
-    #             )
-    #         ).scalars()
+    async def _playlist_autocomplete(
+        self, interaction: Interaction, current: str
+    ) -> list[Choice[str]]:
+        async with interaction.client.DbSession() as session:
+            return [
+                Choice(name=name, value=name)
+                for name in (
+                    await session.execute(
+                        select(SavedPlaylist.name)
+                        .where(
+                            SavedPlaylist.guild_id == str(interaction.guild.id)
+                        )
+                        .where(SavedPlaylist.name.istartswith(current))
+                    )
+                ).scalars()
+            ][:25]
 
     @commands.hybrid_group(
         name="playlist",
@@ -483,6 +487,8 @@ class Music(commands.Cog):
             ctx.audiocontroller.preload_queue()
         await ctx.send(config.SONGINFO_PLAYLIST_QUEUED)
 
+    _playlist_load.autocomplete("name")(_playlist_autocomplete)
+
     @_playlist.command(
         name="remove",
         aliases=["r"],
@@ -507,6 +513,8 @@ class Music(commands.Cog):
             await ctx.send(config.PLAYLIST_NOT_FOUND)
             return
         await ctx.send(config.PLAYLIST_REMOVED)
+
+    _playlist_remove.autocomplete("name")(_playlist_autocomplete)
 
     @_playlist.command(
         name="list",
@@ -574,6 +582,8 @@ class Music(commands.Cog):
         # TODO: pagination
         await ctx.send(embed=pages[0])
 
+    _playlist_show.autocomplete("playlist")(_playlist_autocomplete)
+
     @_playlist.command(
         name="add_song",
         aliases=["as"],
@@ -614,6 +624,8 @@ class Music(commands.Cog):
             await session.commit()
         await ctx.send(config.PLAYLIST_UPDATED)
 
+    _playlist_add_song.autocomplete("playlist")(_playlist_autocomplete)
+
     @_playlist.command(
         name="remove_song",
         aliases=["rs"],
@@ -653,6 +665,8 @@ class Music(commands.Cog):
             playlist.songs_json = json.dumps(songs)
             await session.commit()
         await ctx.send(config.PLAYLIST_UPDATED)
+
+    _playlist_remove_song.autocomplete("playlist")(_playlist_autocomplete)
 
     @_playlist.command(
         name="move_song",
@@ -695,6 +709,8 @@ class Music(commands.Cog):
             playlist.songs_json = json.dumps(songs)
             await session.commit()
         await ctx.send(config.PLAYLIST_UPDATED)
+
+    _playlist_move_song.autocomplete("playlist")(_playlist_autocomplete)
 
 
 async def setup(bot: MusicBot):

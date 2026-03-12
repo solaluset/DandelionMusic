@@ -8,6 +8,7 @@ from contextlib import redirect_stdout
 
 import discord
 from discord.ext import commands
+from discord.app_commands import Choice
 from aioconsole import aexec
 
 from config import config
@@ -138,20 +139,6 @@ class Developer(commands.Cog):
         config.save()
         await ctx.send("Whitelist updated.")
 
-    # @staticmethod
-    # def _guild_whitelist_remove_autocomplete(
-    #     ctx: discord.AutocompleteContext,
-    # ) -> List[str]:
-    #     value = ctx.value.lower()
-    #     lines = []
-    #     for id_ in config.GUILD_WHITELIST:
-    #         guild = ctx.bot.get_guild(id_)
-    #         if guild:
-    #             lines.append(f"{id_} {guild.name}")
-    #         else:
-    #             lines.append(str(id_))
-    #     return [s for s in lines if value in s.lower()]
-
     @_guild_whitelist.command(name="remove")
     @commands.is_owner()
     async def _guild_whitelist_remove(
@@ -172,6 +159,23 @@ class Developer(commands.Cog):
         await ctx.send(message)
         if guild is not None:
             await guild.leave()
+
+    @_guild_whitelist_remove.autocomplete("id")
+    async def _guild_whitelist_remove_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[Choice[str]]:
+        value = current.lower()
+        choices = []
+        for id_ in config.GUILD_WHITELIST:
+            guild = interaction.client.get_guild(id_)
+            choices.append(
+                Choice(name=guild.name if guild else str(id_), value=str(id_))
+            )
+        return [
+            c
+            for c in choices
+            if value in c.name.lower() or value in c.value.lower()
+        ][:25]
 
 
 async def setup(bot: MusicBot):
