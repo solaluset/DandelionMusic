@@ -13,6 +13,7 @@ from aioconsole import aexec
 
 from config import config
 from musicbot.bot import Context, MusicBot
+from musicbot.utils import Paginator
 
 
 class Splitter(TextWrapper):
@@ -90,8 +91,7 @@ class Developer(commands.Cog):
             if len(pages) == 1:
                 await ctx.send(pages[0])
             else:
-                # TODO: paginator
-                await ctx.send(pages[-1])
+                await Paginator(pages).send(ctx)
         else:
             try:
                 suppress = ctx.channel.last_message.author == ctx.me

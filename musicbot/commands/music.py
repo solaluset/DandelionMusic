@@ -11,7 +11,7 @@ from config import config
 from musicbot import linkutils, utils, loader
 from musicbot.song import Song
 from musicbot.bot import MusicBot, Context
-from musicbot.utils import View, dj_check, chunks
+from musicbot.utils import View, Paginator, dj_check, chunks
 from musicbot.audiocontroller import (
     PLAYLIST,
     EMPTY_PLAYLIST,
@@ -579,8 +579,7 @@ class Music(commands.Cog):
                 )
                 i += 1
             pages.append(embed)
-        # TODO: pagination
-        await ctx.send(embed=pages[0])
+        await Paginator(pages).send(ctx)
 
     _playlist_show.autocomplete("playlist")(_playlist_autocomplete)
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 import os
 import sys
+import copy
 import _thread
 import asyncio
 import subprocess
@@ -24,8 +25,10 @@ from discord import (
     ui,
     Emoji,
     Embed,
+    ButtonStyle,
 )
 from discord.ext.commands import CommandError
+from discord.ext.paginators import ButtonPaginator, PaginatorButton
 
 from config import config
 from musicbot.song import Song
@@ -169,6 +172,64 @@ def songs_embed(title: str, songs: Iterable[Song]) -> Embed:
         )
 
     return embed
+
+
+class ConstantPaginatorButton(PaginatorButton):
+    @property
+    def label(self):
+        return super().label
+
+    @label.setter
+    def label(self, value):
+        # ignore
+        pass
+
+    @property
+    def style(self):
+        return super().style
+
+    @style.setter
+    def style(self, value):
+        # ignore
+        pass
+
+    def _copy(self):
+        return copy.deepcopy(self)
+
+
+class Paginator(ButtonPaginator):
+    def __init__(self, pages: list):
+        super().__init__(
+            pages,
+            buttons={
+                "FIRST": ConstantPaginatorButton(
+                    label="<<", style=ButtonStyle.blurple
+                ),
+                "LEFT": ConstantPaginatorButton(
+                    label="<", style=ButtonStyle.green
+                ),
+                "PAGE_INDICATOR": PaginatorButton(
+                    disabled=True, style=ButtonStyle.gray
+                ),
+                "RIGHT": ConstantPaginatorButton(
+                    label=">", style=ButtonStyle.green
+                ),
+                "LAST": ConstantPaginatorButton(
+                    label=">>", style=ButtonStyle.blurple
+                ),
+                "STOP": None,
+            },
+            disable_after=True,
+            add_page_string=False,
+        )
+
+    @property
+    def page_string(self) -> str:
+        return f"{self.current_page + 1} / {self.max_pages}"
+
+    async def send(self, context):
+        self.author_id = context.author.id
+        return await super().send(context)
 
 
 def chunks(lst: list, n: int) -> List[list]:
