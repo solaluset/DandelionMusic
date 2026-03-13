@@ -36,7 +36,8 @@ from musicbot.linkutils import url_regex
 
 # avoiding circular import
 if TYPE_CHECKING:
-    from musicbot.bot import Context, MusicBot
+    from musicbot.bot import MusicBot
+    from musicbot.context import BasicContext
 
 
 def check_dependencies():
@@ -76,7 +77,7 @@ class CheckError(CommandError):
     pass
 
 
-async def dj_check(ctx: Context):
+async def dj_check(ctx: BasicContext):
     "Check if the user has DJ permissions"
     if ctx.channel.permissions_for(ctx.author).administrator:
         return True
@@ -90,7 +91,7 @@ async def dj_check(ctx: Context):
     raise CheckError(config.USER_MISSING_PERMISSIONS)
 
 
-async def voice_check(ctx: Context):
+async def voice_check(ctx: BasicContext):
     "Check if the user can use the bot now"
     bot_vc = ctx.guild.voice_client
     if not bot_vc:
@@ -118,7 +119,7 @@ async def voice_check(ctx: Context):
     raise CheckError(config.USER_NOT_IN_VC_MESSAGE)
 
 
-async def play_check(ctx: Context):
+async def play_check(ctx: BasicContext):
     "Prepare for music commands"
 
     sett = ctx.bot.settings[ctx.guild]

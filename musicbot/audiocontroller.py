@@ -13,6 +13,7 @@ from config import config
 from musicbot import loader, utils
 from musicbot.song import Song
 from musicbot.ffmpeg import FFmpegPCMAudio
+from musicbot.context import InteractionContext
 from musicbot.playlist import Playlist, LoopMode, LoopState, PauseState
 from musicbot.utils import CheckError, StrEnum, View, asset, play_check
 
@@ -41,8 +42,7 @@ class MusicButton(discord.ui.Button):
         self._check = check
 
     async def callback(self, inter):
-        inter._cs_command = inter.client.get_command("play")
-        ctx = await inter.client.get_context(inter)
+        ctx = InteractionContext(inter)
         try:
             await self._check(ctx)
         except CheckError as e:

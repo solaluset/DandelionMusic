@@ -22,44 +22,8 @@ from musicbot.settings import (
     extract_legacy_settings,
     migrate_old_playlists,
 )
+from musicbot.context import Context
 from musicbot.utils import CheckError
-
-
-class Context(commands.Context):
-    bot: MusicBot
-    guild: discord.Guild
-
-    async def defer(self, **kwargs):
-        try:
-            await super().defer(**kwargs)
-        except discord.InteractionResponded:
-            pass
-
-    async def send(self, *args, **kwargs):
-        kwargs["reference"] = self.message
-        audiocontroller = self.bot.audio_controllers.get(self.guild)
-        if (
-            audiocontroller is None
-            or "view" in kwargs
-            or kwargs.get("ephemeral", False)
-            or (
-                (channel := audiocontroller.command_channel)
-                # unwrap channel from context
-                and getattr(channel, "channel", channel) != self.channel
-            )
-        ):
-            # sending ephemeral message or using different channel
-            # don't bother with views
-            return await super().send(*args, **kwargs)
-        async with audiocontroller.message_lock:
-            await audiocontroller.update_view(None)
-            view = audiocontroller.make_view()
-            if view:
-                kwargs["view"] = view
-            msg = audiocontroller.last_message = await super().send(
-                *args, **kwargs
-            )
-        return msg
 
 
 class UniversalHelpCommand(DefaultHelpCommand):
