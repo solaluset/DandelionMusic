@@ -101,12 +101,14 @@ class General(commands.Cog):
 
     _show_settings = _settings.command(name="show")(_show_settings_callback)
 
-    # TODO: fix this
     for name, type_ in CONFIG_OPTIONS.items():
 
         @_settings.command(name=name)
         @commands.check(dj_check)
-        async def _set_setting(self, ctx: Context, *, value: type_):
+        async def _set_setting(self, ctx: Context = None, *, value: type_):
+            # hacky way to make this work with hybrid commands
+            if ctx is None:
+                ctx = self
             sett = ctx.bot.settings[ctx.guild]
             try:
                 await sett.update_setting(ctx.command.name, value, ctx)
