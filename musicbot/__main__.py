@@ -7,7 +7,7 @@ from discord.ext import commands
 from config import config
 from musicbot import loader
 from musicbot.bot import MusicBot
-from musicbot.utils import check_dependencies, read_shutdown
+from musicbot.utils import check_dependencies
 
 initial_extensions = [
     "musicbot.commands.music",
@@ -51,9 +51,6 @@ if __name__ == "__main__":
 
     # start executor before reading from stdin to avoid deadlocks
     loader.init()
-
-    if "--run" in sys.argv:
-        shutdown_task = bot.loop.create_task(read_shutdown())
 
     try:
         bot.run(config.BOT_TOKEN, reconnect=True)

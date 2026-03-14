@@ -23,7 +23,7 @@ from musicbot.settings import (
     migrate_old_playlists,
 )
 from musicbot.context import Context
-from musicbot.utils import CheckError
+from musicbot.utils import CheckError, read_shutdown
 
 
 class UniversalHelpCommand(DefaultHelpCommand):
@@ -56,6 +56,9 @@ class MusicBot(commands.Bot):
 
     async def start(self, *args, **kwargs):
         print(config.STARTUP_MESSAGE)
+
+        if "--run" in sys.argv:
+            self._shutdown_task = self.loop.create_task(read_shutdown())
 
         self.absolutely_ready = asyncio.Future()
 
