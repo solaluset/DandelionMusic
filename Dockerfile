@@ -38,4 +38,4 @@ RUN pip --no-cache-dir install -r requirements.txt \
     && apt-get update \
     && apt-get install --no-install-recommends ffmpeg -y
 
-CMD ["python", "run.py"]
+CMD ["python", "-m", "musicbot"]
