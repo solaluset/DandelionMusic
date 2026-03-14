@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from config import config
 from musicbot import linkutils, utils, loader
 from musicbot.song import Song
+from musicbot.playlist import LoopMode
 from musicbot.bot import MusicBot, Context
 from musicbot.utils import View, Paginator, dj_check, chunks
 from musicbot.audiocontroller import (
@@ -158,7 +159,7 @@ class Music(commands.Cog):
     async def _loop(
         self,
         ctx: AudioContext,
-        mode: str | None = None,
+        mode: LoopMode | None = None,
     ):
         result = ctx.audiocontroller.loop(mode)
         await ctx.send(result.value)
