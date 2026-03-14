@@ -13,8 +13,9 @@ from config import config
 from musicbot import loader, utils
 from musicbot.song import Song
 from musicbot.ffmpeg import FFmpegPCMAudio
+from musicbot.context import InteractionContext
 from musicbot.playlist import Playlist, LoopMode, LoopState, PauseState
-from musicbot.utils import CheckError, StrEnum, asset, play_check
+from musicbot.utils import CheckError, StrEnum, View, asset, play_check
 
 # avoiding circular import
 if TYPE_CHECKING:
@@ -41,16 +42,16 @@ class MusicButton(discord.ui.Button):
         self._check = check
 
     async def callback(self, inter):
-        ctx = await inter.client.get_application_context(inter)
+        ctx = InteractionContext(inter)
         try:
             await self._check(ctx)
         except CheckError as e:
             await ctx.send(e, ephemeral=True)
             return
-        await inter.response.defer()
-        res = self._callback(ctx)
-        if isawaitable(res):
-            await res
+        async with ctx.typing():
+            res = self._callback(ctx)
+            if isawaitable(res):
+                await res
 
 
 class AudioController(object):
@@ -136,7 +137,7 @@ class AudioController(object):
 
         is_empty = len(self.playlist) == 0
 
-        self.last_view = discord.ui.View(
+        self.last_view = View(
             MusicButton(
                 lambda _: self.prev_song(),
                 custom_id="prev",
@@ -501,10 +502,12 @@ class AudioController(object):
 
     def play_asset(self, voice_asset: VoiceAsset) -> asyncio.Future:
         self.current_voice_asset = voice_asset
-        self.voice_asset_future = self.guild.voice_client.play(
+        future = asyncio.Future()
+        self.guild.voice_client.play(
             discord.FFmpegPCMAudio(asset(voice_asset)),
-            wait_finish=True,
+            after=lambda _: future.set_result(None),
         )
+        self.voice_asset_future = future
         self.voice_asset_future.add_done_callback(
             self._clear_voice_asset_future
         )
@@ -548,7 +551,7 @@ class AudioController(object):
             raise CheckError(config.USER_NOT_IN_VC_MESSAGE)
 
         if bot_vc is None or bot_vc.channel != author_vc.channel and move:
-            await ctx.defer()
+            await ctx.typing()
             await self.register_voice_channel(author_vc.channel)
             if config.ANNOUNCE_CONNECT:
                 self.play_asset(VoiceAsset.HELLO)

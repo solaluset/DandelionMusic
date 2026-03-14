@@ -7,13 +7,13 @@ from traceback import print_exc
 from contextlib import redirect_stdout
 
 import discord
-from discord.ext import commands, bridge
-from discord.ext.pages import Paginator
-from discord.ext.bridge import BridgeOption
+from discord.ext import commands
+from discord.app_commands import Choice
 from aioconsole import aexec
 
 from config import config
 from musicbot.bot import Context, MusicBot
+from musicbot.utils import Paginator
 
 
 class Splitter(TextWrapper):
@@ -100,7 +100,7 @@ class Developer(commands.Cog):
             if not suppress:
                 await ctx.send("No output.")
 
-    @bridge.bridge_group(
+    @commands.hybrid_group(
         name="guild_whitelist",
         aliases=("gw",),
         usage="[action [guild id]]",
@@ -139,29 +139,13 @@ class Developer(commands.Cog):
         config.save()
         await ctx.send("Whitelist updated.")
 
-    @staticmethod
-    def _guild_whitelist_remove_autocomplete(
-        ctx: discord.AutocompleteContext,
-    ) -> List[str]:
-        value = ctx.value.lower()
-        lines = []
-        for id_ in config.GUILD_WHITELIST:
-            guild = ctx.bot.get_guild(id_)
-            if guild:
-                lines.append(f"{id_} {guild.name}")
-            else:
-                lines.append(str(id_))
-        return [s for s in lines if value in s.lower()]
-
     @_guild_whitelist.command(name="remove")
     @commands.is_owner()
     async def _guild_whitelist_remove(
         self,
         ctx: Context,
         *,
-        id: BridgeOption(
-            str, autocomplete=_guild_whitelist_remove_autocomplete
-        ),
+        id: str,
     ):
         id = int(id.split()[0])
         config.GUILD_WHITELIST.remove(id)
@@ -176,6 +160,23 @@ class Developer(commands.Cog):
         if guild is not None:
             await guild.leave()
 
+    @_guild_whitelist_remove.autocomplete("id")
+    async def _guild_whitelist_remove_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[Choice[str]]:
+        value = current.lower()
+        choices = []
+        for id_ in config.GUILD_WHITELIST:
+            guild = interaction.client.get_guild(id_)
+            choices.append(
+                Choice(name=guild.name if guild else str(id_), value=str(id_))
+            )
+        return [
+            c
+            for c in choices
+            if value in c.name.lower() or value in c.value.lower()
+        ][:25]
 
-def setup(bot: MusicBot):
-    bot.add_cog(Developer(bot))
+
+async def setup(bot: MusicBot):
+    await bot.add_cog(Developer(bot))

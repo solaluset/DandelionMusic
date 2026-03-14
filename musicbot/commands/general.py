@@ -1,7 +1,7 @@
 import asyncio
 
 import discord
-from discord.ext import commands, bridge
+from discord.ext import commands
 
 from config import config
 from musicbot.bot import Context, MusicBot
@@ -21,7 +21,7 @@ class General(commands.Cog):
         self.bot = bot
 
     # logic is split to uconnect() for wide usage
-    @bridge.bridge_command(
+    @commands.hybrid_command(
         name="connect",
         description=config.HELP_CONNECT_LONG,
         help=config.HELP_CONNECT_SHORT,
@@ -35,7 +35,7 @@ class General(commands.Cog):
             await audiocontroller.uconnect(ctx, move=True)
         await ctx.send("Connected.")
 
-    @bridge.bridge_command(
+    @commands.hybrid_command(
         name="disconnect",
         description=config.HELP_DISCONNECT_LONG,
         help=config.HELP_DISCONNECT_SHORT,
@@ -43,14 +43,14 @@ class General(commands.Cog):
     )
     @commands.check(voice_check)
     async def _disconnect(self, ctx: Context):
-        await ctx.defer()  # ANNOUNCE_DISCONNECT will take a while
         audiocontroller = ctx.bot.audio_controllers[ctx.guild]
-        if await audiocontroller.udisconnect():
-            await ctx.send("Disconnected.")
-        else:
-            await ctx.send(config.NOT_CONNECTED_MESSAGE)
+        async with ctx.typing():  # ANNOUNCE_DISCONNECT will take a while
+            if await audiocontroller.udisconnect():
+                await ctx.send("Disconnected.")
+            else:
+                await ctx.send(config.NOT_CONNECTED_MESSAGE)
 
-    @bridge.bridge_command(
+    @commands.hybrid_command(
         name="reset",
         description=config.HELP_RESET_LONG,
         help=config.HELP_RESET_SHORT,
@@ -58,22 +58,22 @@ class General(commands.Cog):
     )
     @commands.check(voice_check)
     async def _reset(self, ctx: Context):
-        await ctx.defer()
-        if await ctx.bot.audio_controllers[ctx.guild].udisconnect():
-            # bot was connected and need some rest
-            await asyncio.sleep(1)
+        async with ctx.typing():
+            if await ctx.bot.audio_controllers[ctx.guild].udisconnect():
+                # bot was connected and needs some rest
+                await asyncio.sleep(1)
 
-        audiocontroller = ctx.bot.audio_controllers[ctx.guild] = (
-            AudioController(self.bot, ctx.guild)
-        )
-        await audiocontroller.uconnect(ctx)
+            audiocontroller = ctx.bot.audio_controllers[ctx.guild] = (
+                AudioController(self.bot, ctx.guild)
+            )
+            await audiocontroller.uconnect(ctx)
         await ctx.send(
             "{} Connected to {}".format(
                 ":white_check_mark:", ctx.author.voice.channel.name
             )
         )
 
-    @bridge.bridge_command(
+    @commands.hybrid_command(
         name="ping",
         description=config.HELP_PING_LONG,
         help=config.HELP_PING_SHORT,
@@ -81,7 +81,7 @@ class General(commands.Cog):
     async def _ping(self, ctx):
         await ctx.send(f"Pong ({int(ctx.bot.latency * 1000)} ms)")
 
-    @bridge.bridge_group(
+    @commands.hybrid_group(
         name="setting",
         description=config.HELP_SETTINGS_LONG,
         help=config.HELP_SETTINGS_SHORT,
@@ -105,7 +105,10 @@ class General(commands.Cog):
 
         @_settings.command(name=name)
         @commands.check(dj_check)
-        async def _set_setting(self, ctx: Context, *, value: type_):
+        async def _set_setting(self, ctx: Context = None, *, value: type_):
+            # hacky way to make this work with hybrid commands
+            if ctx is None:
+                ctx = self
             sett = ctx.bot.settings[ctx.guild]
             try:
                 await sett.update_setting(ctx.command.name, value, ctx)
@@ -114,7 +117,7 @@ class General(commands.Cog):
                 return
             await ctx.send("Setting updated!")
 
-    @bridge.bridge_command(
+    @commands.hybrid_command(
         name="addbot",
         description=config.HELP_ADDBOT_LONG,
         help=config.HELP_ADDBOT_SHORT,
@@ -131,5 +134,5 @@ class General(commands.Cog):
         await ctx.send(embed=embed)
 
 
-def setup(bot: MusicBot):
-    bot.add_cog(General(bot))
+async def setup(bot: MusicBot):
+    await bot.add_cog(General(bot))

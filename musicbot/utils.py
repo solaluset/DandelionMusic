@@ -1,6 +1,7 @@
 from __future__ import annotations
 import os
 import sys
+import copy
 import _thread
 import asyncio
 import subprocess
@@ -18,13 +19,16 @@ from typing import (
 
 from aioconsole import ainput
 from discord import (
-    __version__ as pycord_version,
+    __version__ as dpy_version,
     opus,
     utils,
+    ui,
     Emoji,
     Embed,
+    ButtonStyle,
 )
 from discord.ext.commands import CommandError
+from discord.ext.paginators import ButtonPaginator, PaginatorButton
 
 from config import config
 from musicbot.song import Song
@@ -32,14 +36,15 @@ from musicbot.linkutils import url_regex
 
 # avoiding circular import
 if TYPE_CHECKING:
-    from musicbot.bot import Context, MusicBot
+    from musicbot.bot import MusicBot
+    from musicbot.context import BasicContext
 
 
 def check_dependencies():
-    if pycord_version != "2.7.2-SL":
+    if dpy_version != "2.7.1":
         raise ImportError(
-            "you have wrong version of Pycord."
-            " Please install the version specified in requirements.txt"
+            "you have wrong version of discord.py,"
+            " please install the version specified in requirements.txt"
         )
 
     flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
@@ -72,7 +77,7 @@ class CheckError(CommandError):
     pass
 
 
-async def dj_check(ctx: Context):
+async def dj_check(ctx: BasicContext):
     "Check if the user has DJ permissions"
     if ctx.channel.permissions_for(ctx.author).administrator:
         return True
@@ -86,7 +91,7 @@ async def dj_check(ctx: Context):
     raise CheckError(config.USER_MISSING_PERMISSIONS)
 
 
-async def voice_check(ctx: Context):
+async def voice_check(ctx: BasicContext):
     "Check if the user can use the bot now"
     bot_vc = ctx.guild.voice_client
     if not bot_vc:
@@ -114,7 +119,7 @@ async def voice_check(ctx: Context):
     raise CheckError(config.USER_NOT_IN_VC_MESSAGE)
 
 
-async def play_check(ctx: Context):
+async def play_check(ctx: BasicContext):
     "Prepare for music commands"
 
     sett = ctx.bot.settings[ctx.guild]
@@ -135,6 +140,24 @@ async def play_check(ctx: Context):
         return await voice_check(ctx)
 
     return True
+
+
+class View(ui.View):
+    def __init__(self, *items, timeout):
+        super().__init__(timeout=timeout)
+        for item in items:
+            self.add_item(item)
+        self.message = None
+
+    async def on_timeout(self):
+        for child in self.children:
+            if hasattr(child, "disabled"):
+                child.disabled = True
+
+        if self.message:
+            await self.message.edit(view=self)
+
+        return await super().on_timeout()
 
 
 def get_emoji(bot: MusicBot, string: str) -> Optional[Union[str, Emoji]]:
@@ -161,6 +184,64 @@ def songs_embed(title: str, songs: Iterable[Song]) -> Embed:
         )
 
     return embed
+
+
+class ConstantPaginatorButton(PaginatorButton):
+    @property
+    def label(self):
+        return super().label
+
+    @label.setter
+    def label(self, value):
+        # ignore
+        pass
+
+    @property
+    def style(self):
+        return super().style
+
+    @style.setter
+    def style(self, value):
+        # ignore
+        pass
+
+    def _copy(self):
+        return copy.deepcopy(self)
+
+
+class Paginator(ButtonPaginator):
+    def __init__(self, pages: list):
+        super().__init__(
+            pages,
+            buttons={
+                "FIRST": ConstantPaginatorButton(
+                    label="<<", style=ButtonStyle.blurple
+                ),
+                "LEFT": ConstantPaginatorButton(
+                    label="<", style=ButtonStyle.green
+                ),
+                "PAGE_INDICATOR": PaginatorButton(
+                    disabled=True, style=ButtonStyle.gray
+                ),
+                "RIGHT": ConstantPaginatorButton(
+                    label=">", style=ButtonStyle.green
+                ),
+                "LAST": ConstantPaginatorButton(
+                    label=">>", style=ButtonStyle.blurple
+                ),
+                "STOP": None,
+            },
+            disable_after=True,
+            add_page_string=False,
+        )
+
+    @property
+    def page_string(self) -> str:
+        return f"{self.current_page + 1} / {self.max_pages}"
+
+    async def send(self, context):
+        self.author_id = context.author.id
+        return await super().send(context)
 
 
 def chunks(lst: list, n: int) -> List[list]:

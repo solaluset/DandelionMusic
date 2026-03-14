@@ -1,19 +1,18 @@
 import json
-from typing import Iterable, List, Union, Optional
+from typing import Iterable, Union, Optional
 
-from discord import Attachment, AutocompleteContext, Embed
-from discord.ui import View
-from discord.ext import commands, bridge
-from discord.ext.bridge import BridgeOption
-from discord.ext.pages import Paginator
+from discord import Attachment, Embed, Interaction
+from discord.app_commands import Choice
+from discord.ext import commands
 from sqlalchemy import select, delete
 from sqlalchemy.exc import IntegrityError
 
 from config import config
 from musicbot import linkutils, utils, loader
 from musicbot.song import Song
+from musicbot.playlist import LoopMode
 from musicbot.bot import MusicBot, Context
-from musicbot.utils import dj_check, chunks
+from musicbot.utils import View, Paginator, dj_check, chunks
 from musicbot.audiocontroller import (
     PLAYLIST,
     EMPTY_PLAYLIST,
@@ -21,7 +20,6 @@ from musicbot.audiocontroller import (
     MusicButton,
 )
 from musicbot.loader import SongError, search_youtube
-from musicbot.playlist import LoopMode
 from musicbot.settings import SavedPlaylist
 from musicbot.linkutils import get_site_type, url_regex
 
@@ -63,7 +61,7 @@ class Music(commands.Cog):
     async def cog_before_invoke(self, ctx: AudioContext):
         ctx.audiocontroller.command_channel = ctx
 
-    @bridge.bridge_command(
+    @commands.hybrid_command(
         name="play",
         description=config.HELP_YT_LONG,
         help=config.HELP_YT_SHORT,
@@ -88,8 +86,8 @@ class Music(commands.Cog):
             await ctx.send(config.PLAY_ARGS_MISSING)
             return
 
-        await ctx.defer()
-        await self._play_song(ctx, track)
+        async with ctx.typing():
+            await self._play_song(ctx, track)
 
     async def _play_song(
         self, ctx: AudioContext, track: Union[str, Iterable[str]]
@@ -121,15 +119,16 @@ class Music(commands.Cog):
                     embed=song.format_output(config.SONGINFO_NOW_PLAYING)
                 )
 
-    @bridge.bridge_command(
+    @commands.hybrid_command(
         name="search",
         description=config.HELP_SEARCH_LONG,
         help=config.HELP_SEARCH_SHORT,
         aliases=["sc"],
     )
     async def _search(self, ctx: AudioContext, *, query: str):
-        await ctx.defer()
-        results = await search_youtube(query, config.SEARCH_RESULTS)
+        async with ctx.typing():
+            results = await search_youtube(query, config.SEARCH_RESULTS)
+
         songs = []
         for data in results:
             song = Song(
@@ -146,11 +145,11 @@ class Music(commands.Cog):
                     SongButton(self, i, data["url"])
                     for i, data in enumerate(results, start=1)
                 ),
-                disable_on_timeout=True,
+                timeout=180,
             ),
         )
 
-    @bridge.bridge_command(
+    @commands.hybrid_command(
         name="loop",
         description=config.HELP_LOOP_LONG,
         help=config.HELP_LOOP_SHORT,
@@ -160,14 +159,12 @@ class Music(commands.Cog):
     async def _loop(
         self,
         ctx: AudioContext,
-        mode: BridgeOption(
-            str, choices=tuple(m.value for m in LoopMode)
-        ) = None,
+        mode: LoopMode | None = None,
     ):
         result = ctx.audiocontroller.loop(mode)
         await ctx.send(result.value)
 
-    @bridge.bridge_command(
+    @commands.hybrid_command(
         name="shuffle",
         description=config.HELP_SHUFFLE_LONG,
         help=config.HELP_SHUFFLE_SHORT,
@@ -178,7 +175,7 @@ class Music(commands.Cog):
         ctx.audiocontroller.shuffle()
         await ctx.send("Shuffled queue :twisted_rightwards_arrows:")
 
-    @bridge.bridge_command(
+    @commands.hybrid_command(
         name="pause",
         description=config.HELP_PAUSE_LONG,
         help=config.HELP_PAUSE_SHORT,
@@ -188,7 +185,7 @@ class Music(commands.Cog):
         result = ctx.audiocontroller.pause()
         await ctx.send(result.value)
 
-    @bridge.bridge_command(
+    @commands.hybrid_command(
         name="queue",
         description=config.HELP_QUEUE_LONG,
         help=config.HELP_QUEUE_SHORT,
@@ -199,7 +196,7 @@ class Music(commands.Cog):
         playlist = ctx.audiocontroller.playlist
         await ctx.send(embed=playlist.queue_embed())
 
-    @bridge.bridge_command(
+    @commands.hybrid_command(
         name="stop",
         description=config.HELP_STOP_LONG,
         help=config.HELP_STOP_SHORT,
@@ -209,7 +206,7 @@ class Music(commands.Cog):
         ctx.audiocontroller.stop_player()
         await ctx.send("Stopped all sessions :octagonal_sign:")
 
-    @bridge.bridge_command(
+    @commands.hybrid_command(
         name="move",
         description=config.HELP_MOVE_LONG,
         help=config.HELP_MOVE_SHORT,
@@ -273,7 +270,7 @@ class Music(commands.Cog):
             f" {song.title or song.webpage_url}"
         )
 
-    @bridge.bridge_command(
+    @commands.hybrid_command(
         name="remove",
         description=config.HELP_REMOVE_LONG,
         help=config.HELP_REMOVE_SHORT,
@@ -311,7 +308,7 @@ class Music(commands.Cog):
         title = song.title or song.webpage_url
         await ctx.send(f"Removed #{queue_number + 1}: {title}")
 
-    @bridge.bridge_command(
+    @commands.hybrid_command(
         name="skip",
         description=config.HELP_SKIP_LONG,
         help=config.HELP_SKIP_SHORT,
@@ -322,7 +319,7 @@ class Music(commands.Cog):
         ctx.audiocontroller.next_song(forced=True)
         await ctx.send("Skipped current song :fast_forward:")
 
-    @bridge.bridge_command(
+    @commands.hybrid_command(
         name="clear",
         description=config.HELP_CLEAR_LONG,
         help=config.HELP_CLEAR_SHORT,
@@ -332,7 +329,7 @@ class Music(commands.Cog):
         ctx.audiocontroller.playlist.clear()
         await ctx.send("Cleared queue :no_entry_sign:")
 
-    @bridge.bridge_command(
+    @commands.hybrid_command(
         name="prev",
         description=config.HELP_PREV_LONG,
         help=config.HELP_PREV_SHORT,
@@ -344,7 +341,7 @@ class Music(commands.Cog):
         else:
             await ctx.send("No previous track.")
 
-    @bridge.bridge_command(
+    @commands.hybrid_command(
         name="songinfo",
         description=config.HELP_SONGINFO_LONG,
         help=config.HELP_SONGINFO_SHORT,
@@ -355,7 +352,7 @@ class Music(commands.Cog):
         song = ctx.audiocontroller.current_song
         await ctx.send(embed=song.format_output(config.SONGINFO_SONGINFO))
 
-    @bridge.bridge_command(
+    @commands.hybrid_command(
         name="history",
         description=config.HELP_HISTORY_LONG,
         help=config.HELP_HISTORY_SHORT,
@@ -363,7 +360,7 @@ class Music(commands.Cog):
     async def _history(self, ctx: AudioContext):
         await ctx.send(ctx.audiocontroller.track_history())
 
-    @bridge.bridge_command(
+    @commands.hybrid_command(
         name="volume",
         aliases=["vol"],
         description=config.HELP_VOL_LONG,
@@ -372,7 +369,7 @@ class Music(commands.Cog):
     async def _volume(
         self,
         ctx: AudioContext,
-        value: BridgeOption(int, min_value=0, max_value=100) = None,
+        value: int | None = None,
     ):
         if value is None:
             await ctx.send(
@@ -393,20 +390,23 @@ class Music(commands.Cog):
         ctx.audiocontroller.volume = value
 
     async def _playlist_autocomplete(
-        self, ctx: AutocompleteContext
-    ) -> List[str]:
-        async with ctx.bot.DbSession() as session:
-            return (
-                await session.execute(
-                    select(SavedPlaylist.name)
-                    .where(
-                        SavedPlaylist.guild_id == str(ctx.interaction.guild.id)
+        self, interaction: Interaction, current: str
+    ) -> list[Choice[str]]:
+        async with interaction.client.DbSession() as session:
+            return [
+                Choice(name=name, value=name)
+                for name in (
+                    await session.execute(
+                        select(SavedPlaylist.name)
+                        .where(
+                            SavedPlaylist.guild_id == str(interaction.guild.id)
+                        )
+                        .where(SavedPlaylist.name.istartswith(current))
                     )
-                    .where(SavedPlaylist.name.startswith(ctx.value))
-                )
-            ).scalars()
+                ).scalars()
+            ][:25]
 
-    @bridge.bridge_group(
+    @commands.hybrid_group(
         name="playlist",
         aliases=["pl"],
         invoke_without_command=True,
@@ -426,7 +426,6 @@ class Music(commands.Cog):
             await ctx.send(config.PLAYLISTS_ARE_DISABLED)
             return
 
-        await ctx.defer()
         songs = [
             {"url": song.webpage_url, "title": song.title}
             for song in ctx.audiocontroller.playlist.playque
@@ -434,7 +433,8 @@ class Music(commands.Cog):
         if not songs:
             await ctx.send(config.QUEUE_EMPTY)
             return
-        async with ctx.bot.DbSession() as session:
+
+        async with ctx.typing(), ctx.bot.DbSession() as session:
             session.add(
                 SavedPlaylist(
                     guild_id=str(ctx.guild.id),
@@ -458,10 +458,9 @@ class Music(commands.Cog):
     async def _playlist_load(
         self,
         ctx: AudioContext,
-        name: BridgeOption(str, autocomplete=_playlist_autocomplete),
+        name: str,
     ):
-        await ctx.defer()
-        async with ctx.bot.DbSession() as session:
+        async with ctx.typing(), ctx.bot.DbSession() as session:
             playlist = (
                 await session.execute(
                     select(SavedPlaylist)
@@ -482,12 +481,15 @@ class Music(commands.Cog):
                 )
             )
         if not ctx.audiocontroller.is_active():
-            await ctx.audiocontroller.play_song(
-                ctx.audiocontroller.playlist[0]
-            )
+            async with ctx.typing():
+                await ctx.audiocontroller.play_song(
+                    ctx.audiocontroller.playlist[0]
+                )
         else:
             ctx.audiocontroller.preload_queue()
         await ctx.send(config.SONGINFO_PLAYLIST_QUEUED)
+
+    _playlist_load.autocomplete("name")(_playlist_autocomplete)
 
     @_playlist.command(
         name="remove",
@@ -499,10 +501,9 @@ class Music(commands.Cog):
     async def _playlist_remove(
         self,
         ctx: AudioContext,
-        name: BridgeOption(str, autocomplete=_playlist_autocomplete),
+        name: str,
     ):
-        await ctx.defer()
-        async with ctx.bot.DbSession() as session:
+        async with ctx.typing(), ctx.bot.DbSession() as session:
             result = await session.execute(
                 delete(SavedPlaylist)
                 .where(SavedPlaylist.guild_id == str(ctx.guild.id))
@@ -513,6 +514,8 @@ class Music(commands.Cog):
             await ctx.send(config.PLAYLIST_NOT_FOUND)
             return
         await ctx.send(config.PLAYLIST_REMOVED)
+
+    _playlist_remove.autocomplete("name")(_playlist_autocomplete)
 
     @_playlist.command(
         name="list",
@@ -550,11 +553,9 @@ class Music(commands.Cog):
     async def _playlist_show(
         self,
         ctx: AudioContext,
-        playlist: BridgeOption(str, autocomplete=_playlist_autocomplete),
+        playlist: str,
     ):
-        await ctx.defer()
-
-        async with ctx.bot.DbSession() as session:
+        async with ctx.typing(), ctx.bot.DbSession() as session:
             playlist = (
                 await session.execute(
                     select(SavedPlaylist)
@@ -579,6 +580,8 @@ class Music(commands.Cog):
             pages.append(embed)
         await Paginator(pages).send(ctx)
 
+    _playlist_show.autocomplete("playlist")(_playlist_autocomplete)
+
     @_playlist.command(
         name="add_song",
         aliases=["as"],
@@ -589,11 +592,11 @@ class Music(commands.Cog):
     async def _playlist_add_song(
         self,
         ctx: AudioContext,
-        playlist: BridgeOption(str, autocomplete=_playlist_autocomplete),
+        playlist: str,
         track: str,
     ):
-        await ctx.defer()
-        song = await loader.load_song(track)
+        async with ctx.typing():
+            song = await loader.load_song(track)
         if song is None:
             await ctx.send(config.SONGINFO_ERROR)
             return
@@ -602,7 +605,7 @@ class Music(commands.Cog):
         else:
             entries = [{"url": s.webpage_url, "title": s.title} for s in song]
 
-        async with ctx.bot.DbSession() as session:
+        async with ctx.typing(), ctx.bot.DbSession() as session:
             playlist = (
                 await session.execute(
                     select(SavedPlaylist)
@@ -619,6 +622,8 @@ class Music(commands.Cog):
             await session.commit()
         await ctx.send(config.PLAYLIST_UPDATED)
 
+    _playlist_add_song.autocomplete("playlist")(_playlist_autocomplete)
+
     @_playlist.command(
         name="remove_song",
         aliases=["rs"],
@@ -629,12 +634,10 @@ class Music(commands.Cog):
     async def _playlist_remove_song(
         self,
         ctx: AudioContext,
-        playlist: BridgeOption(str, autocomplete=_playlist_autocomplete),
+        playlist: str,
         position: int,
     ):
-        await ctx.defer()
-
-        async with ctx.bot.DbSession() as session:
+        async with ctx.typing(), ctx.bot.DbSession() as session:
             playlist = (
                 await session.execute(
                     select(SavedPlaylist)
@@ -659,6 +662,8 @@ class Music(commands.Cog):
             await session.commit()
         await ctx.send(config.PLAYLIST_UPDATED)
 
+    _playlist_remove_song.autocomplete("playlist")(_playlist_autocomplete)
+
     @_playlist.command(
         name="move_song",
         aliases=["ms"],
@@ -669,13 +674,11 @@ class Music(commands.Cog):
     async def _playlist_move_song(
         self,
         ctx: AudioContext,
-        playlist: BridgeOption(str, autocomplete=_playlist_autocomplete),
+        playlist: str,
         source_position: int,
         destination_position: int,
     ):
-        await ctx.defer()
-
-        async with ctx.bot.DbSession() as session:
+        async with ctx.typing(), ctx.bot.DbSession() as session:
             playlist = (
                 await session.execute(
                     select(SavedPlaylist)
@@ -701,6 +704,8 @@ class Music(commands.Cog):
             await session.commit()
         await ctx.send(config.PLAYLIST_UPDATED)
 
+    _playlist_move_song.autocomplete("playlist")(_playlist_autocomplete)
 
-def setup(bot: MusicBot):
-    bot.add_cog(Music(bot))
+
+async def setup(bot: MusicBot):
+    await bot.add_cog(Music(bot))

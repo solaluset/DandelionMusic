@@ -37,6 +37,7 @@ bot = MusicBot(
     activity=discord.Game(name=config.STATUS_TEXT),
     intents=intents,
     allowed_mentions=discord.AllowedMentions.none(),
+    extensions=initial_extensions,
 )
 
 
@@ -47,8 +48,6 @@ if __name__ == "__main__":
     config.warn_unknown_vars()
     if config.has_missing:
         config.save()
-
-    bot.load_extensions(*initial_extensions)
 
     # start executor before reading from stdin to avoid deadlocks
     loader.init()
