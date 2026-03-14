@@ -1,6 +1,6 @@
 discord.py[voice,speed]==2.7.1
 discord-py-paginators==0.3.0
-yt-dlp[default,curl-cffi]==2026.3.3
+yt-dlp[default,curl-cffi]==2026.3.13
 bgutil-ytdlp-pot-provider==1.3.1
 aiohttp==3.13.3
 beautifulsoup4==4.14.3
