@@ -147,6 +147,17 @@ class View(ui.View):
         super().__init__(timeout=timeout)
         for item in items:
             self.add_item(item)
+        self.message = None
+
+    async def on_timeout(self):
+        for child in self.children:
+            if hasattr(child, "disabled"):
+                child.disabled = True
+
+        if self.message:
+            await self.message.edit(view=self)
+
+        return await super().on_timeout()
 
 
 def get_emoji(bot: MusicBot, string: str) -> Optional[Union[str, Emoji]]:

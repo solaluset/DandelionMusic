@@ -56,9 +56,15 @@ class SendViewMixin:
                 and getattr(channel, "channel", channel) != self.channel
             )
         ):
+            view = kwargs.get("view")
             # sending ephemeral message or using different channel
-            # don't bother with views
-            return await super().send(*args, **kwargs)
+            # do not add player view
+            msg = await super().send(*args, **kwargs)
+            if view:
+                # but update given view
+                # so it can disable buttons on timeout
+                view.message = msg
+            return msg
         async with audiocontroller.message_lock:
             await audiocontroller.update_view(None)
             view = audiocontroller.make_view()
