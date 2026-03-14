@@ -30,7 +30,7 @@ class AudioContext(Context):
 class SongButton(MusicButton):
     def __init__(self, cog: "Music", num: int, song: str):
         async def play(ctx):
-            async with ctx.channel.typing():
+            async with ctx.typing():
                 await cog._play_song(ctx, song)
 
         super().__init__(play, cog.cog_check, emoji=f"{num}⃣")
@@ -85,8 +85,8 @@ class Music(commands.Cog):
             await ctx.send(config.PLAY_ARGS_MISSING)
             return
 
-        await ctx.defer()
-        await self._play_song(ctx, track)
+        async with ctx.typing():
+            await self._play_song(ctx, track)
 
     async def _play_song(
         self, ctx: AudioContext, track: Union[str, Iterable[str]]
@@ -125,8 +125,9 @@ class Music(commands.Cog):
         aliases=["sc"],
     )
     async def _search(self, ctx: AudioContext, *, query: str):
-        await ctx.defer()
-        results = await search_youtube(query, config.SEARCH_RESULTS)
+        async with ctx.typing():
+            results = await search_youtube(query, config.SEARCH_RESULTS)
+
         songs = []
         for data in results:
             song = Song(
@@ -424,7 +425,6 @@ class Music(commands.Cog):
             await ctx.send(config.PLAYLISTS_ARE_DISABLED)
             return
 
-        await ctx.defer()
         songs = [
             {"url": song.webpage_url, "title": song.title}
             for song in ctx.audiocontroller.playlist.playque
@@ -432,7 +432,8 @@ class Music(commands.Cog):
         if not songs:
             await ctx.send(config.QUEUE_EMPTY)
             return
-        async with ctx.bot.DbSession() as session:
+
+        async with ctx.typing(), ctx.bot.DbSession() as session:
             session.add(
                 SavedPlaylist(
                     guild_id=str(ctx.guild.id),
@@ -458,8 +459,7 @@ class Music(commands.Cog):
         ctx: AudioContext,
         name: str,
     ):
-        await ctx.defer()
-        async with ctx.bot.DbSession() as session:
+        async with ctx.typing(), ctx.bot.DbSession() as session:
             playlist = (
                 await session.execute(
                     select(SavedPlaylist)
@@ -480,9 +480,10 @@ class Music(commands.Cog):
                 )
             )
         if not ctx.audiocontroller.is_active():
-            await ctx.audiocontroller.play_song(
-                ctx.audiocontroller.playlist[0]
-            )
+            async with ctx.typing():
+                await ctx.audiocontroller.play_song(
+                    ctx.audiocontroller.playlist[0]
+                )
         else:
             ctx.audiocontroller.preload_queue()
         await ctx.send(config.SONGINFO_PLAYLIST_QUEUED)
@@ -501,8 +502,7 @@ class Music(commands.Cog):
         ctx: AudioContext,
         name: str,
     ):
-        await ctx.defer()
-        async with ctx.bot.DbSession() as session:
+        async with ctx.typing(), ctx.bot.DbSession() as session:
             result = await session.execute(
                 delete(SavedPlaylist)
                 .where(SavedPlaylist.guild_id == str(ctx.guild.id))
@@ -554,9 +554,7 @@ class Music(commands.Cog):
         ctx: AudioContext,
         playlist: str,
     ):
-        await ctx.defer()
-
-        async with ctx.bot.DbSession() as session:
+        async with ctx.typing(), ctx.bot.DbSession() as session:
             playlist = (
                 await session.execute(
                     select(SavedPlaylist)
@@ -596,8 +594,8 @@ class Music(commands.Cog):
         playlist: str,
         track: str,
     ):
-        await ctx.defer()
-        song = await loader.load_song(track)
+        async with ctx.typing():
+            song = await loader.load_song(track)
         if song is None:
             await ctx.send(config.SONGINFO_ERROR)
             return
@@ -606,7 +604,7 @@ class Music(commands.Cog):
         else:
             entries = [{"url": s.webpage_url, "title": s.title} for s in song]
 
-        async with ctx.bot.DbSession() as session:
+        async with ctx.typing(), ctx.bot.DbSession() as session:
             playlist = (
                 await session.execute(
                     select(SavedPlaylist)
@@ -638,9 +636,7 @@ class Music(commands.Cog):
         playlist: str,
         position: int,
     ):
-        await ctx.defer()
-
-        async with ctx.bot.DbSession() as session:
+        async with ctx.typing(), ctx.bot.DbSession() as session:
             playlist = (
                 await session.execute(
                     select(SavedPlaylist)
@@ -681,9 +677,7 @@ class Music(commands.Cog):
         source_position: int,
         destination_position: int,
     ):
-        await ctx.defer()
-
-        async with ctx.bot.DbSession() as session:
+        async with ctx.typing(), ctx.bot.DbSession() as session:
             playlist = (
                 await session.execute(
                     select(SavedPlaylist)

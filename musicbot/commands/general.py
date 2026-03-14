@@ -43,12 +43,12 @@ class General(commands.Cog):
     )
     @commands.check(voice_check)
     async def _disconnect(self, ctx: Context):
-        await ctx.defer()  # ANNOUNCE_DISCONNECT will take a while
         audiocontroller = ctx.bot.audio_controllers[ctx.guild]
-        if await audiocontroller.udisconnect():
-            await ctx.send("Disconnected.")
-        else:
-            await ctx.send(config.NOT_CONNECTED_MESSAGE)
+        async with ctx.typing():  # ANNOUNCE_DISCONNECT will take a while
+            if await audiocontroller.udisconnect():
+                await ctx.send("Disconnected.")
+            else:
+                await ctx.send(config.NOT_CONNECTED_MESSAGE)
 
     @commands.hybrid_command(
         name="reset",
@@ -58,15 +58,15 @@ class General(commands.Cog):
     )
     @commands.check(voice_check)
     async def _reset(self, ctx: Context):
-        await ctx.defer()
-        if await ctx.bot.audio_controllers[ctx.guild].udisconnect():
-            # bot was connected and need some rest
-            await asyncio.sleep(1)
+        async with ctx.typing():
+            if await ctx.bot.audio_controllers[ctx.guild].udisconnect():
+                # bot was connected and needs some rest
+                await asyncio.sleep(1)
 
-        audiocontroller = ctx.bot.audio_controllers[ctx.guild] = (
-            AudioController(self.bot, ctx.guild)
-        )
-        await audiocontroller.uconnect(ctx)
+            audiocontroller = ctx.bot.audio_controllers[ctx.guild] = (
+                AudioController(self.bot, ctx.guild)
+            )
+            await audiocontroller.uconnect(ctx)
         await ctx.send(
             "{} Connected to {}".format(
                 ":white_check_mark:", ctx.author.voice.channel.name

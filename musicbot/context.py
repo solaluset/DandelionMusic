@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import discord
 from discord.ext import commands
+from discord.ext.commands.context import DeferTyping
 
 if TYPE_CHECKING:
     from musicbot.bot import MusicBot
@@ -11,26 +12,33 @@ if TYPE_CHECKING:
 
 class BasicContext:
     def __init__(self, origin: Context | discord.Interaction):
-        self._origin = origin
-
         self.guild = origin.guild
         self.channel = origin.channel
 
         if isinstance(origin, discord.Interaction):
+            self.interaction = origin
             self.bot = origin.client
             self.author = origin.user
         else:
+            self.interaction = None
             self.bot = origin.bot
             self.author = origin.author
+
             self.send = origin.send
+            self.typing = origin.typing
 
     async def send(self, *args, **kwargs):
-        if self._origin.response.is_done():
-            return await self._origin.followup.send(*args, **kwargs)
+        if self.interaction.response.is_done():
+            return await self.interaction.followup.send(*args, **kwargs)
         try:
-            return await self._origin.response.send_message(*args, **kwargs)
+            return await self.interaction.response.send_message(
+                *args, **kwargs
+            )
         except discord.InteractionResponded:
-            return await self._origin.followup.send(*args, **kwargs)
+            return await self.interaction.followup.send(*args, **kwargs)
+
+    def typing(self, *, ephemeral=False) -> DeferTyping:
+        return DeferTyping(self, ephemeral=ephemeral)
 
 
 class SendViewMixin:
@@ -69,9 +77,3 @@ class InteractionContext(SendViewMixin, BasicContext):
 class Context(SendViewMixin, commands.Context, BasicContext):
     bot: MusicBot
     guild: discord.Guild
-
-    async def defer(self, **kwargs):
-        try:
-            await super().defer(**kwargs)
-        except discord.InteractionResponded:
-            pass

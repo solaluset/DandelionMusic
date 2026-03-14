@@ -48,10 +48,10 @@ class MusicButton(discord.ui.Button):
         except CheckError as e:
             await ctx.send(e, ephemeral=True)
             return
-        await inter.response.defer()
-        res = self._callback(ctx)
-        if isawaitable(res):
-            await res
+        async with ctx.typing():
+            res = self._callback(ctx)
+            if isawaitable(res):
+                await res
 
 
 class AudioController(object):
@@ -551,7 +551,7 @@ class AudioController(object):
             raise CheckError(config.USER_NOT_IN_VC_MESSAGE)
 
         if bot_vc is None or bot_vc.channel != author_vc.channel and move:
-            await ctx.defer()
+            await ctx.typing()
             await self.register_voice_channel(author_vc.channel)
             if config.ANNOUNCE_CONNECT:
                 self.play_asset(VoiceAsset.HELLO)
