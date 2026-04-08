@@ -150,7 +150,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
         except ClientResponseError as e:
             raise SongError(config.SONGINFO_ERROR) from e
         if isinstance(data, list):
-            data = [{"url": url} for url in data]
+            data = [{"url": url, "_type": "url"} for url in data]
 
     elif host == SiteTypes.CUSTOM:
         data = _extract_info(track, GENERIC_IE)
