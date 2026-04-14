@@ -238,6 +238,8 @@ class AudioController(object):
             return
         try:
             await msg.edit(view=view)
+        except discord.NotFound:
+            self.last_message = None
         except discord.HTTPException as e:
             if e.code == 50027:  # Invalid Webhook Token
                 try:
