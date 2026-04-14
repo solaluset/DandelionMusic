@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from config import config
-from musicbot.audiocontroller import VC_CONNECT_TIMEOUT, AudioController
+from musicbot.audiocontroller import AudioController
 from musicbot.settings import (
     GuildSettings,
     run_migrations,
@@ -133,19 +133,7 @@ class MusicBot(commands.Bot):
     async def on_voice_state_update(self, member, before, after):
         guild = member.guild
         if member == self.user:
-            audiocontroller = self.audio_controllers[guild]
-            if not guild.voice_client:
-                await asyncio.sleep(VC_CONNECT_TIMEOUT)
-            if guild.voice_client:
-                is_playing = guild.voice_client.is_playing()
-                await audiocontroller.timer.start(is_playing)
-                if is_playing:
-                    # bot was moved, restore playback
-                    await asyncio.sleep(1)
-                    guild.voice_client.resume()
-            else:
-                # did not reconnect, clear state
-                await audiocontroller.udisconnect()
+            return
         elif (
             guild.voice_client
             and guild.voice_client.channel == before.channel
