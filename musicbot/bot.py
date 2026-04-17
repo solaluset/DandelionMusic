@@ -112,6 +112,10 @@ class MusicBot(commands.Bot):
 
     async def setup_hook(self):
         await super().setup_hook()
+        if not config.ENABLE_SLASH_COMMANDS:
+            self.tree.clear_commands(
+                guild=None, type=discord.AppCommandType.chat_input
+            )
         await self.tree.sync()
 
     async def on_guild_join(self, guild):
@@ -126,9 +130,6 @@ class MusicBot(commands.Bot):
         await ctx.send(error)
         if not isinstance(error, (CheckError, NotOwner, UserInputError)):
             print_exception(error)
-
-    async def on_application_command_error(self, ctx, error):
-        await self.on_command_error(ctx, error)
 
     async def on_voice_state_update(self, member, before, after):
         guild = member.guild
@@ -154,11 +155,6 @@ class MusicBot(commands.Bot):
             )
         except Exception as e:
             print_exception(e)
-
-    def add_application_command(self, command):
-        if not config.ENABLE_SLASH_COMMANDS:
-            return
-        return super().add_application_command(command)
 
     async def get_prefix(
         self, message: Union[discord.Message, commands.Context]
