@@ -9,7 +9,7 @@ from typing import Dict, Union
 import aiohttp
 import discord
 from discord.ext import commands, tasks
-from discord.app_commands import Choice
+from discord.app_commands import Choice, CommandTree as BaseCommandTree
 from discord.ext.commands import DefaultHelpCommand, NotOwner, UserInputError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -35,6 +35,7 @@ class MusicBot(commands.Bot):
     def __init__(self, *args, extensions: list[str], **kwargs):
         kwargs.setdefault("help_command", UniversalHelpCommand())
         kwargs.setdefault("proxy", config.PROXY_URL)
+        kwargs.setdefault("tree_cls", CommandTree)
         super().__init__(*args, **kwargs)
 
         # A dictionary that remembers
@@ -181,18 +182,6 @@ class MusicBot(commands.Bot):
     ):
         return await super().get_context(origin, cls=cls)
 
-    async def process_application_commands(self, inter):
-        if (
-            not inter.guild
-            and inter.context != discord.InteractionContextType.private_channel
-        ):
-            await inter.response.send_message(config.NO_GUILD_MESSAGE)
-            return
-
-        await self.absolutely_ready
-
-        await super().process_application_commands(inter)
-
     async def process_commands(self, message: discord.Message):
         if message.author.bot:
             return
@@ -256,3 +245,14 @@ async def _help_autocomplete(
         for c in interaction.client.walk_commands()
         if c.qualified_name.startswith(current) and not c.hidden
     ][:25]
+
+
+class CommandTree(BaseCommandTree):
+    async def interaction_check(self, inter) -> bool:
+        if inter.guild is None:
+            await inter.response.send_message(config.NO_GUILD_MESSAGE)
+            return False
+
+        await self.client.absolutely_ready
+
+        return True
