@@ -107,7 +107,7 @@ def convert_bool(ctx: "Context", value: bool) -> bool:
 
 
 def convert_volume(ctx: "Context", value: int) -> int:
-    if value > 100 or value < 0:
+    if value > 200 or value < 0:
         raise ConversionError(ConversionErrorText.INVALID_VOLUME)
     return value
 

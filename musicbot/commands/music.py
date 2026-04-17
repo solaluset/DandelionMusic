@@ -21,7 +21,7 @@ from musicbot.audiocontroller import (
     MusicButton,
 )
 from musicbot.loader import SongError, search_youtube
-from musicbot.settings import SavedPlaylist
+from musicbot.settings import SavedPlaylist, ConversionError, convert_volume
 from musicbot.linkutils import get_site_type, url_regex
 
 
@@ -400,8 +400,10 @@ class Music(commands.Cog):
             )
             return
 
-        if value > 100 or value < 0:
-            await ctx.send("Error: Volume must be a number 1-100")
+        try:
+            value = convert_volume(ctx, value)
+        except ConversionError as e:
+            await ctx.send(e)
             return
 
         if ctx.audiocontroller.volume >= value:

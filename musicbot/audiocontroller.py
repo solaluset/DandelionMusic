@@ -113,7 +113,7 @@ class AudioController(object):
             print_exc(file=sys.stderr)
 
     def volume_up(self):
-        self.volume = min(self.volume + 10, 100)
+        self.volume = min(self.volume + 10, 200)
 
     def volume_down(self):
         self.volume = max(self.volume - 10, 10)
@@ -195,15 +195,16 @@ class AudioController(object):
                 lambda _: self.volume_down(),
                 custom_id="volume_down",
                 row=2,
-                disabled=self.volume == 10,
+                disabled=self.volume <= 10,
                 emoji="🔉",
             ),
             MusicButton(
                 lambda _: self.volume_up(),
                 custom_id="volume_up",
                 row=2,
-                disabled=self.volume == 100,
+                disabled=self.volume >= 200,
                 emoji="🔊",
+                label=f"{self.volume}%",
             ),
             timeout=None,
         )

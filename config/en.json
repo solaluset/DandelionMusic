@@ -123,7 +123,7 @@
     "BUTTON_DISABLED": "Button plugin is disabled",
     "INVALID_EMOJI": "Invalid emote",
     "NO_REACTION_PERMS": "Missing permission to add reactions",
-    "INVALID_VOLUME": "Value must be a number in range 0-100",
+    "INVALID_VOLUME": "Value must be a number in range 0-200",
   },
   "SettingsEmbed": {
     "TITLE": "Settings",

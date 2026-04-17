@@ -141,7 +141,7 @@ d!np
 d!volume / d!vol
 ```
 
-* Adjust the volume 1-100%
+* Adjust the volume 1-200%
 * Pass no arguments for current volume
 
 ```
