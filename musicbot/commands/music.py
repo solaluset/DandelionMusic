@@ -1,4 +1,5 @@
 import json
+import asyncio
 from typing import Iterable, Union, Optional
 
 from discord import Attachment, Embed, Interaction
@@ -56,11 +57,30 @@ class Music(commands.Cog):
 
     async def cog_check(self, ctx: AudioContext):
         ctx.audiocontroller = ctx.bot.audio_controllers[ctx.guild]
-        await utils.play_check(ctx)
+
+        lock = ctx.audiocontroller.command_lock
+        typing_task = (
+            asyncio.ensure_future(ctx.typing()) if lock.locked() else None
+        )
+        await lock.acquire()
+
+        try:
+            await utils.play_check(ctx)
+
+            if typing_task is not None:
+                await typing_task
+
+        except Exception:
+            lock.release()
+            raise
+
         return True
 
     async def cog_before_invoke(self, ctx: AudioContext):
         ctx.audiocontroller.command_channel = ctx
+
+    async def cog_after_invoke(self, ctx: AudioContext):
+        ctx.audiocontroller.command_lock.release()
 
     @commands.hybrid_command(
         name="play",

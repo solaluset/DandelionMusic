@@ -84,6 +84,7 @@ class AudioController(object):
         # to keep strong references to all tasks
         self._tasks = set()
 
+        self.command_lock = asyncio.Lock()
         self.message_lock = asyncio.Lock()
 
         self.current_voice_asset: Optional[VoiceAsset] = None
