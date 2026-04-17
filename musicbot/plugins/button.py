@@ -81,8 +81,7 @@ class Button(commands.Cog):
             # not the one who sent the message
             ctx.author = member
             try:
-                if not await utils.voice_check(ctx):
-                    return
+                await utils.voice_check(ctx)
             except utils.CheckError:
                 return
             await audiocontroller.register_voice_channel(user_vc.channel)

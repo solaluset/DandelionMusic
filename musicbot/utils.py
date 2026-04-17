@@ -15,6 +15,7 @@ from typing import (
     Optional,
     Union,
     List,
+    Literal,
 )
 
 from aioconsole import ainput
@@ -77,7 +78,7 @@ class CheckError(CommandError):
     pass
 
 
-async def dj_check(ctx: BasicContext):
+async def dj_check(ctx: BasicContext) -> Literal[True]:
     "Check if the user has DJ permissions"
     if ctx.channel.permissions_for(ctx.author).administrator:
         return True
@@ -91,7 +92,7 @@ async def dj_check(ctx: BasicContext):
     raise CheckError(config.USER_MISSING_PERMISSIONS)
 
 
-async def voice_check(ctx: BasicContext):
+async def voice_check(ctx: BasicContext) -> Literal[True]:
     "Check if the user can use the bot now"
     bot_vc = ctx.guild.voice_client
     if not bot_vc:
@@ -105,21 +106,20 @@ async def voice_check(ctx: BasicContext):
 
         if all(m.bot for m in bot_vc.channel.members):
             # current channel doesn't have any user in it
-            return await ctx.bot.audio_controllers[ctx.guild].uconnect(
-                ctx, move=True
-            )
+            await ctx.bot.audio_controllers[ctx.guild].uconnect(ctx, move=True)
+            return True
 
     try:
-        if await dj_check(ctx):
-            # DJs and admins can always run commands
-            return True
+        await dj_check(ctx)
+        # DJs and admins can always run commands
+        return True
     except CheckError:
         pass
 
     raise CheckError(config.USER_NOT_IN_VC_MESSAGE)
 
 
-async def play_check(ctx: BasicContext):
+async def play_check(ctx: BasicContext) -> Literal[True]:
     "Prepare for music commands"
 
     sett = ctx.bot.settings[ctx.guild]
@@ -134,10 +134,11 @@ async def play_check(ctx: BasicContext):
         await dj_check(ctx)
 
     if not ctx.guild.voice_client:
-        return await ctx.bot.audio_controllers[ctx.guild].uconnect(ctx)
+        await ctx.bot.audio_controllers[ctx.guild].uconnect(ctx)
+        return True
 
     if sett.user_must_be_in_vc:
-        return await voice_check(ctx)
+        await voice_check(ctx)
 
     return True
 

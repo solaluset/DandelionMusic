@@ -56,7 +56,8 @@ class Music(commands.Cog):
 
     async def cog_check(self, ctx: AudioContext):
         ctx.audiocontroller = ctx.bot.audio_controllers[ctx.guild]
-        return await utils.play_check(ctx)
+        await utils.play_check(ctx)
+        return True
 
     async def cog_before_invoke(self, ctx: AudioContext):
         ctx.audiocontroller.command_channel = ctx

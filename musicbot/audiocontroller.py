@@ -545,7 +545,7 @@ class AudioController(object):
             self.guild.voice_client.stop()
         return True
 
-    async def uconnect(self, ctx, move=False):
+    async def uconnect(self, ctx, move=False) -> None:
         author_vc = ctx.author.voice
         bot_vc = self.guild.voice_client
 
@@ -559,7 +559,6 @@ class AudioController(object):
                 self.play_asset(VoiceAsset.HELLO)
         else:
             raise CheckError(config.ALREADY_CONNECTED_MESSAGE)
-        return True
 
     async def udisconnect(self):
         self.stop_player()
