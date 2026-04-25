@@ -3,7 +3,7 @@ requires = [
    "setuptools==82.0.1",
    "wheel==0.47.0",
    "tomli==2.4.1; python_version<'3.11'",
-   "packaging==26.1",
+   "packaging==26.2",
    "json-with-comments==1.2.10",
 ]
 
