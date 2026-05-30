@@ -135,7 +135,11 @@ class MusicBot(commands.Bot):
     async def on_voice_state_update(self, member, before, after):
         guild = member.guild
         if member == self.user:
-            return
+            if after.channel is not None:
+                audiocontroller = self.audio_controllers[guild]
+                await audiocontroller.timer.start(
+                    guild.voice_client.is_playing()
+                )
         elif (
             guild.voice_client
             and guild.voice_client.channel == before.channel
