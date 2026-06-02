@@ -8,11 +8,11 @@ from contextlib import contextmanager
 from typing import TYPE_CHECKING, Coroutine, Literal, Optional, Union
 
 import discord
-from config import config
 
+from config import config
 from musicbot import loader, utils
 from musicbot.song import Song
-from musicbot.ffmpeg import FFmpegPCMAudio
+from musicbot.ffmpeg import FFmpegPCMAudio, AudioMixer
 from musicbot.context import InteractionContext
 from musicbot.playlist import Playlist, LoopMode, LoopState, PauseState
 from musicbot.utils import CheckError, StrEnum, View, asset, play_check
@@ -69,6 +69,7 @@ class AudioController(object):
         self.playlist = Playlist()
         self._next_song = None
         self.guild = guild
+        self.mixer = None
 
         sett = bot.settings[guild]
         self._volume: int = sett.default_volume
@@ -105,7 +106,7 @@ class AudioController(object):
     def volume(self, value: int):
         self._volume = value
         try:
-            self.guild.voice_client.source.volume = float(value) / 100.0
+            self.mixer.get_stream(0).source.volume = float(value) / 100.0
         except AttributeError:
             pass
         except Exception:
@@ -127,9 +128,13 @@ class AudioController(object):
         if bot_vc:
             await bot_vc.move_to(channel)
         else:
-            await channel.connect(reconnect=True, timeout=VC_CONNECT_TIMEOUT)
+            bot_vc = await channel.connect(
+                reconnect=True, timeout=VC_CONNECT_TIMEOUT
+            )
         # to avoid ClientException: Not connected to voice
         await asyncio.sleep(1)
+
+        self.mixer = AudioMixer(bot_vc)
 
     def make_view(self):
         if not self.is_active():
@@ -137,6 +142,8 @@ class AudioController(object):
             return None
 
         is_empty = len(self.playlist) == 0
+        stream = self.mixer.get_stream(0)
+        is_playing = stream and not stream.paused
 
         self.last_view = View(
             MusicButton(
@@ -148,7 +155,7 @@ class AudioController(object):
             MusicButton(
                 lambda _: self.pause(),
                 custom_id="pause",
-                emoji="⏸️" if self.guild.voice_client.is_playing() else "▶️",
+                emoji="⏸️" if is_playing else "▶️",
             ),
             MusicButton(
                 lambda _: self.next_song(forced=True),
@@ -256,10 +263,7 @@ class AudioController(object):
     def is_active(self) -> bool:
         if self.voice_asset_future is not None:
             return False
-        client = self.guild.voice_client
-        return client is not None and (
-            client.is_playing() or client.is_paused()
-        )
+        return bool(self.mixer and self.mixer.get_stream(0))
 
     def track_history(self):
         history_string = config.INFO_HISTORY_TITLE
@@ -270,15 +274,13 @@ class AudioController(object):
     def pause(self):
         if self.voice_asset_future is not None:
             return PauseState.NOTHING_TO_PAUSE
-        client = self.guild.voice_client
-        if client:
-            if client.is_playing():
-                client.pause()
+        if self.mixer and (stream := self.mixer.get_stream(0)):
+            if not stream.paused:
+                stream.paused = True
                 self.add_task(self.timer.start(True))
                 return PauseState.PAUSED
-            elif client.is_paused():
-                client.resume()
-                return PauseState.RESUMED
+            stream.paused = False
+            return PauseState.RESUMED
         return PauseState.NOTHING_TO_PAUSE
 
     def loop(self, mode=None):
@@ -324,7 +326,7 @@ class AudioController(object):
         finally:
             self.playlist.loop = original_mode
 
-    def next_song(self, error=None, *, forced=False):
+    def next_song(self, *, forced=False):
         """Invoked after a song is finished
         Plays the next song if there is one"""
 
@@ -333,7 +335,7 @@ class AudioController(object):
 
         if self.is_active():
             self._next_song = self.playlist.next(forced)
-            self.guild.voice_client.stop()
+            self.mixer.stop_stream(0)
             return
 
         if self._next_song:
@@ -390,12 +392,14 @@ class AudioController(object):
             await self.voice_asset_future
 
         try:
-            self.guild.voice_client.play(
+            self.mixer.add_stream(
                 discord.PCMVolumeTransformer(
                     audio,
                     float(self.volume) / 100.0,
                 ),
+                id_=0,
                 after=self.next_song,
+                replayable=True,
             )
         except discord.ClientException:
             await self.udisconnect()
@@ -476,7 +480,7 @@ class AudioController(object):
         if not self.is_active():
             return
 
-        self.guild.voice_client.stop()
+        self.mixer.stop_stream(0)
 
     def prev_song(self) -> bool:
         """Loads the last song from the history into the queue and starts it"""
@@ -489,7 +493,7 @@ class AudioController(object):
             self.add_task(self.play_song(prev_song))
         else:
             self._next_song = prev_song
-            self.guild.voice_client.stop()
+            self.mixer.stop_stream(0)
         return True
 
     async def timeout_handler(self):
@@ -507,9 +511,10 @@ class AudioController(object):
     def play_asset(self, voice_asset: VoiceAsset) -> asyncio.Future:
         self.current_voice_asset = voice_asset
         future = asyncio.Future()
-        self.guild.voice_client.play(
+        self.mixer.add_stream(
             discord.FFmpegPCMAudio(asset(voice_asset)),
-            after=lambda _: future.set_result(None),
+            id_=0,
+            after=lambda: future.set_result(None),
         )
         self.voice_asset_future = future
         self.voice_asset_future.add_done_callback(
@@ -543,8 +548,8 @@ class AudioController(object):
         if not self._waiting:
             return False
         self._waiting = False
-        if self.guild.voice_client:
-            self.guild.voice_client.stop()
+        if self.mixer:
+            self.mixer.stop_stream(0)
         return True
 
     async def uconnect(self, ctx, move=False) -> None:
@@ -566,6 +571,7 @@ class AudioController(object):
         self.stop_player()
         await self.update_view(None)
         if self.guild.voice_client is None:
+            self.mixer = None
             return False
         if config.ANNOUNCE_DISCONNECT:
             try:
@@ -575,6 +581,7 @@ class AudioController(object):
             else:
                 # let it finish
                 await asyncio.sleep(1)
+        self.mixer = None
         await self.guild.voice_client.disconnect(force=True)
         self.timer.cancel()
         return True
