@@ -97,7 +97,7 @@ class AudioMixer(AudioSource):
     def __init__(self, client: VoiceClient):
         self.client = client
         self.streams: Dict[int, AudioStream] = {}
-        self.replays: defaultdict[int, deque] = defaultdict(
+        self.replays: defaultdict[int, deque[bytes]] = defaultdict(
             lambda: deque(maxlen=self.MAX_REPLAY_FRAMES)
         )
         self._stop_future = Future()
