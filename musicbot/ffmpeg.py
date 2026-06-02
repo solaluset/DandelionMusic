@@ -16,6 +16,7 @@ import audioop
 from discord import AudioSource, FFmpegPCMAudio as BasePCMAudio, VoiceClient
 from discord.opus import Encoder as OpusEncoder
 
+from config import config
 from musicbot.song import Song
 
 OriginalArgs = Tuple[List[str], Optional[dict]]
@@ -86,19 +87,19 @@ class AudioStream:
     source: AudioSource
     after: Optional[Callable[[], None]] = None
     paused: bool = False
-    replayable: bool = False
+    rewindable: bool = False
 
 
 class AudioMixer(AudioSource):
     SILENCE = b"\0" * OpusEncoder.FRAME_SIZE
     FRAMES_PER_SECOND = round(1000 / OpusEncoder.FRAME_LENGTH)
-    MAX_REPLAY_FRAMES = FRAMES_PER_SECOND * 60
+    MAX_REWIND_FRAMES = FRAMES_PER_SECOND * config.MAX_REWIND_SECONDS
 
     def __init__(self, client: VoiceClient):
         self.client = client
         self.streams: Dict[int, AudioStream] = {}
-        self.replays: defaultdict[int, deque[bytes]] = defaultdict(
-            lambda: deque(maxlen=self.MAX_REPLAY_FRAMES)
+        self.rewinds: defaultdict[int, deque[bytes]] = defaultdict(
+            lambda: deque(maxlen=self.MAX_REWIND_FRAMES)
         )
         self._stop_future = Future()
         self._stop_future.cancel()
@@ -121,8 +122,8 @@ class AudioMixer(AudioSource):
                 self.stop_stream(id_)
                 continue
 
-            if stream.replayable:
-                self.replays[id_].append(ret)
+            if stream.rewindable:
+                self.rewinds[id_].append(ret)
 
             yield ret
 
@@ -136,7 +137,7 @@ class AudioMixer(AudioSource):
         *,
         id_: Optional[int] = None,
         after: Optional[Callable[[], None]] = None,
-        replayable: bool = False,
+        rewindable: bool = False,
     ) -> None:
         if source.is_opus():
             raise ValueError("source must not be Opus-encoded")
@@ -146,7 +147,7 @@ class AudioMixer(AudioSource):
         elif id_ in self.streams:
             raise ValueError(f"stream with id {id_} already exists")
         self.streams[id_] = AudioStream(
-            source, after=after, replayable=replayable
+            source, after=after, rewindable=rewindable
         )
 
         self._stop_future.cancel()
@@ -177,21 +178,27 @@ class AudioMixer(AudioSource):
             future = self._stop_future = Future()
             threading.Thread(target=stop, daemon=True).start()
 
-    def replay_stream(self, id_: int, frame_count: int) -> None:
+    def rewind_stream(self, id_: int, frame_count: int) -> None:
+        current_stream = self.streams.get(id_)
+        if current_stream and isinstance(current_stream.source, AudioRewind):
+            # this stream is already a rewind, unwrap
+            self.stop_stream(id_)
+
         current_stream = self.streams.pop(id_, None)
 
         def restore():
-            self.streams[id_] = current_stream
+            if current_stream:
+                self.streams[id_] = current_stream
 
-        frames = tuple(self.replays[id_])[-frame_count:]
+        frames = tuple(self.rewinds[id_])[-frame_count:]
         self.add_stream(
-            AudioReplay(frames),
+            AudioRewind(frames),
             id_=id_,
             after=restore,
         )
 
 
-class AudioReplay(AudioSource):
+class AudioRewind(AudioSource):
     def __init__(self, frames: Iterable[bytes]):
         self.frames = iter(frames)
 

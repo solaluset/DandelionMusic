@@ -48,6 +48,10 @@ class Config:
     MAX_HISTORY_LENGTH = 10
     MAX_TRACKNAME_HISTORY_LENGTH = 15
 
+    # increasing this will cause higher memory usage
+    # 1 minute = 11 MiB per stream
+    MAX_REWIND_SECONDS = 60
+
     # if database is not one of sqlite, postgres or MySQL
     # you need to provide the url in SQL Alchemy-supported format.
     # Must be async-compatible
