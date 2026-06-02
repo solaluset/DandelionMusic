@@ -94,7 +94,7 @@ class AudioController(object):
 
     @property
     def current_song(self) -> Optional[Song]:
-        if self.is_active():
+        if self.playlist:
             return self.playlist[0]
         return None
 
@@ -305,6 +305,10 @@ class AudioController(object):
         self.playlist.shuffle()
         self.preload_queue()
 
+    def rewind(self, seconds: int) -> None:
+        if self.mixer:
+            self.mixer.rewind_stream(0, seconds * self.mixer.FRAMES_PER_SECOND)
+
     @staticmethod
     def needs_waiting(func):
         @wraps(func)
@@ -399,7 +403,7 @@ class AudioController(object):
                 ),
                 id_=0,
                 after=self.next_song,
-                replayable=True,
+                rewindable=True,
             )
         except discord.ClientException:
             await self.udisconnect()
@@ -439,7 +443,7 @@ class AudioController(object):
             else:
                 loaded_song = PLAYLIST
 
-        if self.current_song is None:
+        if not self.is_active():
             print("Playing {}".format(track))
             await self.play_song(self.playlist[0])
         else:

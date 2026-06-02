@@ -45,6 +45,8 @@
 
   "HELP_HISTORY_SHORT": "Show history of songs",
   "HELP_HISTORY_LONG": "Shows the {MAX_TRACKNAME_HISTORY_LENGTH} last played songs.",
+  "HELP_REWIND_SHORT": "Rewind audio",
+  "HELP_REWIND_LONG": "Rewind audio for specified time (max {MAX_REWIND_SECONDS} seconds, default 20)",
   "HELP_PAUSE_SHORT": "Pause Music",
   "HELP_PAUSE_LONG": "Pauses the AudioPlayer. Use it again to resume playback.",
   "HELP_VOL_SHORT": "Change volume %",
