@@ -20,11 +20,13 @@ class Playlist:
     def __init__(self):
         # Stores the links os the songs in queue and the ones already played
         self.playque: deque[Song] = deque()
-        self.playhistory: deque[Song] = deque()
+        self.playhistory: deque[Song] = deque(maxlen=config.MAX_HISTORY_LENGTH)
 
         # A seperate history that remembers
         # the names of the tracks that were played
-        self.trackname_history: deque[str] = deque()
+        self.trackname_history: deque[str] = deque(
+            maxlen=config.MAX_TRACKNAME_HISTORY_LENGTH
+        )
 
         self.loop = LoopMode.OFF
 
@@ -41,8 +43,6 @@ class Playlist:
         if self.trackname_history and self.trackname_history[-1] == trackname:
             return
         self.trackname_history.append(trackname)
-        if len(self.trackname_history) > config.MAX_TRACKNAME_HISTORY_LENGTH:
-            self.trackname_history.popleft()
 
     def add(self, track: Song):
         self.playque.append(track)
@@ -66,8 +66,6 @@ class Playlist:
             ignore_single_loop and self.loop == LoopMode.SINGLE
         ):
             self.playhistory.append(self.playque.popleft())
-            if len(self.playhistory) > config.MAX_HISTORY_LENGTH:
-                self.playhistory.popleft()
             if len(self.playque) != 0:
                 return self.playque[0]
             else:
