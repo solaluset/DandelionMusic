@@ -305,9 +305,15 @@ class AudioController(object):
         self.playlist.shuffle()
         self.preload_queue()
 
-    def rewind(self, seconds: int) -> None:
+    def rewind(self, seconds: int) -> int:
         if self.mixer:
-            self.mixer.rewind_stream(0, seconds * self.mixer.FRAMES_PER_SECOND)
+            return round(
+                self.mixer.rewind_stream(
+                    0, seconds * self.mixer.FRAMES_PER_SECOND
+                )
+                / self.mixer.FRAMES_PER_SECOND
+            )
+        return 0
 
     @staticmethod
     def needs_waiting(func):

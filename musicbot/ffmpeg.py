@@ -178,7 +178,7 @@ class AudioMixer(AudioSource):
             future = self._stop_future = Future()
             threading.Thread(target=stop, daemon=True).start()
 
-    def rewind_stream(self, id_: int, frame_count: int) -> None:
+    def rewind_stream(self, id_: int, frame_count: int) -> int:
         current_stream = self.streams.get(id_)
         if current_stream and isinstance(current_stream.source, AudioRewind):
             # this stream is already a rewind, unwrap
@@ -196,6 +196,8 @@ class AudioMixer(AudioSource):
             id_=id_,
             after=restore,
         )
+
+        return len(frames)
 
 
 class AudioRewind(AudioSource):
