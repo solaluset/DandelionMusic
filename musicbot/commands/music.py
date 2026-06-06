@@ -391,7 +391,7 @@ class Music(commands.Cog):
         aliases=("re",),
     )
     async def _rewind(self, ctx: AudioContext, time: int = 20):
-        ctx.audiocontroller.rewind(time)
+        time = ctx.audiocontroller.rewind(time)
         await ctx.send(f":track_previous: Rewound for {time} seconds.")
 
     @commands.hybrid_command(
