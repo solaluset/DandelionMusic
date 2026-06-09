@@ -305,6 +305,17 @@ class AudioController(object):
         self.playlist.shuffle()
         self.preload_queue()
 
+    def fast_forward(self, seconds: int) -> None:
+        if self.mixer:
+            self.add_task(
+                asyncio.get_running_loop().run_in_executor(
+                    None,
+                    lambda: self.mixer.fast_forward_stream(
+                        0, seconds * self.mixer.FRAMES_PER_SECOND
+                    ),
+                )
+            )
+
     def rewind(self, seconds: int) -> int:
         if self.mixer:
             return round(
@@ -457,8 +468,11 @@ class AudioController(object):
 
         return loaded_song
 
-    def add_task(self, coro: Coroutine):
-        task = self.bot.loop.create_task(coro)
+    def add_task(self, coro: Coroutine | asyncio.Future):
+        if isinstance(coro, asyncio.Future):
+            task = coro
+        else:
+            task = self.bot.loop.create_task(coro)
         self._tasks.add(task)
         task.add_done_callback(self._tasks.remove)
 

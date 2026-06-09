@@ -178,6 +178,17 @@ class AudioMixer(AudioSource):
             future = self._stop_future = Future()
             threading.Thread(target=stop, daemon=True).start()
 
+    def fast_forward_stream(self, id_: int, frame_count: int) -> None:
+        stream = self.streams.get(id_)
+        if not stream:
+            return
+
+        stream.paused = True
+        for _ in range(frame_count):
+            if not stream.paused or not stream.source.read():
+                break
+        stream.paused = False
+
     def rewind_stream(self, id_: int, frame_count: int) -> int:
         current_stream = self.streams.get(id_)
         if current_stream and isinstance(current_stream.source, AudioRewind):

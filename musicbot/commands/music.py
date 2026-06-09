@@ -385,6 +385,16 @@ class Music(commands.Cog):
         await ctx.send(ctx.audiocontroller.track_history())
 
     @commands.hybrid_command(
+        name="fast-forward",
+        description=config.HELP_FAST_FORWARD_LONG,
+        help=config.HELP_FAST_FORWARD_SHORT,
+        aliases=("ff",),
+    )
+    async def _fast_forward(self, ctx: AudioContext, time: int = 20):
+        ctx.audiocontroller.fast_forward(time)
+        await ctx.send(f":fast_forward: Fast-forwarding for {time} seconds...")
+
+    @commands.hybrid_command(
         name="rewind",
         description=config.HELP_REWIND_LONG,
         help=config.HELP_REWIND_SHORT,
