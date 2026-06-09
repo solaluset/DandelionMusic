@@ -408,6 +408,9 @@ class AudioController(object):
         ):
             await self.voice_asset_future
 
+        if not self.guild.voice_client:
+            raise loader.SongError(config.NOT_CONNECTED_MESSAGE)
+
         try:
             self.mixer.add_stream(
                 discord.PCMVolumeTransformer(
@@ -547,7 +550,13 @@ class AudioController(object):
         self.current_voice_asset = None
 
     def announce_waiting(self):
-        if not config.ANNOUNCE_WAITING or self.is_active() or self._waiting:
+        if (
+            not config.ANNOUNCE_WAITING
+            or self.is_active()
+            or not self.guild.voice_client
+            or not self.guild.voice_client.is_connected()
+            or self._waiting
+        ):
             return
 
         self._waiting = True
@@ -590,10 +599,11 @@ class AudioController(object):
     async def udisconnect(self):
         self.stop_player()
         await self.update_view(None)
-        if self.guild.voice_client is None:
+        if (client := self.guild.voice_client) is None:
             self.mixer = None
             return False
         if config.ANNOUNCE_DISCONNECT:
+            self.mixer.stop_stream(-1)
             try:
                 await self.play_asset(VoiceAsset.GOODBYE)
             except Exception:
@@ -602,6 +612,6 @@ class AudioController(object):
                 # let it finish
                 await asyncio.sleep(1)
         self.mixer = None
-        await self.guild.voice_client.disconnect(force=True)
+        await client.disconnect(force=True)
         self.timer.cancel()
         return True
