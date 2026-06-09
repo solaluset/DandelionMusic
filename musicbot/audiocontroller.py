@@ -325,7 +325,7 @@ class AudioController(object):
     @staticmethod
     def needs_waiting(func):
         @wraps(func)
-        async def wrapped(self, *args, **kwargs):
+        async def wrapped(self: AudioController, *args, **kwargs):
             self.announce_waiting()
             try:
                 return await func(self, *args, **kwargs)
