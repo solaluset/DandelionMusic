@@ -119,7 +119,7 @@ class AudioMixer(AudioSource):
 
             ret = stream.source.read()
             if not ret:
-                self.stop_stream(id_)
+                self._stop_stream_once(id_)
                 continue
 
             if stream.rewindable:
@@ -158,6 +158,14 @@ class AudioMixer(AudioSource):
         return self.streams.get(id_)
 
     def stop_stream(self, id_: int) -> None:
+        stream = self.streams.get(id_)
+        if stream and isinstance(stream.source, AudioRewind):
+            # stop the rewind
+            self._stop_stream_once(id_)
+        # stop actual stream
+        self._stop_stream_once(id_)
+
+    def _stop_stream_once(self, id_: int) -> None:
         stream = self.streams.pop(id_, None)
         if stream and stream.after:
             try:
@@ -193,7 +201,7 @@ class AudioMixer(AudioSource):
         current_stream = self.streams.get(id_)
         if current_stream and isinstance(current_stream.source, AudioRewind):
             # this stream is already a rewind, unwrap
-            self.stop_stream(id_)
+            self._stop_stream_once(id_)
 
         current_stream = self.streams.pop(id_, None)
 
