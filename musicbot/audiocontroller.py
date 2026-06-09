@@ -261,8 +261,6 @@ class AudioController(object):
                 print_exc(file=sys.stderr)
 
     def is_active(self) -> bool:
-        if self.voice_asset_future is not None:
-            return False
         return bool(self.mixer and self.mixer.get_stream(0))
 
     def track_history(self):
@@ -272,8 +270,6 @@ class AudioController(object):
         return history_string
 
     def pause(self):
-        if self.voice_asset_future is not None:
-            return PauseState.NOTHING_TO_PAUSE
         if self.mixer and (stream := self.mixer.get_stream(0)):
             if not stream.paused:
                 stream.paused = True
@@ -537,7 +533,7 @@ class AudioController(object):
         future = asyncio.Future()
         self.mixer.add_stream(
             discord.FFmpegPCMAudio(asset(voice_asset)),
-            id_=0,
+            id_=-1,
             after=lambda: future.set_result(None),
         )
         self.voice_asset_future = future
@@ -573,7 +569,7 @@ class AudioController(object):
             return False
         self._waiting = False
         if self.mixer:
-            self.mixer.stop_stream(0)
+            self.mixer.stop_stream(-1)
         return True
 
     async def uconnect(self, ctx, move=False) -> None:
