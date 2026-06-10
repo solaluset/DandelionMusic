@@ -30,9 +30,11 @@ _not_provided = object()
 
 
 class VoiceAsset(StrEnum):
-    HELLO = "hello.mp3"
-    GOODBYE = "goodbye.mp3"
-    WAIT = "wait.mp3"
+    # assets were encoded with these parameters:
+    # -af loudnorm -b:a 48k -frame_duration 60
+    HELLO = "hello.opus"
+    GOODBYE = "goodbye.opus"
+    WAIT = "wait.opus"
 
 
 class MusicButton(discord.ui.Button):
