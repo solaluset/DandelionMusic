@@ -95,15 +95,18 @@ class Music(commands.Cog):
         self, ctx: AudioContext, *, track: str = None, file: Attachment = None
     ):
         if track is None:
-            if ctx.message:
+            if ctx.interaction is None:
                 if ctx.message.attachments:
                     track = ctx.message.jump_url
                 elif (
                     ctx.message.reference
-                    and ctx.message.reference.resolved
-                    and ctx.message.reference.resolved.attachments
+                    and (msg := ctx.message.reference.resolved)
+                    and (
+                        msg.attachments
+                        or any(s.attachments for s in msg.message_snapshots)
+                    )
                 ):
-                    track = ctx.message.reference.resolved.jump_url
+                    track = msg.jump_url
             elif file:
                 track = file.url
         if track is None:
