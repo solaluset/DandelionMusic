@@ -38,7 +38,7 @@ sys.argv.extend(
         ),
         *[
             "--add-data=" + file + os.pathsep + "assets"
-            for file in glob.glob("assets/*.mp3")
+            for file in glob.glob("assets/*.opus")
         ],
         *[
             "--add-data=" + file + os.pathsep + os.path.dirname(file)
