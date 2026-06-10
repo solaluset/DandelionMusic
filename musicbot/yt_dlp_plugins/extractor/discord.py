@@ -20,6 +20,7 @@ class DiscordAttachmentsIE(InfoExtractor):
     def _real_extract(self, url):
         from musicbot.__main__ import bot
         from musicbot.loader import _loop
+        from musicbot.linkutils import SiteTypes, identify_url
 
         if bot.http.token is None:
             _loop.run_until_complete(bot.http.static_login(config.BOT_TOKEN))
@@ -44,5 +45,6 @@ class DiscordAttachmentsIE(InfoExtractor):
                 "uploader": uploader,
             }
             for a in self._all_attachments(resp)
+            if identify_url(a["url"]) == SiteTypes.CUSTOM
         ]
         return {"_type": "playlist", "entries": entries}
