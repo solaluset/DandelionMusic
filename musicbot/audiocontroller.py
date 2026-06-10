@@ -108,7 +108,7 @@ class AudioController(object):
     def volume(self, value: int):
         self._volume = value
         try:
-            self.mixer.get_stream(0).source.volume = float(value) / 100.0
+            self.mixer.get_stream(0).source.volume = value / 100.0
         except AttributeError:
             pass
         except Exception:
@@ -419,7 +419,7 @@ class AudioController(object):
             self.mixer.add_stream(
                 discord.PCMVolumeTransformer(
                     audio,
-                    float(self.volume) / 100.0,
+                    self.volume / 100.0,
                 ),
                 id_=0,
                 after=self.next_song,
@@ -539,7 +539,10 @@ class AudioController(object):
         self.current_voice_asset = voice_asset
         future = asyncio.Future()
         self.mixer.add_stream(
-            discord.FFmpegPCMAudio(asset(voice_asset)),
+            discord.PCMVolumeTransformer(
+                discord.FFmpegPCMAudio(asset(voice_asset)),
+                self.volume / 100.0,
+            ),
             id_=-1,
             after=lambda: future.cancelled() or future.set_result(None),
         )
