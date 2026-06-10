@@ -75,6 +75,8 @@ class Config:
         ".m4v",
         ".ogg",
         ".mov",
+        ".opus",
+        ".flac",
     )
 
     COOKIE_PATH = "config/cookies/cookies.txt"
