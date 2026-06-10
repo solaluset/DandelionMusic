@@ -357,6 +357,9 @@ class AudioController(object):
             self.mixer.stop_stream(0)
             return
 
+        if self._waiting:
+            self.announce_waiting()
+
         if self._next_song:
             next_song = self._next_song
             self._next_song = None
@@ -381,8 +384,7 @@ class AudioController(object):
     async def play_song(self, song: Song):
         """Plays a song object"""
 
-        if song.data is None:
-            self.announce_waiting()
+        self.announce_waiting()
 
         try:
             if not await loader.preload(song, self.bot):
@@ -539,7 +541,7 @@ class AudioController(object):
         self.mixer.add_stream(
             discord.FFmpegPCMAudio(asset(voice_asset)),
             id_=-1,
-            after=lambda: future.set_result(None),
+            after=lambda: future.cancelled() or future.set_result(None),
         )
         self.voice_asset_future = future
         self.voice_asset_future.add_done_callback(
@@ -552,24 +554,25 @@ class AudioController(object):
         self.current_voice_asset = None
 
     def announce_waiting(self):
-        if (
-            not config.ANNOUNCE_WAITING
-            or self.is_active()
-            or not self.guild.voice_client
-            or not self.guild.voice_client.is_connected()
-            or self._waiting
-        ):
+        if not config.ANNOUNCE_WAITING:
             return
 
         self._waiting = True
 
+        if (
+            self.is_active()
+            or not self.guild.voice_client
+            or not self.guild.voice_client.is_connected()
+        ):
+            return
+
         def continue_waiting(_):
             if self._waiting:
-                self._waiting = False
                 self.announce_waiting()
 
         if self.voice_asset_future is not None:
-            self.voice_asset_future.add_done_callback(continue_waiting)
+            if self.current_voice_asset != VoiceAsset.WAIT:
+                self.voice_asset_future.add_done_callback(continue_waiting)
             return
 
         future = self.play_asset(VoiceAsset.WAIT)
@@ -600,11 +603,12 @@ class AudioController(object):
 
     async def udisconnect(self):
         self.stop_player()
+        self._waiting = False
         await self.update_view(None)
         if (client := self.guild.voice_client) is None:
             self.mixer = None
             return False
-        if config.ANNOUNCE_DISCONNECT:
+        if config.ANNOUNCE_DISCONNECT and client.is_connected():
             self.mixer.stop_stream(-1)
             try:
                 await self.play_asset(VoiceAsset.GOODBYE)
