@@ -177,7 +177,7 @@ class AudioMixer(AudioSource):
             self._stop_future.cancel()
 
             def stop():
-                time.sleep(1)
+                time.sleep(3)
                 if not future.set_running_or_notify_cancel():
                     return
                 self.client.stop()
