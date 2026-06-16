@@ -15,7 +15,7 @@ from yt_dlp import YoutubeDL, DownloadError
 
 from config import config
 from musicbot.bot import MusicBot
-from musicbot.song import Song
+from musicbot.song import Song, SongError
 from musicbot.utils import OutputWrapper
 from musicbot.ffmpeg import OriginalArgs, _get_ffmpeg_args, downloader_class
 from musicbot.linkutils import (
@@ -77,10 +77,6 @@ _extractor = YoutubeDL(
 _downloader = downloader_class(_extractor, _extractor.params)
 _preloading = {}
 _site_locks = {}
-
-
-class SongError(Exception):
-    pass
 
 
 def _noop():

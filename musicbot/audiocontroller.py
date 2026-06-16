@@ -13,8 +13,7 @@ import discord
 
 from config import config
 from musicbot import loader, utils
-from musicbot.song import Song
-from musicbot.loader import SongError
+from musicbot.song import Song, SongError
 from musicbot.ffmpeg import FFmpegPCMAudio, AudioMixer
 from musicbot.context import InteractionContext
 from musicbot.playlist import Playlist, LoopMode, LoopState, PauseState

@@ -102,3 +102,7 @@ class Song:
             if thumbnails:
                 # last thumbnail has the best resolution
                 self.thumbnail = thumbnails[-1]["url"]
+
+
+class SongError(Exception):
+    pass

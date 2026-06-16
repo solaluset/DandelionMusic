@@ -10,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 
 from config import config
 from musicbot import linkutils, utils, loader
-from musicbot.song import Song
+from musicbot.song import Song, SongError
 from musicbot.playlist import LoopMode
 from musicbot.bot import MusicBot, Context
 from musicbot.utils import View, Paginator, dj_check, chunks
@@ -20,7 +20,7 @@ from musicbot.audiocontroller import (
     AudioController,
     MusicButton,
 )
-from musicbot.loader import SongError, search_youtube
+from musicbot.loader import search_youtube
 from musicbot.settings import SavedPlaylist, ConversionError, convert_volume
 from musicbot.linkutils import get_site_type, url_regex
 
