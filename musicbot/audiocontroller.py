@@ -14,6 +14,7 @@ import discord
 from config import config
 from musicbot import loader, utils
 from musicbot.song import Song
+from musicbot.loader import SongError
 from musicbot.ffmpeg import FFmpegPCMAudio, AudioMixer
 from musicbot.context import InteractionContext
 from musicbot.playlist import Playlist, LoopMode, LoopState, PauseState
@@ -405,6 +406,9 @@ class AudioController(object):
             audio = FFmpegPCMAudio(await loader.get_ffmpeg_args(song))
             # FFmpeg needs some time when seeking, ensure it's ready
             await asyncio.get_running_loop().run_in_executor(None, audio.read)
+            audio._check_process_returncode()
+            if error := audio._current_error:
+                raise SongError(config.SONGINFO_ERROR) from error
         finally:
             self.stop_waiting()
 
