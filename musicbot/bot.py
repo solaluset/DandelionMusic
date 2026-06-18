@@ -143,6 +143,8 @@ class MusicBot(commands.Bot):
                     guild.voice_client.is_playing()
                 )
             else:
+                # this may get called by mistake, log for debugging purposes
+                print("DEBUG: after.channel is None, disconnecting")
                 await audiocontroller.udisconnect()
         elif (
             guild.voice_client
