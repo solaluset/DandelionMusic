@@ -1,6 +1,0 @@
-build:
-  docker:
-    worker: Dockerfile
-  config:
-    # your database type
-    HEROKU_DB: postgres
