@@ -56,7 +56,7 @@ class Config:
     # you need to provide the url in SQL Alchemy-supported format.
     # Must be async-compatible
     # CHANGE ONLY IF YOU KNOW WHAT YOU'RE DOING
-    DATABASE_URL = os.getenv("HEROKU_DB") or "sqlite:///settings.db"
+    DATABASE_URL = "sqlite:///settings.db"
 
     # proxy used to connect to YouTube and other sites (optional)
     PROXY_URL: Optional[str] = ""
