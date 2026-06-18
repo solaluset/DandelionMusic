@@ -58,8 +58,10 @@ class Config:
     # CHANGE ONLY IF YOU KNOW WHAT YOU'RE DOING
     DATABASE_URL = os.getenv("HEROKU_DB") or "sqlite:///settings.db"
 
-    # proxy used to connect to Discord and other sites (optional)
+    # proxy used to connect to YouTube and other sites (optional)
     PROXY_URL: Optional[str] = ""
+    # whether to use proxy for Discord connection too
+    USE_PROXY_FOR_DISCORD = True
 
     ENABLE_BUTTON_PLUGIN = True
 
