@@ -142,14 +142,13 @@ class AudioController(object):
 
     def make_view(self):
         if not self.is_active():
-            self.last_view = None
             return None
 
         is_empty = len(self.playlist) == 0
         stream = self.mixer.get_stream(0)
         is_playing = stream and not stream.paused
 
-        self.last_view = View(
+        return View(
             MusicButton(
                 lambda _: self.prev_song(),
                 custom_id="prev",
@@ -220,8 +219,6 @@ class AudioController(object):
             timeout=None,
         )
 
-        return self.last_view
-
     async def current_song_callback(self, ctx):
         await ctx.send(
             embed=self.current_song.format_output(config.SONGINFO_SONGINFO),
@@ -263,6 +260,7 @@ class AudioController(object):
             else:
                 print("Failed to update view:", file=sys.stderr)
                 print_exc(file=sys.stderr)
+        self.last_view = view
 
     def is_active(self) -> bool:
         return bool(self.mixer and self.mixer.get_stream(0))
