@@ -14,7 +14,6 @@ from typing import (
     Iterable,
     Optional,
     Union,
-    List,
     Literal,
 )
 
@@ -249,10 +248,15 @@ class Paginator(ButtonPaginator):
         return await super().send(context)
 
 
-def chunks(lst: list, n: int) -> List[list]:
+def chunks(lst: Iterable, n: int) -> Iterable[list]:
     """Yield successive n-sized chunks from lst."""
-    for i in range(0, len(lst), n):
-        yield lst[i : i + n]
+    if isinstance(lst, (list, tuple, str, bytes)):
+        for i in range(0, len(lst), n):
+            yield lst[i : i + n]
+        return
+    it = iter(lst)
+    while chunk := [val for _, val in zip(range(n), it)]:
+        yield chunk
 
 
 # StrEnum doesn't exist in Python < 3.11

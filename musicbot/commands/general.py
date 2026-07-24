@@ -6,8 +6,8 @@ from discord.ext import commands
 from config import config
 from musicbot.bot import Context, MusicBot
 from musicbot.settings import CONFIG_OPTIONS, ConversionError
-from musicbot.audiocontroller import AudioController
-from musicbot.utils import dj_check, voice_check
+from musicbot.audiocontroller import AudioController, MusicButton
+from musicbot.utils import Paginator, chunks, dj_check, voice_check
 
 
 class General(commands.Cog):
@@ -132,6 +132,32 @@ class General(commands.Cog):
         )
 
         await ctx.send(embed=embed)
+
+    @commands.hybrid_command(
+        name="button-log",
+        description=config.HELP_BUTTON_LOG_LONG,
+        help=config.HELP_BUTTON_LOG_SHORT,
+    )
+    async def _button_log(self, ctx):
+        pages = []
+        for part in chunks(MusicButton.USAGE_HISTORY, 10):
+            embed = discord.Embed(
+                title="Button usage history",
+                description="(newest to oldest)",
+                color=config.EMBED_COLOR,
+            )
+            for timestamp, user_id, button in part:
+                embed.add_field(
+                    name=f"<t:{timestamp}:R>",
+                    value=f"<@{user_id}> pressed {button}",
+                    inline=False,
+                )
+            pages.append(embed)
+
+        if not pages:
+            await ctx.send("No one used the buttons.")
+            return
+        await Paginator(pages).send(ctx)
 
 
 async def setup(bot: MusicBot):
