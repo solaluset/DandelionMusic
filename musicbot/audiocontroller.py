@@ -17,7 +17,14 @@ from musicbot.song import Song, SongError
 from musicbot.ffmpeg import FFmpegPCMAudio, AudioMixer
 from musicbot.context import InteractionContext
 from musicbot.playlist import Playlist, LoopMode, LoopState, PauseState
-from musicbot.utils import CheckError, StrEnum, View, asset, play_check
+from musicbot.utils import (
+    CheckError,
+    StrEnum,
+    View,
+    asset,
+    channel_check,
+    play_check,
+)
 
 # avoiding circular import
 if TYPE_CHECKING:
@@ -175,6 +182,7 @@ class AudioController(object):
             ),
             MusicButton(
                 self.current_song_callback,
+                check=channel_check,
                 custom_id="current_song",
                 row=1,
                 disabled=self.current_song is None,
@@ -189,6 +197,7 @@ class AudioController(object):
             ),
             MusicButton(
                 self.queue_callback,
+                check=channel_check,
                 custom_id="queue",
                 row=1,
                 disabled=is_empty,

@@ -1,6 +1,6 @@
 import json
 import asyncio
-from typing import Iterable, Union, Optional
+from typing import Awaitable, Callable, Iterable, Union, Optional
 
 from discord import Attachment, Embed, Interaction
 from discord.app_commands import Choice
@@ -13,7 +13,7 @@ from musicbot import linkutils, utils, loader
 from musicbot.song import Song, SongError
 from musicbot.playlist import LoopMode
 from musicbot.bot import MusicBot, Context
-from musicbot.utils import View, Paginator, dj_check, chunks
+from musicbot.utils import View, Paginator, dj_check, channel_check, chunks
 from musicbot.audiocontroller import (
     PLAYLIST,
     EMPTY_PLAYLIST,
@@ -48,6 +48,17 @@ def active_only(ctx: AudioContext):
     return True
 
 
+_CHECK_OVERRIDES: dict[str, Callable[[AudioContext], Awaitable[bool]]] = {}
+
+
+def override_check(check: Callable[[AudioContext], Awaitable[bool]]):
+    def override_check_inner(command):
+        _CHECK_OVERRIDES[command.name] = check
+        return command
+
+    return override_check_inner
+
+
 class Music(commands.Cog):
     """A collection of the commands related to music playback.
 
@@ -68,7 +79,7 @@ class Music(commands.Cog):
         await lock.acquire()
 
         try:
-            await utils.play_check(ctx)
+            await _CHECK_OVERRIDES.get(ctx.command.name, utils.play_check)(ctx)
 
             if typing_task is not None:
                 await typing_task
@@ -84,6 +95,11 @@ class Music(commands.Cog):
 
     async def cog_after_invoke(self, ctx: AudioContext):
         ctx.audiocontroller.command_lock.release()
+
+    async def cog_command_error(self, ctx: AudioContext, error):
+        lock = ctx.audiocontroller.command_lock
+        if lock.locked():
+            lock.release()
 
     @commands.hybrid_command(
         name="play",
@@ -212,6 +228,7 @@ class Music(commands.Cog):
         result = ctx.audiocontroller.pause()
         await ctx.send(result.value)
 
+    @override_check(channel_check)
     @commands.hybrid_command(
         name="queue",
         description=config.HELP_QUEUE_LONG,
@@ -368,6 +385,7 @@ class Music(commands.Cog):
         else:
             await ctx.send("No previous track.")
 
+    @override_check(channel_check)
     @commands.hybrid_command(
         name="songinfo",
         description=config.HELP_SONGINFO_LONG,
@@ -379,6 +397,7 @@ class Music(commands.Cog):
         song = ctx.audiocontroller.current_song
         await ctx.send(embed=song.format_output(config.SONGINFO_SONGINFO))
 
+    @override_check(channel_check)
     @commands.hybrid_command(
         name="history",
         description=config.HELP_HISTORY_LONG,

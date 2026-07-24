@@ -119,16 +119,20 @@ async def voice_check(ctx: BasicContext) -> Literal[True]:
     raise CheckError(config.USER_NOT_IN_VC_MESSAGE)
 
 
+async def channel_check(ctx: BasicContext) -> Literal[True]:
+    if (cm_channel := ctx.bot.settings[ctx.guild].command_channel) is not None:
+        if int(cm_channel) != ctx.channel.id:
+            raise CheckError(config.WRONG_CHANNEL_MESSAGE)
+
+    return True
+
+
 async def play_check(ctx: BasicContext) -> Literal[True]:
     "Prepare for music commands"
 
     sett = ctx.bot.settings[ctx.guild]
 
-    cm_channel = sett.command_channel
-
-    if cm_channel is not None:
-        if int(cm_channel) != ctx.channel.id:
-            raise CheckError(config.WRONG_CHANNEL_MESSAGE)
+    await channel_check(ctx)
 
     if sett.dj_only:
         await dj_check(ctx)
