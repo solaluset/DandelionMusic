@@ -138,9 +138,10 @@ class General(commands.Cog):
         description=config.HELP_BUTTON_LOG_LONG,
         help=config.HELP_BUTTON_LOG_SHORT,
     )
+    @commands.check(dj_check)
     async def _button_log(self, ctx):
         pages = []
-        for part in chunks(MusicButton.USAGE_HISTORY, 10):
+        for part in chunks(MusicButton.USAGE_HISTORY[ctx.guild.id], 10):
             embed = discord.Embed(
                 title="Button usage history",
                 description="(newest to oldest)",

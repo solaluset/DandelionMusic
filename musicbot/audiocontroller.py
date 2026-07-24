@@ -4,7 +4,7 @@ import sys
 import asyncio
 from functools import wraps
 from itertools import islice
-from collections import deque
+from collections import defaultdict, deque
 from inspect import isawaitable
 from traceback import print_exc
 from contextlib import contextmanager
@@ -49,7 +49,9 @@ class VoiceAsset(StrEnum):
 
 
 class MusicButton(discord.ui.Button):
-    USAGE_HISTORY: deque[tuple[int, int, str]] = deque(maxlen=100)
+    USAGE_HISTORY: defaultdict[int, deque[tuple[int, int, str]]] = defaultdict(
+        lambda: deque(maxlen=100)
+    )
 
     def __init__(self, callback, check=play_check, **kwargs):
         super().__init__(**kwargs)
@@ -63,7 +65,7 @@ class MusicButton(discord.ui.Button):
         except CheckError as e:
             await ctx.send(e, ephemeral=True)
             return
-        self.USAGE_HISTORY.appendleft(
+        self.USAGE_HISTORY[ctx.guild.id].appendleft(
             (
                 int(datetime.now(timezone.utc).timestamp()),
                 ctx.author.id,
