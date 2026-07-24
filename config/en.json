@@ -83,6 +83,8 @@
   "HELP_REMOVE_LONG": "Allows to remove a song from the queue by typing it's position (defaults to the last song).",
   "HELP_SAVE_PLAYLIST_SHORT": "Save current playlist",
   "HELP_SAVE_PLAYLIST_LONG": "Saves current playlist with the specified name to replay it later",
+  "HELP_BUTTON_LOG_SHORT": "Shows button usage",
+  "HELP_BUTTON_LOG_LONG": "Shows who and when invoked the buttons",
   "PLAYLIST_SAVED_MESSAGE": "Playlist saved.",
   "PLAYLIST_ALREADY_EXISTS": "Playlist with this name already exists.",
   "HELP_LOAD_PLAYLIST_SHORT": "Load and play playlist",

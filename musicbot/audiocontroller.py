@@ -4,9 +4,11 @@ import sys
 import asyncio
 from functools import wraps
 from itertools import islice
+from collections import deque
 from inspect import isawaitable
 from traceback import print_exc
 from contextlib import contextmanager
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Coroutine, Literal, Optional, Union
 
 import discord
@@ -47,6 +49,8 @@ class VoiceAsset(StrEnum):
 
 
 class MusicButton(discord.ui.Button):
+    USAGE_HISTORY: deque[tuple[int, int, str]] = deque(maxlen=100)
+
     def __init__(self, callback, check=play_check, **kwargs):
         super().__init__(**kwargs)
         self._callback = callback
@@ -59,10 +63,20 @@ class MusicButton(discord.ui.Button):
         except CheckError as e:
             await ctx.send(e, ephemeral=True)
             return
+        self.USAGE_HISTORY.appendleft(
+            (
+                int(datetime.now(timezone.utc).timestamp()),
+                ctx.author.id,
+                str(self),
+            )
+        )
         async with ctx.typing():
             res = self._callback(ctx)
             if isawaitable(res):
                 await res
+
+    def __str__(self) -> str:
+        return " ".join(str(part) for part in (self.emoji, self.label) if part)
 
 
 class AudioController(object):
