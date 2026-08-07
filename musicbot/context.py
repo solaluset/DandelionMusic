@@ -14,6 +14,7 @@ class BasicContext:
     def __init__(self, origin: Context | discord.Interaction):
         self.guild = origin.guild
         self.channel = origin.channel
+        self.command = origin.command
 
         if isinstance(origin, discord.Interaction):
             self.interaction = origin
