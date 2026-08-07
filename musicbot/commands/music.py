@@ -79,7 +79,13 @@ class Music(commands.Cog):
         await lock.acquire()
 
         try:
-            await _CHECK_OVERRIDES.get(ctx.command.name, utils.play_check)(ctx)
+            if ctx.command is not None:
+                check = _CHECK_OVERRIDES.get(
+                    ctx.command.name, utils.play_check
+                )
+            else:
+                check = utils.play_check
+            await check(ctx)
 
             if typing_task is not None:
                 await typing_task
