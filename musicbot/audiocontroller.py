@@ -279,7 +279,7 @@ class AudioController(object):
             if e.code == 50027:  # Invalid Webhook Token
                 try:
                     self.last_message = await msg.channel.fetch_message(msg.id)
-                    await self.update_view(view)
+                    return await self.update_view()
                 except discord.NotFound:
                     self.last_message = None
             else:
