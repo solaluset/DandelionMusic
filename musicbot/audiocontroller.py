@@ -392,7 +392,7 @@ class AudioController(object):
             next_song = self.playlist.next(forced)
 
         if next_song is None:
-            if not self.timer.triggered and self.guild.voice_client:
+            if not self.timer.triggered() and self.guild.voice_client:
                 self.add_task(
                     self.timer.start(
                         not all(
