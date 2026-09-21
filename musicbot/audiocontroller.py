@@ -450,7 +450,9 @@ class AudioController(object):
                     self.volume / 100.0,
                 ),
                 id_=0,
-                after=self.next_song,
+                after=lambda: self.bot.loop.call_soon_threadsafe(
+                    self.next_song
+                ),
                 rewindable=True,
             )
         except discord.ClientException:
