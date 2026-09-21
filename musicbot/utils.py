@@ -289,7 +289,8 @@ class Timer:
         self._task.add_done_callback(self._unset_task)
 
     def cancel(self):
-        if self._task:
+        # do not cancel if already running callback
+        if self._task and not self.triggered():
             self._task.cancel()
 
     def triggered(self) -> bool:
