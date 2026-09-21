@@ -31,11 +31,11 @@ _dummy_process = _original_popen(
 
 class MonkeyPopen:
     args_catch_lock = threading.Lock()
-    args_catch_future: Optional[Future] = None
+    args_catch_result: Optional[OriginalArgs] = None
 
     def __call__(self, args, *extra, env: Optional[dict] = None, **kwargs):
-        if self.args_catch_lock.locked():
-            self.args_catch_future.set_result((args, env))
+        if MonkeyPopen.args_catch_lock.locked():
+            MonkeyPopen.args_catch_result = (args, env)
             return _dummy_process
         return _original_popen(args, *extra, env=env, **kwargs)
 
@@ -48,11 +48,10 @@ def _get_ffmpeg_args(song: Song) -> OriginalArgs:
 
     with MonkeyPopen.args_catch_lock:
         try:
-            MonkeyPopen.args_catch_future = Future()
             _downloader.download("-", song.data)
-            return MonkeyPopen.args_catch_future.result()
+            return MonkeyPopen.args_catch_result
         finally:
-            MonkeyPopen.args_catch_future = None
+            MonkeyPopen.args_catch_result = None
 
 
 class FFmpegPCMAudio(BasePCMAudio):
