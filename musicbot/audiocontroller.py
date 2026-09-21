@@ -642,6 +642,7 @@ class AudioController(object):
 
     async def udisconnect(self):
         self.stop_player()
+        self.timer.cancel()
         self._waiting = False
         await self.update_view(None)
         if (client := self.guild.voice_client) is None:
@@ -658,5 +659,4 @@ class AudioController(object):
                 await asyncio.sleep(1)
         self.mixer = None
         await client.disconnect(force=True)
-        self.timer.cancel()
         return True
