@@ -63,7 +63,7 @@ class MusicBot(commands.Bot):
         if "--run" in sys.argv:
             self._shutdown_task = self.loop.create_task(read_shutdown())
 
-        self.absolutely_ready = asyncio.Future()
+        self.absolutely_ready = self.loop.create_future()
 
         for extension in self._extensions:
             await self.load_extension(extension)

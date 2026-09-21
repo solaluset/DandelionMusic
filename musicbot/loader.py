@@ -209,7 +209,7 @@ async def preload(song: Song, bot: MusicBot) -> bool:
     future = _preloading.get(song)
     if future:
         return await future
-    _preloading[song] = asyncio.Future()
+    _preloading[song] = bot.loop.create_future()
 
     try:
         preloaded = await load_song(song.webpage_url)

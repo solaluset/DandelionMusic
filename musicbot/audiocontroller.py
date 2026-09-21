@@ -565,7 +565,7 @@ class AudioController(object):
 
     def play_asset(self, voice_asset: VoiceAsset) -> asyncio.Future:
         self.current_voice_asset = voice_asset
-        future = asyncio.Future()
+        future = self.bot.loop.create_future()
         self.mixer.add_stream(
             discord.PCMVolumeTransformer(
                 discord.FFmpegPCMAudio(asset(voice_asset)),
