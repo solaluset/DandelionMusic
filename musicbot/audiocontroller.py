@@ -331,7 +331,7 @@ class AudioController(object):
     def fast_forward(self, seconds: int) -> None:
         if self.mixer:
             self.add_task(
-                asyncio.get_running_loop().run_in_executor(
+                self.bot.loop.run_in_executor(
                     None,
                     lambda: self.mixer.fast_forward_stream(
                         0, seconds * self.mixer.FRAMES_PER_SECOND
@@ -427,7 +427,7 @@ class AudioController(object):
 
             audio = FFmpegPCMAudio(await loader.get_ffmpeg_args(song))
             # FFmpeg needs some time when seeking, ensure it's ready
-            await asyncio.get_running_loop().run_in_executor(None, audio.read)
+            await self.bot.loop.run_in_executor(None, audio.read)
             audio._check_process_returncode()
             if error := audio._current_error:
                 raise SongError(config.SONGINFO_ERROR) from error
