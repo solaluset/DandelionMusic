@@ -33,7 +33,9 @@ class UniversalHelpCommand(DefaultHelpCommand):
 
 class MusicBot(commands.Bot):
     def __init__(self, *args, extensions: list[str], **kwargs):
-        kwargs.setdefault("help_command", UniversalHelpCommand())
+        kwargs.setdefault(
+            "help_command", UniversalHelpCommand(verify_checks=False)
+        )
         kwargs.setdefault(
             "proxy", config.PROXY_URL if config.USE_PROXY_FOR_DISCORD else None
         )
