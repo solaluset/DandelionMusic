@@ -215,6 +215,9 @@ async def preload(song: Song, bot: MusicBot) -> bool:
         preloaded = await load_song(song.webpage_url)
     except SongError:
         success = False
+    except Exception as e:
+        _preloading.pop(song).set_exception(e)
+        raise
     else:
         success = preloaded is not None
 
