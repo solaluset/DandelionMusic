@@ -105,18 +105,18 @@ def _extract_info(url: str, ie: Optional[ExtractorT] = None) -> Optional[dict]:
             return None
 
 
-async def search_youtube(title: str, count: int = 1) -> Optional[List[dict]]:
+async def search_youtube(title: str, count: int = 1) -> List[dict]:
     return await _run_sync(_search_youtube, title, count)
 
 
-def _search_youtube(title: str, count: int = 1) -> Optional[List[dict]]:
+def _search_youtube(title: str, count: int = 1) -> List[dict]:
     """Searches youtube for the video title
     Returns the first results video link"""
 
     r = _extract_info(f"ytsearch{count}:{title}")
 
     if not r:
-        return None
+        return []
 
     return r["entries"]
 
@@ -209,12 +209,15 @@ async def preload(song: Song, bot: MusicBot) -> bool:
     future = _preloading.get(song)
     if future:
         return await future
-    _preloading[song] = asyncio.Future()
+    _preloading[song] = bot.loop.create_future()
 
     try:
         preloaded = await load_song(song.webpage_url)
     except SongError:
         success = False
+    except Exception as e:
+        _preloading.pop(song).set_exception(e)
+        raise
     else:
         success = preloaded is not None
 

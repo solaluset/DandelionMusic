@@ -331,7 +331,7 @@ class AudioController(object):
     def fast_forward(self, seconds: int) -> None:
         if self.mixer:
             self.add_task(
-                asyncio.get_running_loop().run_in_executor(
+                self.bot.loop.run_in_executor(
                     None,
                     lambda: self.mixer.fast_forward_stream(
                         0, seconds * self.mixer.FRAMES_PER_SECOND
@@ -392,7 +392,7 @@ class AudioController(object):
             next_song = self.playlist.next(forced)
 
         if next_song is None:
-            if not self.timer.triggered and self.guild.voice_client:
+            if not self.timer.triggered() and self.guild.voice_client:
                 self.add_task(
                     self.timer.start(
                         not all(
@@ -427,7 +427,7 @@ class AudioController(object):
 
             audio = FFmpegPCMAudio(await loader.get_ffmpeg_args(song))
             # FFmpeg needs some time when seeking, ensure it's ready
-            await asyncio.get_running_loop().run_in_executor(None, audio.read)
+            await self.bot.loop.run_in_executor(None, audio.read)
             audio._check_process_returncode()
             if error := audio._current_error:
                 raise SongError(config.SONGINFO_ERROR) from error
@@ -450,7 +450,9 @@ class AudioController(object):
                     self.volume / 100.0,
                 ),
                 id_=0,
-                after=self.next_song,
+                after=lambda: self.bot.loop.call_soon_threadsafe(
+                    self.next_song
+                ),
                 rewindable=True,
             )
         except discord.ClientException:
@@ -565,14 +567,20 @@ class AudioController(object):
 
     def play_asset(self, voice_asset: VoiceAsset) -> asyncio.Future:
         self.current_voice_asset = voice_asset
-        future = asyncio.Future()
+        future = self.bot.loop.create_future()
+
+        def set_done():
+            if future.cancelled():
+                return
+            future.set_result(None)
+
         self.mixer.add_stream(
             discord.PCMVolumeTransformer(
                 discord.FFmpegPCMAudio(asset(voice_asset)),
                 self.volume / 100.0,
             ),
             id_=-1,
-            after=lambda: future.cancelled() or future.set_result(None),
+            after=lambda: self.bot.loop.call_soon_threadsafe(set_done),
         )
         self.voice_asset_future = future
         self.voice_asset_future.add_done_callback(
@@ -634,6 +642,7 @@ class AudioController(object):
 
     async def udisconnect(self):
         self.stop_player()
+        self.timer.cancel()
         self._waiting = False
         await self.update_view(None)
         if (client := self.guild.voice_client) is None:
@@ -650,5 +659,4 @@ class AudioController(object):
                 await asyncio.sleep(1)
         self.mixer = None
         await client.disconnect(force=True)
-        self.timer.cancel()
         return True

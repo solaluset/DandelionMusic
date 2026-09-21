@@ -33,7 +33,9 @@ class UniversalHelpCommand(DefaultHelpCommand):
 
 class MusicBot(commands.Bot):
     def __init__(self, *args, extensions: list[str], **kwargs):
-        kwargs.setdefault("help_command", UniversalHelpCommand())
+        kwargs.setdefault(
+            "help_command", UniversalHelpCommand(verify_checks=False)
+        )
         kwargs.setdefault(
             "proxy", config.PROXY_URL if config.USE_PROXY_FOR_DISCORD else None
         )
@@ -63,7 +65,7 @@ class MusicBot(commands.Bot):
         if "--run" in sys.argv:
             self._shutdown_task = self.loop.create_task(read_shutdown())
 
-        self.absolutely_ready = asyncio.Future()
+        self.absolutely_ready = self.loop.create_future()
 
         for extension in self._extensions:
             await self.load_extension(extension)

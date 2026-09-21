@@ -269,28 +269,32 @@ class Timer:
     def __init__(self, callback: Callable[[], Awaitable]):
         self._callback = callback
         self._task = None
-        self.triggered = False
+        self.trigger_lock = asyncio.Lock()
 
     async def _job(self):
         await asyncio.sleep(config.VC_TIMEOUT)
-        self.triggered = True
-        await self._callback()
-        self.triggered = False
-        self._task = None
+        async with self.trigger_lock:
+            await self._callback()
+
+    def _unset_task(self, task: asyncio.Task):
+        if task is self._task:
+            self._task = None
 
     # we need event loop here
     async def start(self, restart=False):
-        if self._task:
-            if restart:
-                self._task.cancel()
-            else:
-                return
+        if self._task and not restart:
+            return
+        self.cancel()
         self._task = asyncio.create_task(self._job())
+        self._task.add_done_callback(self._unset_task)
 
     def cancel(self):
-        if self._task:
+        # do not cancel if already running callback
+        if self._task and not self.triggered():
             self._task.cancel()
-            self._task = None
+
+    def triggered(self) -> bool:
+        return self.trigger_lock.locked()
 
 
 class OutputWrapper:

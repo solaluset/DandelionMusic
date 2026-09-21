@@ -9,7 +9,6 @@ from traceback import print_exc
 from dataclasses import dataclass
 from collections import defaultdict
 from typing import Callable, Dict, Optional, List, Tuple, Iterable
-from concurrent.futures import Future
 
 import yt_dlp
 import audioop
@@ -31,11 +30,11 @@ _dummy_process = _original_popen(
 
 class MonkeyPopen:
     args_catch_lock = threading.Lock()
-    args_catch_future: Optional[Future] = None
+    args_catch_result: Optional[OriginalArgs] = None
 
     def __call__(self, args, *extra, env: Optional[dict] = None, **kwargs):
-        if self.args_catch_lock.locked():
-            self.args_catch_future.set_result((args, env))
+        if MonkeyPopen.args_catch_lock.locked():
+            MonkeyPopen.args_catch_result = (args, env)
             return _dummy_process
         return _original_popen(args, *extra, env=env, **kwargs)
 
@@ -48,11 +47,10 @@ def _get_ffmpeg_args(song: Song) -> OriginalArgs:
 
     with MonkeyPopen.args_catch_lock:
         try:
-            MonkeyPopen.args_catch_future = Future()
             _downloader.download("-", song.data)
-            return MonkeyPopen.args_catch_future.result()
+            return MonkeyPopen.args_catch_result
         finally:
-            MonkeyPopen.args_catch_future = None
+            MonkeyPopen.args_catch_result = None
 
 
 class FFmpegPCMAudio(BasePCMAudio):
@@ -101,8 +99,7 @@ class AudioMixer(AudioSource):
         self.rewinds: defaultdict[int, deque[bytes]] = defaultdict(
             lambda: deque(maxlen=self.MAX_REWIND_FRAMES)
         )
-        self._stop_future = Future()
-        self._stop_future.cancel()
+        self._stop_mark: Optional[object] = None
 
     def read(self) -> bytes:
         return reduce(
@@ -150,7 +147,7 @@ class AudioMixer(AudioSource):
             source, after=after, rewindable=rewindable
         )
 
-        self._stop_future.cancel()
+        self._stop_mark = None
         if not self.client.is_playing():
             self.client.play(self)
 
@@ -174,16 +171,15 @@ class AudioMixer(AudioSource):
                 print_exc(file=sys.stderr)
 
         if not self.streams and self.client.is_playing():
-            self._stop_future.cancel()
+            self._stop_mark = None
 
             def stop():
                 time.sleep(3)
-                if not future.set_running_or_notify_cancel():
+                if stop_mark is not self._stop_mark:
                     return
                 self.client.stop()
-                future.set_result(None)
 
-            future = self._stop_future = Future()
+            stop_mark = self._stop_mark = object()
             threading.Thread(target=stop, daemon=True).start()
 
     def fast_forward_stream(self, id_: int, frame_count: int) -> None:
