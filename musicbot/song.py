@@ -41,10 +41,12 @@ class Song:
         if params.get("end"):
             end = timeparse(params["end"][0])
 
-        self._start = start
-        self._end = end
+        self.start = start
+        self.end = end
 
-    def format_output(self, playtype: str) -> discord.Embed:
+    def format_output(
+        self, playtype: str, play_time: int | None = None
+    ) -> discord.Embed:
         embed = discord.Embed(
             title=playtype,
             description="[{}]({})".format(self.title, self.webpage_url),
@@ -60,21 +62,17 @@ class Song:
             inline=False,
         )
 
-        duration = self.duration
-        if self.data and (
-            self.data.get("section_start") or self.data.get("section_end")
-        ):
-            end = self.data.get("section_end", duration)
-            if end:
-                duration = end - self.data.get("section_start", 0)
+        duration = (
+            str(datetime.timedelta(seconds=self.duration))
+            if self.duration is not None
+            else config.SONGINFO_UNKNOWN
+        )
+        if play_time is not None:
+            duration = f"{datetime.timedelta(seconds=play_time)} / {duration}"
 
         embed.add_field(
             name=config.SONGINFO_DURATION,
-            value=(
-                str(datetime.timedelta(seconds=duration))
-                if duration is not None
-                else config.SONGINFO_UNKNOWN
-            ),
+            value=duration,
             inline=False,
         )
 
@@ -86,12 +84,12 @@ class Song:
                 if v:
                     setattr(self, k, v)
         else:
-            start_time = data.get("start_time", self._start)
+            start_time = data.get("start_time", self.start)
             if start_time:
-                data["section_start"] = start_time
-            end_time = data.get("end_time", self._end)
+                self.start = data["section_start"] = start_time
+            end_time = data.get("end_time", self.end)
             if end_time:
-                data["section_end"] = end_time
+                self.end = data["section_end"] = end_time
 
             self.data = data
 
