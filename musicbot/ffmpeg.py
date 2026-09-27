@@ -86,6 +86,11 @@ class AudioStream:
     after: Optional[Callable[[], None]] = None
     paused: bool = False
     rewindable: bool = False
+    read_frames: int = 0
+
+    def read(self) -> bytes:
+        self.read_frames += 1
+        return self.source.read()
 
 
 class AudioMixer(AudioSource):
@@ -114,7 +119,7 @@ class AudioMixer(AudioSource):
             if stream.paused:
                 continue
 
-            ret = stream.source.read()
+            ret = stream.read()
             if not ret:
                 self._stop_stream_once(id_)
                 continue
@@ -189,7 +194,7 @@ class AudioMixer(AudioSource):
 
         stream.paused = True
         for _ in range(frame_count):
-            if not stream.paused or not stream.source.read():
+            if not stream.paused or not stream.read():
                 break
         stream.paused = False
 

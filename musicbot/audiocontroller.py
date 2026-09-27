@@ -125,6 +125,11 @@ class AudioController(object):
             return self.playlist[0]
         return None
 
+    def get_current_song_time(self) -> int:
+        return (self.current_song.start or 0) + round(
+            self.mixer.get_stream(0).read_frames / AudioMixer.FRAMES_PER_SECOND
+        )
+
     @property
     def volume(self) -> int:
         return self._volume
@@ -246,7 +251,9 @@ class AudioController(object):
 
     async def current_song_callback(self, ctx):
         await ctx.send(
-            embed=self.current_song.format_output(config.SONGINFO_SONGINFO),
+            embed=self.current_song.format_output(
+                config.SONGINFO_SONGINFO, self.get_current_song_time()
+            ),
         )
 
     async def queue_callback(self, ctx):

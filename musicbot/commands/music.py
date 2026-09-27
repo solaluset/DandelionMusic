@@ -401,7 +401,12 @@ class Music(commands.Cog):
     @active_only
     async def _songinfo(self, ctx: AudioContext):
         song = ctx.audiocontroller.current_song
-        await ctx.send(embed=song.format_output(config.SONGINFO_SONGINFO))
+        await ctx.send(
+            embed=song.format_output(
+                config.SONGINFO_SONGINFO,
+                ctx.audiocontroller.get_current_song_time(),
+            )
+        )
 
     @override_check(channel_check)
     @commands.hybrid_command(
