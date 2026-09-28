@@ -164,10 +164,10 @@ class AudioController(object):
             bot_vc = await channel.connect(
                 reconnect=True, timeout=VC_CONNECT_TIMEOUT
             )
+            self.mixer = AudioMixer(bot_vc)
+
         # to avoid ClientException: Not connected to voice
         await asyncio.sleep(1)
-
-        self.mixer = AudioMixer(bot_vc)
 
         if config.ANNOUNCE_CONNECT and not self.is_active():
             self.play_asset(VoiceAsset.HELLO)
