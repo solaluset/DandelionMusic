@@ -107,6 +107,7 @@ class AudioController(object):
 
         self.last_message = None
         self.last_view = None
+        self.last_view_data = None
 
         # according to Python documentation, we need
         # to keep strong references to all tasks
@@ -172,48 +173,61 @@ class AudioController(object):
         if not self.is_active():
             return None
 
-        is_empty = len(self.playlist) == 0
         stream = self.mixer.get_stream(0)
         is_playing = stream and not stream.paused
 
-        return View(
+        view_data = {
+            "has_prev": self.playlist.has_prev(),
+            "has_next": self.playlist.has_next(),
+            "pause_emoji": "⏸️" if is_playing else "▶️",
+            "is_empty": len(self.playlist) == 0,
+            "loop_label": "Loop: " + self.playlist.loop,
+            "no_current_song": self.current_song is None,
+            "volume": self.volume,
+        }
+
+        if view_data == self.last_view_data:
+            return self.last_view
+
+        self.last_view_data = view_data
+        self.last_view = View(
             MusicButton(
                 lambda _: self.prev_song(),
                 custom_id="prev",
-                disabled=not self.playlist.has_prev(),
+                disabled=not view_data["has_prev"],
                 emoji="⏮️",
             ),
             MusicButton(
                 lambda _: self.pause(),
                 custom_id="pause",
-                emoji="⏸️" if is_playing else "▶️",
+                emoji=view_data["pause_emoji"],
             ),
             MusicButton(
                 lambda _: self.next_song(forced=True),
                 custom_id="next",
-                disabled=not self.playlist.has_next(),
+                disabled=not view_data["has_next"],
                 emoji="⏭️",
             ),
             MusicButton(
                 lambda _: self.loop(),
                 custom_id="loop",
-                disabled=is_empty,
+                disabled=view_data["is_empty"],
                 emoji="🔁",
-                label="Loop: " + self.playlist.loop,
+                label=view_data["loop_label"],
             ),
             MusicButton(
                 self.current_song_callback,
                 check=channel_check,
                 custom_id="current_song",
                 row=1,
-                disabled=self.current_song is None,
+                disabled=view_data["no_current_song"],
                 emoji="💿",
             ),
             MusicButton(
                 lambda _: self.shuffle(),
                 custom_id="shuffle",
                 row=1,
-                disabled=is_empty,
+                disabled=view_data["is_empty"],
                 emoji="🔀",
             ),
             MusicButton(
@@ -221,7 +235,7 @@ class AudioController(object):
                 check=channel_check,
                 custom_id="queue",
                 row=1,
-                disabled=is_empty,
+                disabled=view_data["is_empty"],
                 emoji="📜",
             ),
             MusicButton(
@@ -235,19 +249,21 @@ class AudioController(object):
                 lambda _: self.volume_down(),
                 custom_id="volume_down",
                 row=2,
-                disabled=self.volume <= 10,
+                disabled=view_data["volume"] <= 10,
                 emoji="🔉",
             ),
             MusicButton(
                 lambda _: self.volume_up(),
                 custom_id="volume_up",
                 row=2,
-                disabled=self.volume >= 200,
+                disabled=view_data["volume"] >= 200,
                 emoji="🔊",
-                label=f"{self.volume}%",
+                label=f"{view_data["volume"]}%",
             ),
             timeout=None,
         )
+
+        return self.last_view
 
     async def current_song_callback(self, ctx):
         await ctx.send(
@@ -272,12 +288,6 @@ class AudioController(object):
             view = self.make_view()
         if view is old_view:
             return
-        elif (
-            old_view
-            and view
-            and old_view.to_components() == view.to_components()
-        ):
-            return
         try:
             await msg.edit(view=view)
         except discord.NotFound:
@@ -292,7 +302,6 @@ class AudioController(object):
             else:
                 print("Failed to update view:", file=sys.stderr)
                 print_exc(file=sys.stderr)
-        self.last_view = view
 
     def is_active(self) -> bool:
         return bool(self.mixer and self.mixer.get_stream(0))
