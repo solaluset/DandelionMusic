@@ -537,7 +537,7 @@ class AudioController(object):
                 )
 
     def add_task(self, coro: Coroutine | asyncio.Future):
-        if isinstance(coro, asyncio.Future):
+        if asyncio.isfuture(coro):
             task = coro
         else:
             task = self.bot.loop.create_task(coro)
