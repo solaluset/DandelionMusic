@@ -169,6 +169,9 @@ class AudioController(object):
 
         self.mixer = AudioMixer(bot_vc)
 
+        if config.ANNOUNCE_CONNECT and not self.is_active():
+            self.play_asset(VoiceAsset.HELLO)
+
     def make_view(self):
         if not self.is_active():
             return None
@@ -679,8 +682,6 @@ class AudioController(object):
         if bot_vc is None or bot_vc.channel != author_vc.channel and move:
             await ctx.typing()
             await self.register_voice_channel(author_vc.channel)
-            if config.ANNOUNCE_CONNECT and not self.is_active():
-                self.play_asset(VoiceAsset.HELLO)
         else:
             raise CheckError(config.ALREADY_CONNECTED_MESSAGE)
 
