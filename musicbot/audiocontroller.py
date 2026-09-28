@@ -258,7 +258,7 @@ class AudioController(object):
                 row=2,
                 disabled=view_data["volume"] >= 200,
                 emoji="🔊",
-                label=f"{view_data["volume"]}%",
+                label=f"{view_data['volume']}%",
             ),
             timeout=None,
         )
