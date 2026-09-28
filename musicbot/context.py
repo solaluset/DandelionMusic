@@ -67,13 +67,15 @@ class SendViewMixin:
                 view.message = msg
             return msg
         async with audiocontroller.message_lock:
-            await audiocontroller.update_view(None)
+            old_view_task = self.bot.loop.create_task(
+                audiocontroller.update_view(None)
+            )
             view = audiocontroller.make_view()
             if view:
                 kwargs["view"] = view
-            msg = audiocontroller.last_message = await super().send(
-                *args, **kwargs
-            )
+            msg = await super().send(*args, **kwargs)
+            await old_view_task
+            audiocontroller.last_message = msg
         return msg
 
 
