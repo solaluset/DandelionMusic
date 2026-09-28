@@ -63,6 +63,10 @@ class ConversionError(Exception):
 
 
 async def convert_emoji(ctx: "Context", value: Optional[str]) -> Optional[str]:
+    raise ConversionError(
+        "This setting is deprecated, it has no effect and will be removed."
+    )
+
     if not config.ENABLE_BUTTON_PLUGIN:
         raise ConversionError(ConversionErrorText.BUTTON_DISABLED)
 

@@ -1,96 +1,48 @@
-import discord
+from discord import Interaction, Message
 from discord.ext import commands
+from discord.app_commands import context_menu, guild_only
+
 from musicbot import linkutils, utils
 from musicbot.bot import MusicBot
-
-SUPPORTED_SITES = (
-    linkutils.SiteTypes.SPOTIFY,
-    linkutils.SiteTypes.YT_DLP,
-)
+from musicbot.context import InteractionContext
 
 
 class Button(commands.Cog):
     def __init__(self, bot: MusicBot):
         self.bot = bot
+        bot.tree.add_command(self.build_context_menu())
 
     @staticmethod
-    def get_links(text: str):
+    def _get_links(msg: Message):
+        links = linkutils.get_urls(msg.content)
+        links.extend(a.url for a in msg.attachments)
         return [
             link
-            for link in linkutils.get_urls(text)
-            if linkutils.identify_url(link) in SUPPORTED_SITES
+            for link in links
+            if linkutils.identify_url(link) != linkutils.SiteTypes.UNKNOWN
         ]
 
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
-        if not message.guild or message.author == self.bot.user:
-            return
+    def build_context_menu(self):
+        @context_menu(name="play")
+        @guild_only()
+        async def _play(inter: Interaction, message: Message):
+            ctx = InteractionContext(inter)
 
-        await self.bot.absolutely_ready
-
-        sett = self.bot.settings[message.guild]
-        button = sett.button_emote
-
-        if not button:
-            return
-
-        emoji = utils.get_emoji(self.bot, button)
-        if not emoji:
-            return
-
-        if self.get_links(message.content):
-            await message.add_reaction(emoji)
-
-    @commands.Cog.listener()
-    async def on_raw_reaction_add(
-        self, reaction: discord.RawReactionActionEvent
-    ):
-        serv = self.bot.get_guild(reaction.guild_id)
-
-        member = reaction.member
-        user_vc = member.voice
-
-        if not serv or member.bot or not user_vc:
-            return
-
-        sett = self.bot.settings[serv]
-        button = sett.button_emote
-
-        if not button:
-            return
-
-        if (
-            reaction.emoji.name == button
-            or str(reaction.emoji.id or "") == button
-        ):
-            chan = serv.get_channel(reaction.channel_id)
-            message = await chan.fetch_message(reaction.message_id)
-
-            links = self.get_links(message.content)
-
+            links = self._get_links(message)
             if not links:
-                return
-
-            if chan.permissions_for(serv.me).manage_messages:
-                await message.remove_reaction(reaction.emoji, member)
-
-            audiocontroller = self.bot.audio_controllers[serv]
-
-            ctx = await self.bot.get_context(message)
-            # author is the user who added the reaction,
-            # not the one who sent the message
-            ctx.author = member
-            try:
-                await utils.voice_check(ctx)
-            except utils.CheckError:
-                return
-            await audiocontroller.register_voice_channel(user_vc.channel)
-            if not audiocontroller.command_channel and sett.command_channel:
-                audiocontroller.command_channel = serv.get_channel(
-                    int(sett.command_channel)
+                return await ctx.send(
+                    "No supported links found.", ephemeral=True
                 )
-            for url in links:
-                await audiocontroller.process_song(url)
+
+            async with ctx.typing():
+                await utils.play_check(ctx)
+
+                audiocontroller = ctx.bot.audio_controllers[ctx.guild]
+                audiocontroller.command_channel = ctx
+                for url in links:
+                    await audiocontroller.play(ctx, url)
+
+        return _play
 
 
 async def setup(bot: MusicBot):
