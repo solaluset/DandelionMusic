@@ -9,7 +9,7 @@ from inspect import isawaitable
 from traceback import print_exc
 from contextlib import contextmanager
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Coroutine, Literal, Optional, Union
+from typing import TYPE_CHECKING, Coroutine, Literal, Optional, Union, Iterable
 
 import discord
 
@@ -17,7 +17,7 @@ from config import config
 from musicbot import loader, utils
 from musicbot.song import Song, SongError
 from musicbot.ffmpeg import FFmpegPCMAudio, AudioMixer
-from musicbot.context import InteractionContext
+from musicbot.context import InteractionContext, BasicContext
 from musicbot.playlist import Playlist, LoopMode, LoopState, PauseState
 from musicbot.utils import (
     CheckError,
@@ -470,7 +470,7 @@ class AudioController(object):
         self.preload_queue()
 
     @needs_waiting
-    async def process_song(
+    async def _process_song(
         self, track: str
     ) -> Union[Optional[Song], Literal[PLAYLIST], Literal[EMPTY_PLAYLIST]]:
         """Adds the track to the playlist instance
@@ -500,6 +500,34 @@ class AudioController(object):
             self.preload_queue()
 
         return loaded_song
+
+    async def play(self, ctx: BasicContext, track: Union[str, Iterable[str]]):
+        # reset timer
+        await self.timer.start(True)
+
+        try:
+            song = await self._process_song(track)
+        except SongError as e:
+            await ctx.send(e)
+            return
+        if song is None:
+            await ctx.send(config.SONGINFO_UNSUPPORTED)
+            return
+
+        if song is PLAYLIST:
+            await ctx.send(config.SONGINFO_PLAYLIST_QUEUED)
+        elif song is EMPTY_PLAYLIST:
+            await ctx.send(config.SONGINFO_PLAYLIST_EMPTY)
+        else:
+            if len(self.playlist) != 1:
+                await ctx.send(
+                    embed=song.format_output(config.SONGINFO_QUEUE_ADDED)
+                )
+            elif not ctx.bot.settings[ctx.guild].announce_songs:
+                # auto-announce is disabled, announce here
+                await ctx.send(
+                    embed=song.format_output(config.SONGINFO_NOW_PLAYING)
+                )
 
     def add_task(self, coro: Coroutine | asyncio.Future):
         if isinstance(coro, asyncio.Future):
@@ -648,7 +676,7 @@ class AudioController(object):
         if (client := self.guild.voice_client) is None:
             self.mixer = None
             return False
-        if config.ANNOUNCE_DISCONNECT and client.is_connected():
+        if config.ANNOUNCE_DISCONNECT and self.mixer and client.is_connected():
             self.mixer.stop_stream(-1)
             try:
                 await self.play_asset(VoiceAsset.GOODBYE)

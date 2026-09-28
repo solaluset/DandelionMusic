@@ -9,7 +9,11 @@ from typing import Dict, Union
 import aiohttp
 import discord
 from discord.ext import commands, tasks
-from discord.app_commands import Choice, CommandTree as BaseCommandTree
+from discord.app_commands import (
+    Choice,
+    CommandTree as BaseCommandTree,
+    CommandInvokeError,
+)
 from discord.ext.commands import DefaultHelpCommand, NotOwner, UserInputError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -22,7 +26,7 @@ from musicbot.settings import (
     extract_legacy_settings,
     migrate_old_playlists,
 )
-from musicbot.context import Context
+from musicbot.context import Context, InteractionContext
 from musicbot.utils import CheckError, read_shutdown
 
 
@@ -274,3 +278,9 @@ class CommandTree(BaseCommandTree):
         await self.client.absolutely_ready
 
         return True
+
+    async def on_error(self, inter, error):
+        ctx = InteractionContext(inter)
+        if isinstance(error, CommandInvokeError):
+            error = error.original
+        await ctx.bot.on_command_error(ctx, error)

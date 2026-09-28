@@ -27,7 +27,6 @@ if config.MENTION_AS_PREFIX:
     prefix = commands.when_mentioned_or(prefix)
 
 if config.ENABLE_BUTTON_PLUGIN:
-    intents.message_content = True
     initial_extensions.append("musicbot.plugins.button")
 
 bot = MusicBot(

@@ -1,6 +1,6 @@
 import json
 import asyncio
-from typing import Awaitable, Callable, Iterable, Union, Optional
+from typing import Awaitable, Callable, Optional
 
 from discord import Attachment, Embed, Interaction
 from discord.app_commands import Choice
@@ -10,13 +10,11 @@ from sqlalchemy.exc import IntegrityError
 
 from config import config
 from musicbot import linkutils, utils, loader
-from musicbot.song import Song, SongError
+from musicbot.song import Song
 from musicbot.playlist import LoopMode
 from musicbot.bot import MusicBot, Context
 from musicbot.utils import View, Paginator, dj_check, channel_check, chunks
 from musicbot.audiocontroller import (
-    PLAYLIST,
-    EMPTY_PLAYLIST,
     AudioController,
     MusicButton,
 )
@@ -34,7 +32,7 @@ class SongButton(MusicButton):
         async def play(ctx):
             try:
                 async with ctx.channel.typing():
-                    await cog._play_song(ctx, song)
+                    await ctx.bot.audio_controllers[ctx.guild].play(ctx, song)
             finally:
                 await cog.cog_after_invoke(ctx)
 
@@ -136,37 +134,7 @@ class Music(commands.Cog):
             return
 
         async with ctx.typing():
-            await self._play_song(ctx, track)
-
-    async def _play_song(
-        self, ctx: AudioContext, track: Union[str, Iterable[str]]
-    ):
-        # reset timer
-        await ctx.audiocontroller.timer.start(True)
-
-        try:
-            song = await ctx.audiocontroller.process_song(track)
-        except SongError as e:
-            await ctx.send(e)
-            return
-        if song is None:
-            await ctx.send(config.SONGINFO_UNSUPPORTED)
-            return
-
-        if song is PLAYLIST:
-            await ctx.send(config.SONGINFO_PLAYLIST_QUEUED)
-        elif song is EMPTY_PLAYLIST:
-            await ctx.send(config.SONGINFO_PLAYLIST_EMPTY)
-        else:
-            if len(ctx.audiocontroller.playlist) != 1:
-                await ctx.send(
-                    embed=song.format_output(config.SONGINFO_QUEUE_ADDED)
-                )
-            elif not ctx.bot.settings[ctx.guild].announce_songs:
-                # auto-announce is disabled, announce here
-                await ctx.send(
-                    embed=song.format_output(config.SONGINFO_NOW_PLAYING)
-                )
+            await ctx.audiocontroller.play(ctx, track)
 
     @commands.hybrid_command(
         name="search",
