@@ -172,7 +172,7 @@ class MusicBot(commands.Bot):
         try:
             await asyncio.gather(
                 *(
-                    audiocontroller.update_view()
+                    _update_view(audiocontroller)
                     for audiocontroller in self.audio_controllers.values()
                 )
             )
@@ -284,3 +284,8 @@ class CommandTree(BaseCommandTree):
         if isinstance(error, CommandInvokeError):
             error = error.original
         await ctx.bot.on_command_error(ctx, error)
+
+
+async def _update_view(audiocontroller: AudioController):
+    async with audiocontroller.message_lock:
+        await audiocontroller.update_view()
