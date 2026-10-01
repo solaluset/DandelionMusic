@@ -130,6 +130,7 @@
     "INVALID_EMOJI": "Invalid emote",
     "NO_REACTION_PERMS": "Missing permission to add reactions",
     "INVALID_VOLUME": "Value must be a number in range 0-200",
+    "TIMEOUT_DISABLED": "This setting can not be changed.",
   },
   "SettingsEmbed": {
     "TITLE": "Settings",

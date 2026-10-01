@@ -116,6 +116,12 @@ def convert_volume(ctx: "Context", value: int) -> int:
     return value
 
 
+def convert_vc_timeout(ctx: "Context", value: bool) -> bool:
+    if not config.ALLOW_VC_TIMEOUT_EDIT:
+        raise ConversionError(ConversionErrorText.TIMEOUT_DISABLED)
+    return convert_bool(ctx, value)
+
+
 CONFIG_CONVERTERS = {
     "command_channel": convert_object,
     "start_voice_channel": convert_object,
@@ -123,7 +129,7 @@ CONFIG_CONVERTERS = {
     "user_must_be_in_vc": convert_bool,
     "button_emote": convert_emoji,
     "default_volume": convert_volume,
-    "vc_timeout": convert_bool,
+    "vc_timeout": convert_vc_timeout,
     "announce_songs": convert_bool,
     "dj_only": convert_bool,
 }
