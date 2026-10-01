@@ -402,9 +402,6 @@ class AudioController(object):
             self.mixer.stop_stream(0)
             return
 
-        if self._waiting:
-            self.announce_waiting()
-
         if self._next_song:
             next_song = self._next_song
             self._next_song = None
@@ -429,7 +426,11 @@ class AudioController(object):
     async def play_song(self, song: Song):
         """Plays a song object"""
 
-        self.announce_waiting()
+        async def _announce_waiting_later():
+            await asyncio.sleep(1)
+            self.announce_waiting()
+
+        waiting_task = self.add_task(_announce_waiting_later())
 
         try:
             if not await loader.preload(song, self.bot):
@@ -452,6 +453,7 @@ class AudioController(object):
             if error := audio._current_error:
                 raise SongError(config.SONGINFO_ERROR) from error
         finally:
+            waiting_task.cancel()
             self.stop_waiting()
 
         if (
@@ -549,13 +551,14 @@ class AudioController(object):
                     embed=song.format_output(config.SONGINFO_NOW_PLAYING)
                 )
 
-    def add_task(self, coro: Coroutine | asyncio.Future):
+    def add_task(self, coro: Coroutine | asyncio.Future) -> asyncio.Future:
         if asyncio.isfuture(coro):
             task = coro
         else:
             task = self.bot.loop.create_task(coro)
         self._tasks.add(task)
         task.add_done_callback(self._tasks.remove)
+        return task
 
     async def _preload_queue(self):
         rerun_needed = False
