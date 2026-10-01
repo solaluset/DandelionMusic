@@ -174,6 +174,7 @@ class AudioController(object):
 
     def make_view(self):
         if not self.is_active():
+            self.last_view = self.last_view_data = None
             return None
 
         stream = self.mixer.get_stream(0)
