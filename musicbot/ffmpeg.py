@@ -176,7 +176,7 @@ class AudioMixer(AudioSource):
                 print_exc(file=sys.stderr)
 
         if not self.streams and self.client.is_playing():
-            self._stop_mark = None
+            stop_mark = self._stop_mark = object()
 
             def stop():
                 time.sleep(3)
@@ -184,7 +184,6 @@ class AudioMixer(AudioSource):
                     return
                 self.client.stop()
 
-            stop_mark = self._stop_mark = object()
             threading.Thread(target=stop, daemon=True).start()
 
     def fast_forward_stream(self, id_: int, frame_count: int) -> None:
