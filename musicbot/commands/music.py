@@ -116,17 +116,7 @@ class Music(commands.Cog):
     ):
         if track is None:
             if ctx.interaction is None:
-                if ctx.message.attachments:
-                    track = ctx.message.jump_url
-                elif (
-                    ctx.message.reference
-                    and (msg := ctx.message.reference.resolved)
-                    and (
-                        msg.attachments
-                        or any(s.attachments for s in msg.message_snapshots)
-                    )
-                ):
-                    track = msg.jump_url
+                track = ctx.message.jump_url
             elif file:
                 track = file.url
         if track is None:
