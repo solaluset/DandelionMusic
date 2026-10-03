@@ -23,9 +23,12 @@ OriginalArgs = Tuple[List[str], Optional[dict]]
 downloader_class = yt_dlp.get_external_downloader("ffmpeg")
 _downloader_module = inspect.getmodule(downloader_class)
 _original_popen = _downloader_module.Popen
-_dummy_process = _original_popen(
-    ["ffmpeg", "-version"], stdout=subprocess.PIPE
-)
+try:
+    _dummy_process = _original_popen(
+        ["ffmpeg", "-version"], stdout=subprocess.PIPE
+    )
+except (FileNotFoundError, subprocess.CalledProcessError) as e:
+    raise RuntimeError("ffmpeg was not found") from e
 
 
 class MonkeyPopen:
