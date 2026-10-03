@@ -4,9 +4,7 @@ import sys
 import copy
 import _thread
 import asyncio
-import subprocess
 from enum import Enum
-from subprocess import CalledProcessError, check_output
 from typing import (
     TYPE_CHECKING,
     Awaitable,
@@ -46,12 +44,6 @@ def check_dependencies():
             "you have wrong version of discord.py,"
             " please install the version specified in requirements.txt"
         )
-
-    flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
-    try:
-        check_output(("ffmpeg", "-version"), text=True, creationflags=flags)
-    except (FileNotFoundError, CalledProcessError) as e:
-        raise RuntimeError("ffmpeg was not found") from e
 
     try:
         opus.Encoder.get_opus_version()
