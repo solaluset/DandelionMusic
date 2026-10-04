@@ -178,7 +178,9 @@ class MusicBot(commands.Bot):
         except Exception as e:  # noqa: BLE001
             print_exception(e)
 
-    async def get_prefix(self, message: discord.Message | commands.Context):
+    async def get_prefix(
+        self, message: discord.Message | commands.Context
+    ) -> str | list[str]:
         if isinstance(message, commands.Context):
             # display this as prefix for slash commands
             return "/"
@@ -194,7 +196,7 @@ class MusicBot(commands.Bot):
             ):
                 return match.group()
         # did not match
-        return " "
+        return []
 
     async def get_context(
         self, origin: discord.Message | discord.Interaction, /, *, cls=Context
