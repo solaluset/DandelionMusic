@@ -1,5 +1,3 @@
-# noqa: N999
-
 # bump dependencies in pyproject.toml that dependabot doesn't for some reason
 import json
 import tomllib
