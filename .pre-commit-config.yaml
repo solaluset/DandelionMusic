@@ -45,7 +45,7 @@ repos:
 
           os.system("pip install ./config")
 
-          runpy.run_path("config/update-dockerfile.py")
+          runpy.run_path("scripts/update-dockerfile.py")
           '
         files: ^config/config\.py$
         language: python
