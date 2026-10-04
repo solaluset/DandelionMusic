@@ -8,8 +8,8 @@ class SunoAIIE(InfoExtractor):
     _VALID_URL = r"^https?://(app\.suno\.ai|suno\.com)/song/(?P<code>\w+)"
 
     def _real_extract(self, url):
-        from musicbot.loader import _loop
         from musicbot.linkutils import get_soup
+        from musicbot.loader import _loop
 
         match = re.match(self._VALID_URL, url)
         try:

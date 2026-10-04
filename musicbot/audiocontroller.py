@@ -1,24 +1,25 @@
 from __future__ import annotations
 
-import sys
 import asyncio
-from functools import wraps
-from itertools import islice
+import sys
 from collections import defaultdict, deque
-from inspect import isawaitable
-from traceback import print_exc
+from collections.abc import Coroutine, Iterable
 from contextlib import contextmanager
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Coroutine, Literal, Optional, Union, Iterable
+from datetime import UTC, datetime
+from functools import wraps
+from inspect import isawaitable
+from itertools import islice
+from traceback import print_exc
+from typing import TYPE_CHECKING, ClassVar, Literal
 
 import discord
 
 from config import config
 from musicbot import loader, utils
+from musicbot.context import BasicContext, InteractionContext
+from musicbot.ffmpeg import AudioMixer, FFmpegPCMAudio
+from musicbot.playlist import LoopMode, LoopState, PauseState, Playlist
 from musicbot.song import Song, SongError
-from musicbot.ffmpeg import FFmpegPCMAudio, AudioMixer
-from musicbot.context import InteractionContext, BasicContext
-from musicbot.playlist import Playlist, LoopMode, LoopState, PauseState
 from musicbot.utils import (
     CheckError,
     StrEnum,
@@ -49,8 +50,8 @@ class VoiceAsset(StrEnum):
 
 
 class MusicButton(discord.ui.Button):
-    USAGE_HISTORY: defaultdict[int, deque[tuple[int, int, str]]] = defaultdict(
-        lambda: deque(maxlen=100)
+    USAGE_HISTORY: ClassVar[defaultdict[int, deque[tuple[int, int, str]]]] = (
+        defaultdict(lambda: deque(maxlen=100))
     )
 
     def __init__(self, callback, check=play_check, **kwargs):
@@ -67,7 +68,7 @@ class MusicButton(discord.ui.Button):
             return
         self.USAGE_HISTORY[ctx.guild.id].appendleft(
             (
-                int(datetime.now(timezone.utc).timestamp()),
+                int(datetime.now(UTC).timestamp()),
                 ctx.author.id,
                 str(self),
             )
@@ -81,7 +82,7 @@ class MusicButton(discord.ui.Button):
         return " ".join(str(part) for part in (self.emoji, self.label) if part)
 
 
-class AudioController(object):
+class AudioController:
     """Controls the playback of audio and the sequential playing of the songs.
 
     Attributes:
@@ -91,7 +92,7 @@ class AudioController(object):
         guild: The guild in which the Audiocontroller operates.
     """
 
-    def __init__(self, bot: "MusicBot", guild: discord.Guild):
+    def __init__(self, bot: MusicBot, guild: discord.Guild):
         self.bot = bot
         self.playlist = Playlist()
         self._next_song = None
@@ -103,7 +104,7 @@ class AudioController(object):
 
         self.timer = utils.Timer(self.timeout_handler)
 
-        self.command_channel: Optional[discord.abc.Messageable] = None
+        self.command_channel: discord.abc.Messageable | None = None
 
         self.last_message = None
         self.last_view = None
@@ -116,12 +117,12 @@ class AudioController(object):
         self.command_lock = asyncio.Lock()
         self.message_lock = asyncio.Lock()
 
-        self.current_voice_asset: Optional[VoiceAsset] = None
-        self.voice_asset_future: Optional[asyncio.Future] = None
+        self.current_voice_asset: VoiceAsset | None = None
+        self.voice_asset_future: asyncio.Future | None = None
         self._waiting = False
 
     @property
-    def current_song(self) -> Optional[Song]:
+    def current_song(self) -> Song | None:
         if self.playlist:
             return self.playlist[0]
         return None
@@ -142,7 +143,7 @@ class AudioController(object):
             self.mixer.get_stream(0).source.volume = value / 100.0
         except AttributeError:
             pass
-        except Exception:
+        except Exception:  # noqa: BLE001
             print("Unknown error when setting volume:", file=sys.stderr)
             print_exc(file=sys.stderr)
 
@@ -494,7 +495,7 @@ class AudioController(object):
     @needs_waiting
     async def _process_song(
         self, track: str
-    ) -> Union[Optional[Song], Literal[PLAYLIST], Literal[EMPTY_PLAYLIST]]:
+    ) -> Song | Literal[PLAYLIST, EMPTY_PLAYLIST] | None:
         """Adds the track to the playlist instance
         Starts playing if it is the first song"""
 
@@ -516,14 +517,14 @@ class AudioController(object):
                 loaded_song = PLAYLIST
 
         if not self.is_active():
-            print("Playing {}".format(track))
+            print(f"Playing {track}")
             await self.play_song(self.playlist[0])
         else:
             self.preload_queue()
 
         return loaded_song
 
-    async def play(self, ctx: BasicContext, track: Union[str, Iterable[str]]):
+    async def play(self, ctx: BasicContext, track: str | Iterable[str]):
         # reset timer
         await self.timer.start(True)
 
@@ -701,7 +702,7 @@ class AudioController(object):
             self.mixer.stop_stream(-1)
             try:
                 await self.play_asset(VoiceAsset.GOODBYE)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 print_exc(file=sys.stderr)
             else:
                 # let it finish

@@ -4,9 +4,9 @@ import discord
 from discord.ext import commands
 
 from config import config
+from musicbot.audiocontroller import AudioController, MusicButton
 from musicbot.bot import Context, MusicBot
 from musicbot.settings import CONFIG_OPTIONS, ConversionError
-from musicbot.audiocontroller import AudioController, MusicButton
 from musicbot.utils import Paginator, chunks, dj_check, voice_check
 
 

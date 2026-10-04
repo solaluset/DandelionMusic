@@ -1,5 +1,4 @@
 import random
-from typing import Optional
 from collections import deque
 
 from discord import Embed
@@ -58,7 +57,7 @@ class Playlist:
             != 0
         )
 
-    def next(self, ignore_single_loop=False) -> Optional[Song]:
+    def next(self, ignore_single_loop=False) -> Song | None:
         if len(self.playque) == 0:
             return None
 
@@ -76,7 +75,7 @@ class Playlist:
 
         return self.playque[0]
 
-    def prev(self) -> Optional[Song]:
+    def prev(self) -> Song | None:
         if self.loop != LoopMode.ALL:
             if len(self.playhistory) != 0:
                 song = self.playhistory.pop()

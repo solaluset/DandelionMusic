@@ -1,21 +1,21 @@
-import os
-import sys
 import ast
 import inspect
+import os
+import sys
 import warnings
-from typing import Optional
+from typing import ClassVar
 
 import jsonc
 from packaging.requirements import Requirement
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import (  # noqa: E402
+from utils import (
     CONFIG_DIRS,
     Formatter,
-    get_env_var,
     alchemize_url,
-    load_configs,
+    get_env_var,
     join_dicts,
+    load_configs,
     subtract_dicts,
 )
 
@@ -59,7 +59,7 @@ class Config:
     DATABASE_URL = "sqlite:///settings.db"
 
     # proxy used to connect to YouTube and other sites (optional)
-    PROXY_URL: Optional[str] = ""
+    PROXY_URL: str | None = ""
     # whether to use proxy for Discord connection too
     USE_PROXY_FOR_DISCORD = True
 
@@ -95,7 +95,7 @@ class Config:
     ENABLE_PLAYLISTS = True
 
     # if not empty, the bot will leave non-whitelisted guilds
-    GUILD_WHITELIST = []
+    GUILD_WHITELIST: ClassVar[list[int]] = []
 
     def __init__(self):
         current_cfg = self.load()
@@ -253,7 +253,7 @@ class Config:
         }
 
     @classmethod
-    def get_comments(cls) -> Optional[dict]:
+    def get_comments(cls) -> dict | None:
         try:
             src = inspect.getsource(cls)
         except OSError:

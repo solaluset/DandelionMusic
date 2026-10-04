@@ -1,33 +1,36 @@
-import sys
-import json
-import atexit
 import asyncio
+import atexit
+import json
+import sys
 import threading
-from inspect import getmodule
-from urllib.parse import urlparse, parse_qs
-from datetime import datetime, timezone
 from concurrent.futures import ProcessPoolExecutor
+from datetime import UTC, datetime
+from inspect import getmodule
 from multiprocessing import get_context as mp_context
-from typing import List, Optional, Union
+from urllib.parse import parse_qs, urlparse
 
 from aiohttp import ClientResponseError
-from yt_dlp import YoutubeDL, DownloadError
+from yt_dlp import DownloadError, YoutubeDL
 
 from config import config
 from musicbot.bot import MusicBot
-from musicbot.song import Song, SongError
-from musicbot.utils import OutputWrapper
 from musicbot.ffmpeg import OriginalArgs, _get_ffmpeg_args, downloader_class
 from musicbot.linkutils import (
     GENERIC_IE,
     ExtractorT,
     SiteTypes,
-    get_ie,
     fetch_spotify,
+    get_ie,
     identify_url,
+)
+from musicbot.linkutils import (
     init as init_session,
+)
+from musicbot.linkutils import (
     stop as stop_session,
 )
+from musicbot.song import Song, SongError
+from musicbot.utils import OutputWrapper
 
 sys.stdout = OutputWrapper(sys.stdout)
 sys.stderr = OutputWrapper(sys.stderr)
@@ -88,7 +91,7 @@ def init():
     _executor.submit(_noop).result()
 
 
-def _extract_info(url: str, ie: Optional[ExtractorT] = None) -> Optional[dict]:
+def _extract_info(url: str, ie: ExtractorT | None = None) -> dict | None:
     if ie is None:
         ie = get_ie(url)
     # cache by module (effectively means by site)
@@ -105,11 +108,11 @@ def _extract_info(url: str, ie: Optional[ExtractorT] = None) -> Optional[dict]:
             return None
 
 
-async def search_youtube(title: str, count: int = 1) -> List[dict]:
+async def search_youtube(title: str, count: int = 1) -> list[dict]:
     return await _run_sync(_search_youtube, title, count)
 
 
-def _search_youtube(title: str, count: int = 1) -> List[dict]:
+def _search_youtube(title: str, count: int = 1) -> list[dict]:
     """Searches youtube for the video title
     Returns the first results video link"""
 
@@ -121,11 +124,11 @@ def _search_youtube(title: str, count: int = 1) -> List[dict]:
     return r["entries"]
 
 
-async def load_song(track: str) -> Union[Optional[Song], List[Song]]:
+async def load_song(track: str) -> Song | list[Song] | None:
     return await _run_sync(_load_song, track)
 
 
-def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
+def _load_song(track: str) -> Song | list[Song] | None:
     host = identify_url(track)
 
     if host == SiteTypes.NOT_URL:
@@ -183,7 +186,7 @@ def _load_song(track: str) -> Union[Optional[Song], List[Song]]:
     return song
 
 
-def _parse_expire(url: str) -> Optional[int]:
+def _parse_expire(url: str) -> int | None:
     expire = parse_qs(urlparse(url).query).get("expire")
     if not expire:
         return None
@@ -201,9 +204,7 @@ async def preload(song: Song, bot: MusicBot) -> bool:
         expire = _parse_expire(song.data["url"])
         if expire is None or expire == _parse_expire(song.webpage_url):
             return True
-        if datetime.now(timezone.utc) < datetime.fromtimestamp(
-            expire, timezone.utc
-        ):
+        if datetime.now(UTC) < datetime.fromtimestamp(expire, UTC):
             return True
 
     future = _preloading.get(song)

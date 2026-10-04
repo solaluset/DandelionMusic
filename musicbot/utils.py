@@ -1,36 +1,35 @@
 from __future__ import annotations
-import os
-import sys
-import copy
+
 import _thread
 import asyncio
+import copy
+import os
+import sys
+from collections.abc import Awaitable, Callable, Iterable
 from enum import Enum
 from typing import (
     TYPE_CHECKING,
-    Awaitable,
-    Callable,
-    Iterable,
-    Optional,
-    Union,
     Literal,
 )
 
 from aioconsole import ainput
 from discord import (
-    __version__ as dpy_version,
-    opus,
-    utils,
-    ui,
-    Emoji,
-    Embed,
     ButtonStyle,
+    Embed,
+    Emoji,
+    opus,
+    ui,
+    utils,
+)
+from discord import (
+    __version__ as dpy_version,
 )
 from discord.ext.commands import CommandError
 from discord.ext.paginators import ButtonPaginator, PaginatorButton
 
 from config import config
-from musicbot.song import Song
 from musicbot.linkutils import url_regex
+from musicbot.song import Song
 
 # avoiding circular import
 if TYPE_CHECKING:
@@ -111,9 +110,10 @@ async def voice_check(ctx: BasicContext) -> Literal[True]:
 
 
 async def channel_check(ctx: BasicContext) -> Literal[True]:
-    if (cm_channel := ctx.bot.settings[ctx.guild].command_channel) is not None:
-        if int(cm_channel) != ctx.channel.id:
-            raise CheckError(config.WRONG_CHANNEL_MESSAGE)
+    if (
+        cm_channel := ctx.bot.settings[ctx.guild].command_channel
+    ) is not None and int(cm_channel) != ctx.channel.id:
+        raise CheckError(config.WRONG_CHANNEL_MESSAGE)
 
     return True
 
@@ -156,7 +156,7 @@ class View(ui.View):
         return await super().on_timeout()
 
 
-def get_emoji(bot: MusicBot, string: str) -> Optional[Union[str, Emoji]]:
+def get_emoji(bot: MusicBot, string: str) -> str | Emoji | None:
     if string.isdecimal():
         return utils.get(bot.emojis, id=int(string))
     return string
@@ -301,7 +301,7 @@ class OutputWrapper:
             ret = self.stream.write(text)
             if not self.using_log_file:
                 self.flush()
-        except Exception:
+        except Exception:  # noqa: BLE001
             self.using_log_file = True
             self.stream = self.get_log_file()
             ret = self.stream.write(text)
@@ -310,7 +310,7 @@ class OutputWrapper:
     def flush(self):
         try:
             self.stream.flush()
-        except Exception:
+        except Exception:  # noqa: BLE001
             self.using_log_file = True
             self.stream = self.get_log_file()
 
@@ -321,7 +321,7 @@ class OutputWrapper:
     def get_log_file(cls):
         if cls.log_file:
             return cls.log_file
-        cls.log_file = open("log.txt", "w", encoding="utf-8")
+        cls.log_file = open("log.txt", "w", encoding="utf-8")  # noqa: SIM115
         return cls.log_file
 
 

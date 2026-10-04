@@ -1,16 +1,19 @@
+import asyncio
 import re
 import sys
-import asyncio
 from enum import Enum, auto
+from multiprocessing import current_process
 from traceback import print_exc
 from urllib.parse import urlparse
-from multiprocessing import current_process
-from typing import Optional, Union, List
 
-from spotipy import Spotify
-from bs4 import BeautifulSoup
 from aiohttp import ClientSession
-from spotipy.oauth2 import SpotifyClientCredentials
+from bs4 import BeautifulSoup
+from spotipy import (
+    Spotify,
+    SpotifyClientCredentials,
+    SpotifyException,
+    SpotifyOauthError,
+)
 from yt_dlp.extractor import gen_extractor_classes
 from yt_dlp.extractor.common import InfoExtractor
 from yt_dlp.extractor.lazy_extractors import LazyLoadExtractor
@@ -28,11 +31,10 @@ if config.SPOTIFY_ID or config.SPOTIFY_SECRET:
             ),
             proxies={"all": config.PROXY_URL},
         )
-    except Exception:
+    except SpotifyOauthError:
         if (
             # avoid printing this twice
-            current_process().name
-            == "MainProcess"
+            current_process().name == "MainProcess"
         ):
             print_exc(file=sys.stderr)
             print(
@@ -41,7 +43,7 @@ if config.SPOTIFY_ID or config.SPOTIFY_SECRET:
                 file=sys.stderr,
             )
 
-ExtractorT = Union[InfoExtractor, LazyLoadExtractor]
+ExtractorT = InfoExtractor | LazyLoadExtractor
 EXTRACTORS = gen_extractor_classes()
 GENERIC_IE = next(ie for ie in EXTRACTORS if ie.IE_NAME == "generic")
 # Modified version of
@@ -95,7 +97,7 @@ async def get_soup(url: str) -> BeautifulSoup:
     return BeautifulSoup(page, "html.parser")
 
 
-async def fetch_spotify(url: str) -> Optional[Union[dict, List[str]]]:
+async def fetch_spotify(url: str) -> dict | list[str] | None:
     """Searches YouTube for Spotify song or loads Spotify playlist"""
     match = spotify_regex.match(url)
     # strip any extra parts
@@ -117,7 +119,7 @@ async def fetch_spotify(url: str) -> Optional[Union[dict, List[str]]]:
 
 async def fetch_spotify_playlist(
     url: str, list_type: str, code: str
-) -> List[str]:
+) -> list[str]:
     """Returns list of Spotify links"""
 
     if spotify_api:
@@ -131,7 +133,7 @@ async def fetch_spotify_playlist(
 
 def fetch_playlist_with_api(
     list_type: SpotifyPlaylistTypes, code: str
-) -> List[str]:
+) -> list[str]:
     tracks = []
     try:
         if list_type == SpotifyPlaylistTypes.ALBUM:
@@ -149,7 +151,7 @@ def fetch_playlist_with_api(
                 f" for {list_type} {code}",
                 file=sys.stderr,
             )
-    except Exception:
+    except SpotifyException:
         print(
             f"ERROR: Spotify API returned error for {list_type} {code}:",
             file=sys.stderr,
@@ -169,18 +171,18 @@ def fetch_playlist_with_api(
     return links
 
 
-def get_urls(content: str) -> List[str]:
+def get_urls(content: str) -> list[str]:
     return [m[0] for m in url_regex.findall(content)]
 
 
-def get_ie(url: str) -> Optional[ExtractorT]:
+def get_ie(url: str) -> ExtractorT | None:
     for ie in EXTRACTORS:
         if ie.suitable(url) and ie is not GENERIC_IE:
             return ie
     return None
 
 
-def identify_url(url: str) -> Union[SiteTypes, ExtractorT]:
+def identify_url(url: str) -> SiteTypes | ExtractorT:
     if not url_regex.fullmatch(url):
         return SiteTypes.NOT_URL
 

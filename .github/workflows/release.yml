@@ -12,20 +12,20 @@ jobs:
     permissions: write-all
 
     steps:
-    - uses: actions/checkout@v7
-    - uses: actions/setup-python@v7
-      with:
-        python-version: "3.11"
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
 
-    - name: Build
-      run: >
-        pip install -r config/build-requirements.txt
-        && python -m config.build
+      - name: Build
+        run: >
+          pip install -r config/build-requirements.txt
+          && python -m config.build
 
-    - name: Upload binaries to release
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        tag: ${{ github.ref }}
-        file: ./dist/DandelionMusic.exe
-        asset_name: DandelionMusic-$tag.exe
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref }}
+          file: ./dist/DandelionMusic.exe
+          asset_name: DandelionMusic-$tag.exe

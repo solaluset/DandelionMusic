@@ -1,24 +1,25 @@
-import sys
-import time
+import audioop
 import inspect
-import threading
 import subprocess
-from queue import deque
-from functools import reduce
-from traceback import print_exc
-from dataclasses import dataclass
+import sys
+import threading
+import time
 from collections import defaultdict
-from typing import Callable, Dict, Optional, List, Tuple, Iterable
+from collections.abc import Callable, Iterable
+from dataclasses import dataclass
+from functools import reduce
+from queue import deque
+from traceback import print_exc
 
 import yt_dlp
-import audioop
-from discord import AudioSource, FFmpegPCMAudio as BasePCMAudio, VoiceClient
+from discord import AudioSource, VoiceClient
+from discord import FFmpegPCMAudio as BasePCMAudio
 from discord.opus import Encoder as OpusEncoder
 
 from config import config
 from musicbot.song import Song
 
-OriginalArgs = Tuple[List[str], Optional[dict]]
+OriginalArgs = tuple[list[str], dict | None]
 
 downloader_class = yt_dlp.get_external_downloader("ffmpeg")
 _downloader_module = inspect.getmodule(downloader_class)
@@ -33,9 +34,9 @@ except (FileNotFoundError, subprocess.CalledProcessError) as e:
 
 class MonkeyPopen:
     args_catch_lock = threading.Lock()
-    args_catch_result: Optional[OriginalArgs] = None
+    args_catch_result: OriginalArgs | None = None
 
-    def __call__(self, args, *extra, env: Optional[dict] = None, **kwargs):
+    def __call__(self, args, *extra, env: dict | None = None, **kwargs):
         if MonkeyPopen.args_catch_lock.locked():
             MonkeyPopen.args_catch_result = (args, env)
             return _dummy_process
@@ -62,11 +63,16 @@ class FFmpegPCMAudio(BasePCMAudio):
         super().__init__(None, stderr=sys.stderr)
 
     def _spawn_process(
-        self, args: List[str], **subprocess_kwargs
+        self, args: list[str], **subprocess_kwargs
     ) -> subprocess.Popen:
         new_args = self.original_args.copy()
         new_args[1:1] = (
-            "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5".split()
+            "-reconnect",
+            "1",
+            "-reconnect_streamed",
+            "1",
+            "-reconnect_delay_max",
+            "5",
         )
         try:
             c_index = new_args.index("-c")
@@ -75,9 +81,9 @@ class FFmpegPCMAudio(BasePCMAudio):
             pass
         f_index = new_args.index("-f")
         new_args[f_index : f_index + 2] = (
-            "-af loudnorm".split()
+            ["-af", "loudnorm"]
             + args[args.index("-f") : -1]
-            + "-loglevel error".split()
+            + ["-loglevel", "error"]
         )
         subprocess_kwargs["env"] = self.original_env
         return super()._spawn_process(new_args, **subprocess_kwargs)
@@ -86,7 +92,7 @@ class FFmpegPCMAudio(BasePCMAudio):
 @dataclass
 class AudioStream:
     source: AudioSource
-    after: Optional[Callable[[], None]] = None
+    after: Callable[[], None] | None = None
     paused: bool = False
     rewindable: bool = False
     read_frames: int = 0
@@ -103,11 +109,11 @@ class AudioMixer(AudioSource):
 
     def __init__(self, client: VoiceClient):
         self.client = client
-        self.streams: Dict[int, AudioStream] = {}
+        self.streams: dict[int, AudioStream] = {}
         self.rewinds: defaultdict[int, deque[bytes]] = defaultdict(
             lambda: deque(maxlen=self.MAX_REWIND_FRAMES)
         )
-        self._stop_mark: Optional[object] = None
+        self._stop_mark: object | None = None
 
     def read(self) -> bytes:
         return reduce(
@@ -140,8 +146,8 @@ class AudioMixer(AudioSource):
         self,
         source: AudioSource,
         *,
-        id_: Optional[int] = None,
-        after: Optional[Callable[[], None]] = None,
+        id_: int | None = None,
+        after: Callable[[], None] | None = None,
         rewindable: bool = False,
     ) -> None:
         if source.is_opus():
@@ -159,7 +165,7 @@ class AudioMixer(AudioSource):
         if not self.client.is_playing():
             self.client.play(self)
 
-    def get_stream(self, id_: int) -> Optional[AudioStream]:
+    def get_stream(self, id_: int) -> AudioStream | None:
         return self.streams.get(id_)
 
     def stop_stream(self, id_: int) -> None:
@@ -175,7 +181,7 @@ class AudioMixer(AudioSource):
         if stream and stream.after:
             try:
                 stream.after()
-            except Exception:
+            except Exception:  # noqa: BLE001
                 print_exc(file=sys.stderr)
 
         if not self.streams and self.client.is_playing():

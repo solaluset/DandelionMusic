@@ -1,8 +1,8 @@
-import os
-import sys
 import glob
 import json
+import os
 import runpy
+import sys
 
 from config import config
 

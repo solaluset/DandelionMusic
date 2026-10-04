@@ -1,9 +1,11 @@
-import os
-import sys
 import ast
-import jsonc
+import os
 import string
-from typing import TypeVar, Callable, Iterable, Optional, List
+import sys
+from collections.abc import Callable, Iterable
+from typing import TypeVar
+
+import jsonc
 
 T = TypeVar("T")
 CONFIG_DIRS = (
@@ -47,8 +49,8 @@ class Formatter(string.Template):
 
 
 def load_configs(
-    name: str, object_hook: Optional[Callable[[dict], dict]] = None
-) -> List[dict]:
+    name: str, object_hook: Callable[[dict], dict] | None = None
+) -> list[dict]:
     result = []
     for dir_ in CONFIG_DIRS:
         file = os.path.join(dir_, name)

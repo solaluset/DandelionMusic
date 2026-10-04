@@ -10,4 +10,4 @@ sys.path.append(os.path.dirname(__file__))
 load_all_plugins()
 
 # avoid circular import error
-from . import loader  # noqa: E402
+from . import loader
