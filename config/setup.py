@@ -17,7 +17,7 @@ def main():
         print(Config().DATABASE_LIBRARY, file=f)
         # reuse requirements already specified in toml
         print(
-            *tomllib.load(t)["build-system"]["requires"][3:], sep="\n", file=f
+            *tomllib.load(t)["build-system"]["requires"][2:], sep="\n", file=f
         )
 
     setup()

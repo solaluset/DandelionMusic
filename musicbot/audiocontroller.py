@@ -6,6 +6,7 @@ from collections import defaultdict, deque
 from collections.abc import Coroutine
 from contextlib import contextmanager
 from datetime import UTC, datetime
+from enum import StrEnum
 from functools import wraps
 from inspect import isawaitable
 from itertools import islice
@@ -22,7 +23,6 @@ from musicbot.playlist import LoopMode, LoopState, PauseState, Playlist
 from musicbot.song import Song, SongError
 from musicbot.utils import (
     CheckError,
-    StrEnum,
     View,
     asset,
     channel_check,

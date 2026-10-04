@@ -1,6 +1,7 @@
 import json
 import os
 import re
+from enum import StrEnum
 from inspect import isawaitable
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
@@ -21,7 +22,7 @@ from sqlalchemy import String, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from config import config
-from musicbot.utils import StrEnum, get_emoji
+from musicbot.utils import get_emoji
 
 # avoiding circular import
 if TYPE_CHECKING:
