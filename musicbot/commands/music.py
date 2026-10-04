@@ -1,26 +1,26 @@
-import json
 import asyncio
-from typing import Awaitable, Callable, Optional
+import json
+from collections.abc import Awaitable, Callable
 
 from discord import Attachment, Embed, Interaction
 from discord.app_commands import Choice
 from discord.ext import commands
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 
 from config import config
-from musicbot import linkutils, utils, loader
-from musicbot.song import Song
-from musicbot.playlist import LoopMode
-from musicbot.bot import MusicBot, Context
-from musicbot.utils import View, Paginator, dj_check, channel_check, chunks
+from musicbot import linkutils, loader, utils
 from musicbot.audiocontroller import (
     AudioController,
     MusicButton,
 )
-from musicbot.loader import search_youtube
-from musicbot.settings import SavedPlaylist, ConversionError, convert_volume
+from musicbot.bot import Context, MusicBot
 from musicbot.linkutils import get_site_type, url_regex
+from musicbot.loader import search_youtube
+from musicbot.playlist import LoopMode
+from musicbot.settings import ConversionError, SavedPlaylist, convert_volume
+from musicbot.song import Song
+from musicbot.utils import Paginator, View, channel_check, chunks, dj_check
 
 
 class AudioContext(Context):
@@ -112,7 +112,11 @@ class Music(commands.Cog):
         aliases=["p", "yt"],
     )
     async def _play(
-        self, ctx: AudioContext, *, track: str = None, file: Attachment = None
+        self,
+        ctx: AudioContext,
+        *,
+        track: str | None = None,
+        file: Attachment | None = None,
     ):
         if track is None:
             if ctx.interaction is None:
@@ -224,8 +228,8 @@ class Music(commands.Cog):
     async def _move(
         self,
         ctx: AudioContext,
-        dest_pos: Optional[int] = None,
-        src_pos: Optional[int] = None,
+        dest_pos: int | None = None,
+        src_pos: int | None = None,
     ):
         playlist_len = len(ctx.audiocontroller.playlist)
 
@@ -288,7 +292,7 @@ class Music(commands.Cog):
     async def _remove(
         self,
         ctx: AudioContext,
-        queue_number: Optional[int] = None,
+        queue_number: int | None = None,
     ):
         playlist_len = len(ctx.audiocontroller.playlist)
 
@@ -408,9 +412,7 @@ class Music(commands.Cog):
     ):
         if value is None:
             await ctx.send(
-                "Current volume: {}% :speaker:".format(
-                    ctx.audiocontroller.volume
-                )
+                f"Current volume: {ctx.audiocontroller.volume}% :speaker:"
             )
             return
 
@@ -421,9 +423,9 @@ class Music(commands.Cog):
             return
 
         if ctx.audiocontroller.volume >= value:
-            await ctx.send("Volume set to {}% :sound:".format(str(value)))
+            await ctx.send(f"Volume set to {value}% :sound:")
         else:
-            await ctx.send("Volume set to {}% :loud_sound:".format(str(value)))
+            await ctx.send(f"Volume set to {value}% :loud_sound:")
         ctx.audiocontroller.volume = value
 
     async def _playlist_autocomplete(

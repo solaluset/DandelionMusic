@@ -2,8 +2,8 @@ import re
 from hashlib import sha256
 
 from yt_dlp import DownloadError
-from yt_dlp.utils import traverse_obj
 from yt_dlp.extractor.common import InfoExtractor
+from yt_dlp.utils import traverse_obj
 
 from config import config
 

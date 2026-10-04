@@ -1,32 +1,33 @@
 from __future__ import annotations
 
+import asyncio
 import re
 import sys
-import asyncio
 from traceback import print_exception
-from typing import Dict, Union
 
 import aiohttp
 import discord
-from discord.ext import commands, tasks
 from discord.app_commands import (
     Choice,
-    CommandTree as BaseCommandTree,
     CommandInvokeError,
 )
+from discord.app_commands import (
+    CommandTree as BaseCommandTree,
+)
+from discord.ext import commands, tasks
 from discord.ext.commands import DefaultHelpCommand, NotOwner, UserInputError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from config import config
 from musicbot.audiocontroller import AudioController
+from musicbot.context import Context, InteractionContext
 from musicbot.settings import (
     GuildSettings,
-    run_migrations,
     extract_legacy_settings,
     migrate_old_playlists,
+    run_migrations,
 )
-from musicbot.context import Context, InteractionContext
 from musicbot.utils import CheckError, read_shutdown
 
 
@@ -48,10 +49,10 @@ class MusicBot(commands.Bot):
 
         # A dictionary that remembers
         # which guild belongs to which audiocontroller
-        self.audio_controllers: Dict[discord.Guild, AudioController] = {}
+        self.audio_controllers: dict[discord.Guild, AudioController] = {}
 
         # A dictionary that remembers which settings belongs to which guild
-        self.settings: Dict[discord.Guild, GuildSettings] = {}
+        self.settings: dict[discord.Guild, GuildSettings] = {}
 
         self.db_engine = create_async_engine(config.DATABASE)
         self.DbSession = sessionmaker(
@@ -109,7 +110,7 @@ class MusicBot(commands.Bot):
                 await guild.leave()
                 continue
             await self.register(guild)
-            print("Joined {}".format(guild.name))
+            print(f"Joined {guild.name}")
 
         print(config.STARTUP_COMPLETE_MESSAGE)
 
@@ -176,12 +177,10 @@ class MusicBot(commands.Bot):
                     for audiocontroller in self.audio_controllers.values()
                 )
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print_exception(e)
 
-    async def get_prefix(
-        self, message: Union[discord.Message, commands.Context]
-    ):
+    async def get_prefix(self, message: discord.Message | commands.Context):
         if isinstance(message, commands.Context):
             # display this as prefix for slash commands
             return "/"
@@ -239,7 +238,7 @@ class MusicBot(commands.Bot):
                     guild.get_channel(int(sett.start_voice_channel or 0))
                     or guild.voice_channels[0]
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 print(
                     f"Couldn't autojoin VC at {guild.name}:",
                     e,

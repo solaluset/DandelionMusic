@@ -1,7 +1,8 @@
 from __future__ import annotations
+
 import datetime
-from urllib.parse import urlparse, parse_qs
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
+from urllib.parse import parse_qs, urlparse
 
 import discord
 
@@ -18,12 +19,12 @@ class Song:
         self,
         host: SiteTypes,
         webpage_url: str,
-        data: Optional[dict] = None,
-        title: Optional[str] = None,
-        uploader: Optional[str] = None,
-        duration: Optional[int] = None,
-        thumbnail: Optional[str] = None,
-        playlist: Optional[SavedPlaylist] = None,
+        data: dict | None = None,
+        title: str | None = None,
+        uploader: str | None = None,
+        duration: int | None = None,
+        thumbnail: str | None = None,
+        playlist: SavedPlaylist | None = None,
     ):
         self.host = host
         self.webpage_url = webpage_url
@@ -49,7 +50,7 @@ class Song:
     ) -> discord.Embed:
         embed = discord.Embed(
             title=playtype,
-            description="[{}]({})".format(self.title, self.webpage_url),
+            description=f"[{self.title}]({self.webpage_url})",
             color=config.EMBED_COLOR,
         )
 
@@ -78,7 +79,7 @@ class Song:
 
         return embed
 
-    def update(self, data: Union[dict, "Song"]):
+    def update(self, data: dict | Song):
         if isinstance(data, Song):
             for k, v in data.__dict__.items():
                 if v:

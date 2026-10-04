@@ -2,31 +2,30 @@ import json
 import os
 import re
 from inspect import isawaitable
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Annotated, ClassVar
 
 import discord
+import sqlalchemy
+from alembic.autogenerate import produce_migrations, render_python_code
+from alembic.migration import MigrationContext
+from alembic.operations import Operations
 from discord import (
-    TextChannel,
-    VoiceChannel,
-    Role,
     Forbidden,
     HTTPException,
+    Role,
+    TextChannel,
+    VoiceChannel,
     utils,
 )
-import sqlalchemy
 from sqlalchemy import String, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from alembic.migration import MigrationContext
-from alembic.autogenerate import produce_migrations, render_python_code
-from alembic.operations import Operations
-from typing_extensions import Annotated
 
 from config import config
 from musicbot.utils import StrEnum, get_emoji
 
 # avoiding circular import
 if TYPE_CHECKING:
-    from musicbot.bot import MusicBot, Context
+    from musicbot.bot import Context, MusicBot
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 LEGACY_SETTINGS = DIR_PATH + "/generated/settings.json"
@@ -47,7 +46,7 @@ DiscordIdStr = Annotated[str, ID_LENGTH]
 
 
 class Base(DeclarativeBase):
-    type_annotation_map = {
+    type_annotation_map: ClassVar[dict] = {
         DiscordIdStr: String(ID_LENGTH),
     }
 
@@ -62,7 +61,7 @@ class ConversionError(Exception):
     pass
 
 
-async def convert_emoji(ctx: "Context", value: Optional[str]) -> Optional[str]:
+async def convert_emoji(ctx: "Context", value: str | None) -> str | None:
     raise ConversionError(
         "This setting is deprecated, it has no effect and will be removed."
     )
@@ -97,9 +96,7 @@ async def convert_emoji(ctx: "Context", value: Optional[str]) -> Optional[str]:
     return emoji
 
 
-def convert_object(
-    ctx: "Context", value: Optional[discord.Object]
-) -> Optional[str]:
+def convert_object(ctx: "Context", value: discord.Object | None) -> str | None:
     if value is None:
         return None
 
@@ -150,11 +147,11 @@ class GuildSettings(Base):
     __tablename__ = "settings"
 
     guild_id: Mapped[DiscordIdStr] = mapped_column(primary_key=True)
-    command_channel: Mapped[Optional[DiscordIdStr]]
-    start_voice_channel: Mapped[Optional[DiscordIdStr]]
-    dj_role: Mapped[Optional[DiscordIdStr]]
+    command_channel: Mapped[DiscordIdStr | None]
+    start_voice_channel: Mapped[DiscordIdStr | None]
+    dj_role: Mapped[DiscordIdStr | None]
     user_must_be_in_vc: Mapped[bool]
-    button_emote: Mapped[Optional[DiscordIdStr]]
+    button_emote: Mapped[DiscordIdStr | None]
     default_volume: Mapped[int]
     vc_timeout: Mapped[bool]
     announce_songs: Mapped[bool] = mapped_column(
@@ -194,8 +191,8 @@ class GuildSettings(Base):
 
     @classmethod
     async def load_many(
-        cls, bot: "MusicBot", guilds: List[discord.Guild]
-    ) -> Dict[discord.Guild, "GuildSettings"]:
+        cls, bot: "MusicBot", guilds: list[discord.Guild]
+    ) -> dict[discord.Guild, "GuildSettings"]:
         """Load list of objects from database
         Creates new ones when not found
         Returns dict with guilds as keys and their settings as values"""
@@ -244,7 +241,7 @@ class GuildSettings(Base):
 
         # exclusion_keys = ['id']
 
-        for key in DEFAULT_CONFIG.keys():
+        for key in DEFAULT_CONFIG:
             # if key in exclusion_keys:
             #     continue
 
@@ -333,7 +330,7 @@ def run_migrations(connection):
         print(code)
     with Operations.context(ctx) as op:
         variables = {"op": op, "sa": sqlalchemy}
-        exec("def run():\n" + code, variables)
+        exec("def run():\n" + code, variables)  # noqa: S102
         variables["run"]()
     connection.commit()
 
@@ -342,7 +339,7 @@ async def extract_legacy_settings(bot: "MusicBot"):
     "Load settings from deprecated json file to DB"
     if not os.path.isfile(LEGACY_SETTINGS):
         return
-    with open(LEGACY_SETTINGS) as file:
+    with open(LEGACY_SETTINGS) as file:  # noqa: ASYNC230
         json_data = json.load(file)
     async with bot.DbSession() as session:
         existing = (

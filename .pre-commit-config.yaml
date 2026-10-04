@@ -1,37 +1,52 @@
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
-    -   id: trailing-whitespace
-    -   id: end-of-file-fixer
-    -   id: check-yaml
-    -   id: check-added-large-files
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
 
--   repo: https://github.com/psf/black
-    rev: 26.5.1
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.38.0
     hooks:
-    -   id: black
-        args: ["-l", "79"]
+      - id: yamllint
 
--   repo: https://github.com/pycqa/flake8
-    rev: 7.4.1
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.10
     hooks:
-    -   id: flake8
+      - id: ruff-check
+        args: ["--fix"]
+      - id: ruff-format
 
--   repo: local
+  - repo: local
     hooks:
-    -   id: check-jsonc
+      - id: check-jsonc
         name: check-jsonc
         description: 'Check JSON with comments'
-        entry: python -c 'import os, sys; os.system("pip install ./config"); import jsonc; jsonc.load(open(sys.argv[1]))'
+        entry: |
+          python3 -c '
+          import os, sys
+
+          os.system("pip install ./config")
+
+          import jsonc
+          jsonc.load(open(sys.argv[1]))
+          '
         language: python
         types: [json]
         require_serial: true
 
-    -   id: update-dockerfile
+      - id: update-dockerfile
         name: update-dockerfile
         description: 'Update env vars in Dockerfile'
-        entry: python -c 'import os, runpy; os.system("pip install ./config"); runpy.run_path("config/update-dockerfile.py")'
+        entry: |
+          python3 -c '
+          import os, runpy
+
+          os.system("pip install ./config")
+
+          runpy.run_path("config/update-dockerfile.py")
+          '
         files: ^config/config\.py$
         language: python
         require_serial: true

@@ -1,15 +1,14 @@
-import sys
 import asyncio
+import sys
+from contextlib import redirect_stdout
 from io import StringIO
-from typing import List
 from textwrap import TextWrapper
 from traceback import print_exc
-from contextlib import redirect_stdout
 
 import discord
-from discord.ext import commands
-from discord.app_commands import Choice
 from aioconsole import aexec
+from discord.app_commands import Choice
+from discord.ext import commands
 
 from config import config
 from musicbot.bot import Context, MusicBot
@@ -22,13 +21,13 @@ class Splitter(TextWrapper):
             width, replace_whitespace=False, drop_whitespace=False, tabsize=4
         )
 
-    def _split(self, text: str) -> List[str]:
+    def _split(self, text: str) -> list[str]:
         return text.splitlines(True)
 
     def _handle_long_word(
         self,
-        reversed_chunks: List[str],
-        cur_line: List[str],
+        reversed_chunks: list[str],
+        cur_line: list[str],
         cur_len: int,
         width: int,
     ) -> None:
@@ -81,7 +80,7 @@ class Developer(commands.Cog):
         with redirect_stdout(output):
             try:
                 await aexec(code, namespace)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 print_exc(file=output)
         output = output.getvalue()
 

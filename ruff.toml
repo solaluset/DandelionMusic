@@ -1,0 +1,7 @@
+target-version = "py311"
+
+line-length = 79
+
+extend-exclude = [
+    "musicbot/timeparse.py",
+]

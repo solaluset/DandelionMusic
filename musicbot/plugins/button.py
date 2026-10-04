@@ -1,6 +1,6 @@
 from discord import Interaction, Message
-from discord.ext import commands
 from discord.app_commands import context_menu, guild_only
+from discord.ext import commands
 
 from musicbot import utils
 from musicbot.bot import MusicBot

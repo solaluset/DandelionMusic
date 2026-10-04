@@ -1,9 +1,12 @@
+# noqa: N999
+
 # bump dependencies in pyproject.toml that dependabot doesn't for some reason
 import json
 import tomllib
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 from urllib.request import urlopen
+
 from packaging.requirements import Requirement
 from packaging.version import Version
 
