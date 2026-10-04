@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import sys
 from collections import defaultdict, deque
-from collections.abc import Coroutine, Iterable
+from collections.abc import Coroutine
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from functools import wraps
@@ -524,7 +524,7 @@ class AudioController:
 
         return loaded_song
 
-    async def play(self, ctx: BasicContext, track: str | Iterable[str]):
+    async def play(self, ctx: BasicContext, track: str):
         # reset timer
         await self.timer.start(True)
 
