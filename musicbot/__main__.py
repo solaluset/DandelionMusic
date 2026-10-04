@@ -20,17 +20,17 @@ intents = discord.Intents.default()
 intents.voice_states = True
 if config.BOT_PREFIX:
     intents.message_content = True
-    prefix = config.BOT_PREFIX
+    prefixes = [config.BOT_PREFIX]
 else:
-    prefix = " "  # messages can't start with space
+    prefixes = []
 if config.MENTION_AS_PREFIX:
-    prefix = commands.when_mentioned_or(prefix)
+    prefixes = commands.when_mentioned_or(*prefixes)
 
 if config.ENABLE_BUTTON_PLUGIN:
     initial_extensions.append("musicbot.plugins.button")
 
 bot = MusicBot(
-    command_prefix=prefix,
+    command_prefix=prefixes,
     case_insensitive=True,
     status=discord.Status.online,
     activity=discord.Game(name=config.STATUS_TEXT),
