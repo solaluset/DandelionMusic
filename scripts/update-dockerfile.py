@@ -1,5 +1,3 @@
-# noqa: N999
-
 import os
 
 from config import config
