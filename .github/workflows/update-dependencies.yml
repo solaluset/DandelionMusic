@@ -23,7 +23,7 @@ jobs:
         run: pre-commit autoupdate
 
       - name: Update dependencies
-        run: python config/update-deps.py
+        run: python scripts/update-deps.py
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v8
