@@ -286,7 +286,9 @@ class AudioController:
         msg = self.last_message
         if not msg:
             return
+        reset_message = False
         if view is None:
+            reset_message = True
             self.last_message = None
         elif view is _not_provided:
             old_view = self.last_view
@@ -300,8 +302,10 @@ class AudioController:
         except discord.HTTPException as e:
             if e.code == 50027:  # Invalid Webhook Token
                 try:
-                    self.last_message = await msg.channel.fetch_message(msg.id)
-                    return await self.update_view(view)
+                    msg = await msg.channel.fetch_message(msg.id)
+                    if not reset_message:
+                        self.last_message = msg
+                    await msg.edit(view=view)
                 except discord.NotFound:
                     self.last_message = None
             else:
