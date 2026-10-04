@@ -305,7 +305,7 @@ class AudioController:
                     msg = await msg.channel.fetch_message(msg.id)
                     if not reset_message:
                         self.last_message = msg
-                    return await msg.edit(view=view)
+                    await msg.edit(view=view)
                 except discord.NotFound:
                     self.last_message = None
             else:
