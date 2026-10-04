@@ -168,18 +168,6 @@ class Config:
 
         current_cfg = self.as_dict()
         loaded_joined = join_dicts(loaded_cfgs)
-        # recognise deprecated cfg key with a typo
-        if "VC_TIMOUT_DEFAULT" in loaded_joined:
-            # in config, silently replace
-            current_cfg["VC_TIMEOUT_DEFAULT"] = loaded_joined.pop(
-                "VC_TIMOUT_DEFAULT"
-            )
-        if "VC_TIMOUT_DEFAULT" in os.environ:
-            # in env, we can't fix it easily
-            raise RuntimeError(
-                "Please rename VC_TIMOUT_DEFAULT"
-                " to VC_TIMEOUT_DEFAULT in your environment"
-            )
         missing = subtract_dicts(current_cfg, loaded_joined)
         self.unknown_vars = subtract_dicts(loaded_joined, current_cfg)
 
