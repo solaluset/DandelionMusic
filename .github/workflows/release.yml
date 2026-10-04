@@ -19,8 +19,8 @@ jobs:
 
       - name: Build
         run: >
-          pip install -r config/build-requirements.txt
-          && python -m config.build
+          pip install -r scripts/build-requirements.txt
+          && python -m scripts.build
 
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
