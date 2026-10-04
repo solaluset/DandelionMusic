@@ -1,5 +1,4 @@
 import json
-import os
 import re
 from enum import StrEnum
 from inspect import isawaitable
@@ -28,8 +27,6 @@ from musicbot.utils import get_emoji
 if TYPE_CHECKING:
     from musicbot.bot import Context, MusicBot
 
-DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-LEGACY_SETTINGS = DIR_PATH + "/generated/settings.json"
 DEFAULT_CONFIG = {
     "command_channel": None,
     "start_voice_channel": None,
@@ -334,36 +331,6 @@ def run_migrations(connection):
         exec("def run():\n" + code, variables)  # noqa: S102
         variables["run"]()
     connection.commit()
-
-
-async def extract_legacy_settings(bot: "MusicBot"):
-    "Load settings from deprecated json file to DB"
-    if not os.path.isfile(LEGACY_SETTINGS):
-        return
-    with open(LEGACY_SETTINGS) as file:  # noqa: ASYNC230
-        json_data = json.load(file)
-    async with bot.DbSession() as session:
-        existing = (
-            (
-                await session.execute(
-                    select(GuildSettings.guild_id).where(
-                        GuildSettings.guild_id.in_(list(json_data))
-                    )
-                )
-            )
-            .scalars()
-            .fetchall()
-        )
-        for guild_id, data in json_data.items():
-            if guild_id in existing:
-                continue
-            new_settings = DEFAULT_CONFIG.copy()
-            new_settings.update(
-                {k: v for k, v in data.items() if k in new_settings}
-            )
-            session.add(GuildSettings(guild_id=guild_id, **new_settings))
-        await session.commit()
-    os.rename(LEGACY_SETTINGS, LEGACY_SETTINGS + ".back")
 
 
 async def migrate_old_playlists(bot: "MusicBot"):

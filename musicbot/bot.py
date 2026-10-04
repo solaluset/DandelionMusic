@@ -24,7 +24,6 @@ from musicbot.audiocontroller import AudioController
 from musicbot.context import Context, InteractionContext
 from musicbot.settings import (
     GuildSettings,
-    extract_legacy_settings,
     migrate_old_playlists,
     run_migrations,
 )
@@ -77,7 +76,6 @@ class MusicBot(commands.Bot):
 
         async with self.db_engine.connect() as connection:
             await connection.run_sync(run_migrations)
-        await extract_legacy_settings(self)
         await migrate_old_playlists(self)
 
         self.client_session = aiohttp.ClientSession(proxy=config.PROXY_URL)
