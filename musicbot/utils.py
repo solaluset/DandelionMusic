@@ -6,7 +6,6 @@ import copy
 import os
 import sys
 from collections.abc import Awaitable, Callable, Iterable
-from enum import Enum
 from typing import (
     TYPE_CHECKING,
     Literal,
@@ -249,12 +248,6 @@ def chunks(lst: Iterable, n: int) -> Iterable[list]:
     it = iter(lst)
     while chunk := [val for _, val in zip(range(n), it)]:
         yield chunk
-
-
-# StrEnum doesn't exist in Python < 3.11
-class StrEnum(str, Enum):
-    def __str__(self):
-        return self._value_
 
 
 class Timer:
