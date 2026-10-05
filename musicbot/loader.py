@@ -73,7 +73,7 @@ _extractor = YoutubeDL(
         "default_search": "auto",
         "cookiefile": config.COOKIE_PATH,
         "quiet": True,
-        "extractor_args": {"youtube": {"player-client": "default"}},
+        "extractor_args": {"youtube": {"player_client": ["mweb", "default"]}},
         "proxy": config.PROXY_URL,
     }
 )
