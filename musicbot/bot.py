@@ -286,5 +286,8 @@ class CommandTree(BaseCommandTree):
 
 
 async def _update_view(audiocontroller: AudioController):
+    if audiocontroller.message_lock.locked():
+        # skip this iteration
+        return
     async with audiocontroller.message_lock:
         await audiocontroller.update_view()

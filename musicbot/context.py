@@ -75,7 +75,8 @@ class SendViewMixin:
                 kwargs["view"] = view
             msg = await super().send(*args, **kwargs)
             await old_view_task
-            audiocontroller.last_message = msg
+            if view:
+                audiocontroller.last_message = msg
         return msg
 
 
