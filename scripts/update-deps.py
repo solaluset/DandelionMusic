@@ -13,7 +13,7 @@ FILES = [
     ROOT_DIR / "requirements.txt",
     ROOT_DIR / "config" / "pyproject.toml",
     ROOT_DIR / "config" / "db-requirements.txt",
-    ROOT_DIR / "config" / "build-requirements.txt",
+    ROOT_DIR / "scripts" / "build-requirements.txt",
 ]
 
 
