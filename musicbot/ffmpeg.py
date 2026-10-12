@@ -7,7 +7,7 @@ from collections import defaultdict, deque
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from functools import reduce
-from queue import Empty, Queue, ShutDown
+from queue import Empty, Queue
 from threading import Lock, Thread
 from traceback import print_exc
 
@@ -104,13 +104,12 @@ class AudioStream:
     rewindable: bool = False
     read_frames: int = 0
     queue: Queue = field(default_factory=lambda: Queue(FRAMES_PER_SECOND))
+    _reading: bool = True
 
     def reader(self):
-        try:
-            while True:
-                self.queue.put(self.source.read())
-        except ShutDown:
-            pass
+        self._reading = True
+        while self._reading:
+            self.queue.put(self.source.read())
 
     def read(self, wait: bool) -> bytes:
         ret = self.queue.get(wait)
@@ -118,7 +117,11 @@ class AudioStream:
         return ret
 
     def cleanup(self):
-        self.queue.shutdown()
+        self._reading = False
+        try:
+            self.queue.get_nowait()
+        except Empty:
+            pass
 
 
 class AudioMixer(AudioSource):
