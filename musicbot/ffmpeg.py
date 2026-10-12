@@ -73,6 +73,8 @@ class FFmpegPCMAudio(BasePCMAudio):
             "1",
             "-reconnect_delay_max",
             "5",
+            "-timeout",
+            "5",
         )
         try:
             c_index = new_args.index("-c")
