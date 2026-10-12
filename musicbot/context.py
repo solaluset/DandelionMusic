@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING
 
 import discord
@@ -67,16 +68,18 @@ class SendViewMixin:
                 view.message = msg
             return msg
         async with audiocontroller.message_lock:
-            old_view_task = self.bot.loop.create_task(
-                audiocontroller.update_view(None)
-            )
+            if audiocontroller.last_view is not None:
+                old_view_task = self.bot.loop.create_task(
+                    audiocontroller.update_view(None)
+                )
+            else:
+                old_view_task = asyncio.sleep(0)
             view = audiocontroller.make_view()
             if view:
                 kwargs["view"] = view
             msg = await super().send(*args, **kwargs)
             await old_view_task
-            if view:
-                audiocontroller.last_message = msg
+            audiocontroller.last_message = msg
         return msg
 
 
