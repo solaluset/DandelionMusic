@@ -20,6 +20,7 @@ from musicbot.linkutils import (
     ExtractorT,
     SiteTypes,
     fetch_spotify,
+    fix_tiktok_url,
     get_ie,
     identify_url,
 )
@@ -141,6 +142,9 @@ def _load_song(track: str) -> Song | list[Song] | None:
         host = SiteTypes.YT_DLP
 
     elif host == SiteTypes.UNKNOWN:
+        fixed = fix_tiktok_url(track)
+        if fixed != track:
+            return _load_song(fixed)
         return None
 
     elif host == SiteTypes.SPOTIFY:
