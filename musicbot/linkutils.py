@@ -59,6 +59,9 @@ spotify_regex = re.compile(
     r"^https?://open\.spotify\.com/([^/]+/)?"
     r"(?P<type>track|playlist|album)/(?P<code>\w+)"
 )
+tiktok_photo_regex = re.compile(
+    r"^(?P<pre>https?://www\.tiktok\.com/[^/]+)/photo/"
+)
 
 headers = {}
 
@@ -204,3 +207,10 @@ def get_site_type(url: str) -> SiteTypes:
     if not isinstance(type_, SiteTypes):
         return SiteTypes.YT_DLP
     return type_
+
+
+def fix_tiktok_url(url: str) -> str:
+    tiktok = tiktok_photo_regex.match(url)
+    if tiktok is None:
+        return url
+    return tiktok.group("pre") + "/video/" + url.replace(tiktok.group(), "", 1)
