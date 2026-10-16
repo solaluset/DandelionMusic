@@ -167,8 +167,10 @@ class AudioMixer(AudioSource):
 
     def _create_thread(self, func: Callable[[], None]) -> None:
         def _thread_func():
-            func()
-            self._threads.remove(thread)
+            try:
+                func()
+            finally:
+                self._threads.remove(thread)
 
         thread = Thread(target=_thread_func, daemon=True)
         self._threads.add(thread)
