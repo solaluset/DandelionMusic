@@ -18,7 +18,7 @@ import discord
 from config import config
 from musicbot import loader, utils
 from musicbot.context import BasicContext, InteractionContext
-from musicbot.ffmpeg import AudioMixer, FFmpegPCMAudio
+from musicbot.ffmpeg import FRAMES_PER_SECOND, AudioMixer, FFmpegPCMAudio
 from musicbot.playlist import LoopMode, LoopState, PauseState, Playlist
 from musicbot.song import Song, SongError
 from musicbot.utils import (
@@ -129,7 +129,7 @@ class AudioController:
 
     def get_current_song_time(self) -> int:
         return (self.current_song.start or 0) + round(
-            self.mixer.get_stream(0).read_frames / AudioMixer.FRAMES_PER_SECOND
+            self.mixer.get_stream(0).read_frames / FRAMES_PER_SECOND
         )
 
     @property
@@ -359,7 +359,7 @@ class AudioController:
                 self.bot.loop.run_in_executor(
                     None,
                     lambda: self.mixer.fast_forward_stream(
-                        0, seconds * self.mixer.FRAMES_PER_SECOND
+                        0, seconds * FRAMES_PER_SECOND
                     ),
                 )
             )
@@ -367,10 +367,8 @@ class AudioController:
     def rewind(self, seconds: int) -> int:
         if self.mixer:
             return round(
-                self.mixer.rewind_stream(
-                    0, seconds * self.mixer.FRAMES_PER_SECOND
-                )
-                / self.mixer.FRAMES_PER_SECOND
+                self.mixer.rewind_stream(0, seconds * FRAMES_PER_SECOND)
+                / FRAMES_PER_SECOND
             )
         return 0
 
@@ -456,7 +454,9 @@ class AudioController:
             await self.bot.loop.run_in_executor(None, audio.read)
             audio._check_process_returncode()
             if error := audio._current_error:
-                raise SongError(config.SONGINFO_ERROR) from error
+                print("FFmpeg error:", error, file=sys.stderr)
+                self.next_song(forced=True)
+                return
         finally:
             waiting_task.cancel()
             self.stop_waiting()
