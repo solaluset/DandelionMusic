@@ -207,7 +207,6 @@ async def _sleep_as_required(info_dict: dict):
         f.get("available_at") or 0 for f in requested_formats
     ):
         forced_sleep_interval = available_at - int(time.time())
-        print(f"Sleeping for {forced_sleep_interval}...")
         await asyncio.sleep(forced_sleep_interval)
 
 
