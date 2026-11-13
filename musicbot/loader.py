@@ -3,6 +3,7 @@ import atexit
 import json
 import sys
 import threading
+import time
 from concurrent.futures import ProcessPoolExecutor
 from datetime import UTC, datetime
 from inspect import getmodule
@@ -200,6 +201,15 @@ def _parse_expire(url: str) -> int | None:
         return None
 
 
+async def _sleep_as_required(info_dict: dict):
+    requested_formats = info_dict.get("requested_formats") or [info_dict]
+    if available_at := max(
+        f.get("available_at") or 0 for f in requested_formats
+    ):
+        forced_sleep_interval = available_at - int(time.time())
+        await asyncio.sleep(forced_sleep_interval)
+
+
 async def preload(song: Song, bot: MusicBot) -> bool:
     if song.webpage_url is None:
         return True
@@ -227,6 +237,8 @@ async def preload(song: Song, bot: MusicBot) -> bool:
         success = preloaded is not None
 
     if success:
+        await _sleep_as_required(preloaded.data)
+
         song.update(preloaded)
 
         if song.playlist is not None:
